@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { initCommand } from './cli/commands/init.js';
 import { taskCreateCommand } from './cli/commands/task-create.js';
 import { taskStatusCommand } from './cli/commands/task-status.js';
+import { taskExecCommand } from './cli/commands/task-exec.js';
+import { runCommand } from './cli/commands/run.js';
 import { formatOutput } from './cli/output.js';
 
 const program = new Command();
@@ -48,6 +50,36 @@ taskCmd
   .option('--human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     const result = await taskStatusCommand(getRepoRoot(), id);
+    console.log(formatOutput(result, opts.human));
+  });
+
+taskCmd
+  .command('exec <id>')
+  .description('Execute a command inside a task worktree')
+  .requiredOption('--cmd <cmd>', 'Command to run')
+  .option('--wait', 'Wait for completion', false)
+  .option('--human', 'Human-friendly output', false)
+  .action(async (id, opts) => {
+    const result = await taskExecCommand(getRepoRoot(), id, {
+      cmd: opts.cmd,
+      wait: opts.wait,
+    });
+    console.log(formatOutput(result, opts.human));
+  });
+
+program
+  .command('run')
+  .description('Create a task and run a command (shortcut for task create + task exec)')
+  .requiredOption('--prompt <prompt>', 'Description of the task')
+  .requiredOption('--cmd <cmd>', 'Command to run')
+  .option('--wait', 'Wait for completion', false)
+  .option('--human', 'Human-friendly output', false)
+  .action(async (opts) => {
+    const result = await runCommand(getRepoRoot(), {
+      prompt: opts.prompt,
+      cmd: opts.cmd,
+      wait: opts.wait,
+    });
     console.log(formatOutput(result, opts.human));
   });
 
