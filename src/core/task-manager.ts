@@ -86,7 +86,7 @@ export class TaskManager {
   private static VALID_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
     pending: ['provisioning'],
     provisioning: ['ready', 'errored'],
-    ready: ['running', 'verifying'],
+    ready: ['running', 'verifying', 'merged', 'discarded'],
     running: ['verifying', 'errored'],
     verifying: ['completed', 'failed'],
     completed: ['merged', 'discarded'],

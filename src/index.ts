@@ -11,6 +11,9 @@ import { summaryCommand } from './cli/commands/summary.js';
 import { verifyCommand } from './cli/commands/verify.js';
 import { diffCommand } from './cli/commands/diff.js';
 import { compareCommand } from './cli/commands/compare.js';
+import { mergeCommand } from './cli/commands/merge.js';
+import { discardCommand } from './cli/commands/discard.js';
+import { cleanCommand } from './cli/commands/clean.js';
 import { formatOutput, formatTable } from './cli/output.js';
 
 const program = new Command();
@@ -150,6 +153,33 @@ program
   .option('--human', 'Human-friendly output', false)
   .action(async (ids, opts) => {
     const result = await compareCommand(getRepoRoot(), ids);
+    console.log(formatOutput(result, opts.human));
+  });
+
+program
+  .command('merge <id>')
+  .description('Merge a task branch into the current branch')
+  .option('--human', 'Human-friendly output', false)
+  .action(async (id, opts) => {
+    const result = await mergeCommand(getRepoRoot(), id);
+    console.log(formatOutput(result, opts.human));
+  });
+
+program
+  .command('discard <id>')
+  .description('Discard a task (remove worktree and branch)')
+  .option('--human', 'Human-friendly output', false)
+  .action(async (id, opts) => {
+    const result = await discardCommand(getRepoRoot(), id);
+    console.log(formatOutput(result, opts.human));
+  });
+
+program
+  .command('clean')
+  .description('Clean up all completed/discarded task worktrees')
+  .option('--human', 'Human-friendly output', false)
+  .action(async (opts) => {
+    const result = await cleanCommand(getRepoRoot());
     console.log(formatOutput(result, opts.human));
   });
 
