@@ -1,0 +1,35 @@
+{
+  "name": "agentpod",
+  "version": "0.1.0",
+  "description": "A CLI runtime for running parallel AI coding tasks safely inside real repos",
+  "type": "module",
+  "bin": {
+    "agentpod": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": ["ai", "coding", "agents", "git", "worktree", "cli"],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "execa": "^9.5.2",
+    "js-yaml": "^4.1.0",
+    "simple-git": "^3.27.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^22.14.0",
+    "tsup": "^8.4.0",
+    "tsx": "^4.19.3",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.1"
+  }
+}
