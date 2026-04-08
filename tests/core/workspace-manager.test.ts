@@ -75,4 +75,47 @@ describe('WorkspaceManager', () => {
       await expect(access(worktreePath)).rejects.toThrow();
     });
   });
+
+  describe('provision', () => {
+    it('copies specified files into the worktree', async () => {
+      const { writeFile: wf } = await import('node:fs/promises');
+      await wf(join(repo.path, '.env'), 'SECRET=abc123\n');
+
+      const taskId = 'prov01';
+      const branch = 'agentpod/prov01';
+      await wm.createWorktree(taskId, branch);
+
+      await wm.provision(taskId, { copy: ['.env'] });
+
+      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const envContent = await readFile(join(wtPath, '.env'), 'utf-8');
+      expect(envContent).toBe('SECRET=abc123\n');
+    });
+
+    it('creates symlinks for specified directories', async () => {
+      const { mkdir: mk, writeFile: wf, lstat } = await import('node:fs/promises');
+      // Create a fake node_modules dir
+      await mk(join(repo.path, 'node_modules', 'fake-pkg'), { recursive: true });
+      await wf(join(repo.path, 'node_modules', 'fake-pkg', 'index.js'), 'module.exports = 1;\n');
+
+      const taskId = 'prov02';
+      const branch = 'agentpod/prov02';
+      await wm.createWorktree(taskId, branch);
+
+      await wm.provision(taskId, { symlink: ['node_modules'] });
+
+      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const stat = await lstat(join(wtPath, 'node_modules'));
+      expect(stat.isSymbolicLink()).toBe(true);
+    });
+
+    it('does nothing when no copy or symlink configured', async () => {
+      const taskId = 'prov03';
+      const branch = 'agentpod/prov03';
+      await wm.createWorktree(taskId, branch);
+
+      // Should not throw
+      await wm.provision(taskId, {});
+    });
+  });
 });
