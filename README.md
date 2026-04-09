@@ -1,7 +1,7 @@
 <p align="center">
   <h1 align="center">agentpod</h1>
   <p align="center">
-    <strong>Run parallel AI coding tasks safely inside real git repos.</strong>
+    <strong>Your agent works in parallel. You pick the winner.</strong>
   </p>
   <p align="center">
     Isolate. Execute. Verify. Compare. Merge or discard.
@@ -21,83 +21,50 @@
 
 ---
 
-## 🤔 Why agentpod?
+## Why agentpod?
 
-You're using AI coding agents — Claude Code, Codex CLI, Aider, Cursor. They're fast. But they work in your repo, on your branch, one at a time.
+AI coding agents are fast — but they work on your branch, one task at a time.
 
 **What if you could run 5 agents in parallel, each in an isolated workspace, and pick the best result?**
 
-agentpod makes this safe:
+agentpod gives your agent a fleet of git worktrees. Each task gets its own branch — full isolation, no conflicts. Your agent creates tasks, runs them in parallel, verifies results automatically, and you decide what ships.
 
-- Each task gets its own git worktree — full isolation, no conflicts
-- Verification runs automatically — tests, linting, builds
-- Compare approaches side-by-side, merge the winner, discard the rest
-- All state lives in `.agentpod/` (gitignored) — invisible to your team, no buy-in needed
+**For you:** install, init, go back to what you were doing. Check in when you want with `agentpod summary --human`.
 
-Think of it as **docker-compose for AI coding tasks** — lightweight infrastructure that lets agents work in parallel without stepping on each other.
+**For your agent:** 14 commands covering the full lifecycle — create, execute, verify, compare, merge, discard. JSON output by default. Agent skill files for auto-discovery.
 
-## Features
-
-- 🔀 **Agent-agnostic** — works with any CLI-based AI coding tool
-- ⚡ **Parallel execution** — run 2-10 tasks simultaneously in isolated worktrees
-- 🔄 **Full lifecycle** — create, execute, verify, compare, merge or discard
-- ✅ **Auto-verification** — detects test/lint/build commands from your project
-- 📦 **Workspace provisioning** — copies secrets, symlinks dependencies, runs setup hooks
-- 🔌 **MCP server** — agents discover agentpod natively via Model Context Protocol
-- 🏠 **Local-first** — no cloud, no accounts, no dependencies beyond git and Node.js
-
-## Install
-
-```bash
-npm install -g agentpod
-```
-
-Requires **Node.js >= 20** and **git**.
-
-## 🚀 Quick Start
-
-```bash
-# 1. Initialize in your repo
-agentpod init --verify "npm test"
-
-# 2. Run a task (create workspace + execute)
-agentpod run --prompt "refactor auth to use JWT" \
-  --cmd "claude -p 'refactor auth'" --wait
-
-# 3. Check results
-agentpod verify <id>
-agentpod diff <id>
-
-# 4. Accept or reject
-agentpod merge <id>     # merge into current branch
-agentpod discard <id>   # throw it away
-agentpod clean          # remove finished task worktrees
-```
+**No cloud. No accounts. No team buy-in needed.** Everything lives in `.agentpod/` (gitignored) and optional skill files (committed).
 
 ## How It Works
 
 ```
-You tell your agent:  "try 3 approaches to refactor auth"
-
-Your agent calls agentpod:
-  agentpod run --prompt "JWT approach"      --cmd "claude -p '...'"  --wait
-  agentpod run --prompt "sessions approach" --cmd "codex -q '...'"   --wait
-  agentpod run --prompt "OAuth approach"    --cmd "aider '...'"      --wait
-
-Your agent reviews:
-  agentpod compare <id1> <id2> <id3>
-  agentpod merge <best-id>
-  agentpod clean
+1. You run    →  agentpod init             →  guided setup, drops agent skill files
+2. Agent works →  creates tasks in parallel  →  isolated worktrees, auto-verification
+3. You decide  →  agentpod summary --human   →  merge the winner, discard the rest
 ```
 
-**Two execution paths:**
+That's the whole model. You run one command. Your agent does the rest. You check in when you want.
 
-| Path | Command | Use case |
-|------|---------|----------|
-| **Workspace only** | `agentpod task create` | Agent works in the worktree directly |
-| **Workspace + subprocess** | `agentpod run --cmd "..."` | Delegate work to a different agent |
+**Under the hood**, your agent uses agentpod to:
+- Create isolated git worktrees (one per task, own branch)
+- Execute commands in each worktree (other agents, scripts, anything)
+- Run verification (tests, lint, build) automatically
+- Compare results side-by-side
+- Merge the best approach into your branch
 
-The subprocess path is what makes agentpod agent-agnostic — Claude Code can dispatch work to Codex, Aider, or any CLI tool.
+## Get Started
+
+```bash
+npm install -g agentpod
+cd your-project
+agentpod init
+```
+
+Requires **Node.js >= 20** and **git**.
+
+`agentpod init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agentpod automatically. After init, go back to your agent and give it a task:
+
+> *"Use agentpod to try 3 different approaches to refactor the auth module, then compare and merge the best one."*
 
 ## 🤖 Agent Setup Guides
 
