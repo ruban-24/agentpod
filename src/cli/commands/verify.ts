@@ -10,6 +10,9 @@ export interface VerifyResult {
   checks: VerificationCheck[];
 }
 
+// Statuses that can transition to 'verifying'
+const VERIFYABLE_STATUSES = ['running', 'ready'];
+
 export async function verifyCommand(repoRoot: string, taskId: string): Promise<VerifyResult> {
   const tm = new TaskManager(repoRoot);
   const verifier = new Verifier();
@@ -23,8 +26,21 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
   const wtPath = resolve(repoRoot, task.worktree);
   const verifyCommands = config.verify || (await detectVerifyCommands(wtPath));
 
+  // Transition to verifying if the state machine allows it
+  const canTransition = VERIFYABLE_STATUSES.includes(task.status);
+  if (canTransition) {
+    await tm.updateStatus(taskId, 'verifying');
+  }
+
   const result = await verifier.runChecks(wtPath, verifyCommands);
   await tm.updateTask(taskId, { verification: result });
+
+  // Transition to final status if we went through verifying
+  if (canTransition) {
+    const finalStatus = result.passed ? 'completed' : 'failed';
+    await tm.updateStatus(taskId, finalStatus);
+  }
+  // Otherwise (re-verify of completed/failed), just update verification data
 
   return { id: taskId, checks: result.checks };
 }

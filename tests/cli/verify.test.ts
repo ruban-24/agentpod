@@ -51,4 +51,50 @@ describe('verifyCommand', () => {
     expect(result.checks).toHaveLength(1);
     expect(result.checks[0].passed).toBe(true);
   });
+
+  it('transitions task to completed when verification passes and status allows', async () => {
+    const { writeFile: wf } = await import('node:fs/promises');
+    const { join: j } = await import('node:path');
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+
+    await wf(j(repo.path, '.agentpod', 'config.yml'), 'verify:\n  - echo pass\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'verify transitions test' });
+    const tm = new TaskManager(repo.path);
+
+    // Force task to running (verify can transition running -> verifying -> completed)
+    const taskData = await tm.getTask(task.id);
+    taskData!.status = 'running' as any;
+    await tm.saveTask(taskData!);
+
+    const result = await verifyCommand(repo.path, task.id);
+
+    expect(result.checks[0].passed).toBe(true);
+
+    const updated = await tm.getTask(task.id);
+    expect(updated!.status).toBe('completed');
+  });
+
+  it('updates verification data without changing status on re-verify of completed task', async () => {
+    const { writeFile: wf } = await import('node:fs/promises');
+    const { join: j } = await import('node:path');
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+
+    await wf(j(repo.path, '.agentpod', 'config.yml'), 'verify:\n  - echo pass\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'reverify test' });
+    const tm = new TaskManager(repo.path);
+
+    // Force task to completed
+    const taskData = await tm.getTask(task.id);
+    taskData!.status = 'completed' as any;
+    await tm.saveTask(taskData!);
+
+    const result = await verifyCommand(repo.path, task.id);
+
+    expect(result.checks[0].passed).toBe(true);
+    const updated = await tm.getTask(task.id);
+    expect(updated!.status).toBe('completed');
+    expect(updated!.verification).toBeDefined();
+  });
 });
