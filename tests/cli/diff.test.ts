@@ -47,6 +47,8 @@ describe('diffCommand', () => {
     const result = await diffCommand(repo.path, task.id);
 
     expect(result.id).toBe(task.id);
+    expect(result.branch).toBeDefined();
+    expect(result.branch).toContain('agentpod/');
     expect(result.files_changed).toBe(1);
   });
 

@@ -168,7 +168,7 @@ export function formatSummaryHuman(data: { total: number; completed: number; fai
 
 // --- Diff ---
 
-export function formatDiffHuman(data: { id: string; prompt: string; files_changed: number; insertions: number; deletions: number; commits: CommitLogEntry[]; files: FileStats[] }): string {
+export function formatDiffHuman(data: { id: string; prompt: string; branch?: string; files_changed: number; insertions: number; deletions: number; commits: CommitLogEntry[]; files: FileStats[] }): string {
   const lines: string[] = [];
 
   lines.push(`${blue(data.id)} · ${data.prompt} · ${diffStats(data.insertions, data.deletions)} across ${data.files_changed} files · ${data.commits.length} commits`);
@@ -194,7 +194,7 @@ export function formatDiffHuman(data: { id: string; prompt: string; files_change
     lines.push('');
   }
 
-  lines.push(dim(`→ Full diff: git diff main...agentpod/${data.id}`));
+  lines.push(dim(`→ Full diff: git diff HEAD...${data.branch || `agentpod/${data.id}`}`));
 
   return lines.join('\n');
 }
@@ -291,10 +291,10 @@ export function formatTaskCreateHuman(task: TaskRecord): string {
   return lines.join('\n');
 }
 
-export function formatMergeHuman(data: { id: string; merged: boolean; strategy?: string; commit?: string }): string {
+export function formatMergeHuman(data: { id: string; merged: boolean; strategy?: string; commit?: string; targetBranch?: string }): string {
   const lines: string[] = [];
   lines.push(card('green', [
-    `${green('\u2713')} Merged ${bold(blue(data.id))} into main`,
+    `${green('\u2713')} Merged ${bold(blue(data.id))} into ${data.targetBranch || 'current branch'}`,
     dim(`strategy: ${data.strategy || 'unknown'} \u00b7 commit: ${data.commit || 'unknown'}`),
   ]));
   lines.push(nextAction('agentpod clean'));

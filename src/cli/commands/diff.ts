@@ -5,6 +5,7 @@ import type { CommitLogEntry, FileStats } from '../../core/reviewer.js';
 export interface DiffResult {
   id: string;
   prompt: string;
+  branch: string;
   files_changed: number;
   insertions: number;
   deletions: number;
@@ -30,6 +31,7 @@ export async function diffCommand(repoRoot: string, taskId: string): Promise<Dif
   return {
     id: taskId,
     prompt: task.prompt,
+    branch: task.branch,
     ...stats,
     diff: diffText,
     commits,

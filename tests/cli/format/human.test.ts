@@ -119,6 +119,7 @@ describe('formatDiffHuman', () => {
       insertions: 30,
       deletions: 5,
       diff: '',
+      branch: 'agentpod/abc123',
       commits: [
         { sha: 'bae224d', message: 'Add validation logging' },
         { sha: 'c3f891a', message: 'Fix expiry check' },
@@ -135,7 +136,8 @@ describe('formatDiffHuman', () => {
     expect(result).toContain('Add validation logging');
     expect(result).toContain('FILES');
     expect(result).toContain('src/auth.ts');
-    expect(result).toContain('git diff');
+    expect(result).toContain('agentpod/abc123');
+    expect(result).not.toContain('git diff main');
   });
 });
 
@@ -196,11 +198,18 @@ describe('action formatters', () => {
     expect(result).toContain('agentpod task exec');
   });
 
-  it('formatMergeHuman shows merge result', () => {
-    const result = stripAnsi(formatMergeHuman({ id: 'abc123', merged: true, strategy: 'fast-forward', commit: 'bae224d' }));
+  it('formatMergeHuman shows merge result with target branch', () => {
+    const result = stripAnsi(formatMergeHuman({ id: 'abc123', merged: true, strategy: 'fast-forward', commit: 'bae224d', targetBranch: 'main' }));
     expect(result).toContain('Merged abc123');
+    expect(result).toContain('into main');
     expect(result).toContain('fast-forward');
     expect(result).toContain('agentpod clean');
+  });
+
+  it('formatMergeHuman falls back to current branch when targetBranch missing', () => {
+    const result = stripAnsi(formatMergeHuman({ id: 'abc123', merged: true, strategy: 'fast-forward', commit: 'bae224d' }));
+    expect(result).toContain('Merged abc123');
+    expect(result).toContain('into current branch');
   });
 
   it('formatDiscardHuman shows discard confirmation', () => {
