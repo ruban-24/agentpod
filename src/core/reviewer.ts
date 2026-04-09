@@ -1,6 +1,18 @@
 import simpleGit from 'simple-git';
 import type { DiffStats } from '../types.js';
 
+export interface CommitLogEntry {
+  sha: string;
+  message: string;
+}
+
+export interface FileStats {
+  file: string;
+  insertions: number;
+  deletions: number;
+  status: string; // A, M, D, R, etc.
+}
+
 export class Reviewer {
   private repoRoot: string;
 
@@ -90,6 +102,68 @@ export class Reviewer {
         // May not be in a merge state
       }
       return { success: false };
+    }
+  }
+
+  async getCommitLog(branch: string): Promise<CommitLogEntry[]> {
+    const git = simpleGit(this.repoRoot);
+
+    try {
+      const base = await git.raw(['merge-base', 'HEAD', branch]);
+      const baseSha = base.trim();
+      const output = await git.raw(['log', '--oneline', `${baseSha}..${branch}`]);
+
+      if (!output.trim()) return [];
+
+      return output.trim().split('\n').map((line) => {
+        const spaceIndex = line.indexOf(' ');
+        return {
+          sha: line.slice(0, spaceIndex),
+          message: line.slice(spaceIndex + 1),
+        };
+      });
+    } catch {
+      return [];
+    }
+  }
+
+  async getPerFileStats(branch: string): Promise<FileStats[]> {
+    const git = simpleGit(this.repoRoot);
+
+    try {
+      const base = await git.raw(['merge-base', 'HEAD', branch]);
+      const baseSha = base.trim();
+
+      // Get per-file stats
+      const numstat = await git.raw(['diff', '--numstat', baseSha, branch]);
+      // Get file status (A/M/D)
+      const nameStatus = await git.raw(['diff', '--name-status', baseSha, branch]);
+
+      if (!numstat.trim()) return [];
+
+      // Parse name-status for A/M/D indicators
+      const statusMap = new Map<string, string>();
+      for (const line of nameStatus.trim().split('\n')) {
+        const parts = line.split('\t');
+        if (parts.length >= 2) {
+          statusMap.set(parts[parts.length - 1], parts[0]);
+        }
+      }
+
+      // Parse numstat for per-file counts
+      return numstat.trim().split('\n').map((line) => {
+        const parts = line.split('\t');
+        if (parts.length < 3) return null;
+        const file = parts[2];
+        return {
+          file,
+          insertions: parseInt(parts[0], 10) || 0,
+          deletions: parseInt(parts[1], 10) || 0,
+          status: statusMap.get(file) || 'M',
+        };
+      }).filter((entry): entry is FileStats => entry !== null);
+    } catch {
+      return [];
     }
   }
 }

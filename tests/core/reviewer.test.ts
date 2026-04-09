@@ -89,6 +89,69 @@ describe('Reviewer', () => {
     });
   });
 
+  describe('getCommitLog', () => {
+    it('returns commit log entries for a branch', async () => {
+      const wtPath = join(repo.path, '.agentpod', 'worktrees', 'log01');
+      execSync(`git worktree add -b agentpod/log01 "${wtPath}"`, {
+        cwd: repo.path,
+        stdio: 'ignore',
+      });
+      await writeFile(join(wtPath, 'file1.txt'), 'hello');
+      execSync('git add . && git commit -m "first commit on branch"', { cwd: wtPath, stdio: 'ignore' });
+      await writeFile(join(wtPath, 'file2.txt'), 'world');
+      execSync('git add . && git commit -m "second commit on branch"', { cwd: wtPath, stdio: 'ignore' });
+
+      const log = await reviewer.getCommitLog('agentpod/log01');
+
+      expect(log).toHaveLength(2);
+      expect(log[0].message).toBe('second commit on branch');
+      expect(log[1].message).toBe('first commit on branch');
+      expect(log[0].sha).toHaveLength(7);
+    });
+
+    it('returns empty array for branch with no new commits', async () => {
+      const wtPath = join(repo.path, '.agentpod', 'worktrees', 'log02');
+      execSync(`git worktree add -b agentpod/log02 "${wtPath}"`, {
+        cwd: repo.path,
+        stdio: 'ignore',
+      });
+
+      const log = await reviewer.getCommitLog('agentpod/log02');
+      expect(log).toEqual([]);
+    });
+  });
+
+  describe('getPerFileStats', () => {
+    it('returns per-file change stats for a branch', async () => {
+      const wtPath = join(repo.path, '.agentpod', 'worktrees', 'stats01');
+      execSync(`git worktree add -b agentpod/stats01 "${wtPath}"`, {
+        cwd: repo.path,
+        stdio: 'ignore',
+      });
+      await writeFile(join(wtPath, 'new.txt'), 'new file\nline 2\n');
+      execSync('git add . && git commit -m "add new file"', { cwd: wtPath, stdio: 'ignore' });
+
+      const stats = await reviewer.getPerFileStats('agentpod/stats01');
+
+      expect(stats.length).toBeGreaterThanOrEqual(1);
+      const newFile = stats.find((s) => s.file === 'new.txt');
+      expect(newFile).toBeDefined();
+      expect(newFile!.insertions).toBeGreaterThan(0);
+      expect(newFile!.status).toBe('A');
+    });
+
+    it('returns empty array for branch with no changes', async () => {
+      const wtPath = join(repo.path, '.agentpod', 'worktrees', 'stats02');
+      execSync(`git worktree add -b agentpod/stats02 "${wtPath}"`, {
+        cwd: repo.path,
+        stdio: 'ignore',
+      });
+
+      const stats = await reviewer.getPerFileStats('agentpod/stats02');
+      expect(stats).toEqual([]);
+    });
+  });
+
   describe('merge', () => {
     it('merges a branch into the current branch', async () => {
       const wtPath = join(repo.path, '.agentpod', 'worktrees', 'merge01');
