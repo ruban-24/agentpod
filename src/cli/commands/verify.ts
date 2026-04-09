@@ -21,7 +21,7 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
   }
 
   const wtPath = resolve(repoRoot, task.worktree);
-  const verifyCommands = config.verify || (await detectVerifyCommands(repoRoot));
+  const verifyCommands = config.verify || (await detectVerifyCommands(wtPath));
 
   const result = await verifier.runChecks(wtPath, verifyCommands);
   await tm.updateTask(taskId, { verification: result });

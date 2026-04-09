@@ -37,7 +37,7 @@ export async function taskExecCommand(
     await tm.updateTask(taskId, { exit_code: result.exitCode, cmd: options.cmd });
 
     // Run verification
-    const verifyCommands = config.verify || (await detectVerifyCommands(repoRoot));
+    const verifyCommands = config.verify || (await detectVerifyCommands(wtPath));
     await tm.updateStatus(taskId, 'verifying');
     const verification = await verifier.runChecks(wtPath, verifyCommands);
     await tm.updateTask(taskId, { verification });

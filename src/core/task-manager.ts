@@ -131,7 +131,7 @@ export class TaskManager {
     return task;
   }
 
-  async updateTask(id: string, updates: Partial<TaskRecord>): Promise<TaskRecord> {
+  async updateTask(id: string, updates: Omit<Partial<TaskRecord>, 'id' | 'status'>): Promise<TaskRecord> {
     const task = await this.getTask(id);
     if (!task) {
       throw new Error(`Task not found: ${id}`);

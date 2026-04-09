@@ -20,6 +20,11 @@ export async function mergeCommand(repoRoot: string, taskId: string): Promise<Me
     throw new Error(`Task not found: ${taskId}`);
   }
 
+  const mergeableStatuses = ['ready', 'completed', 'failed'];
+  if (!mergeableStatuses.includes(task.status)) {
+    throw new Error(`Cannot merge task in '${task.status}' status (must be: ${mergeableStatuses.join(', ')})`);
+  }
+
   const wtPath = worktreePath(repoRoot, taskId);
 
   // Remove the worktree but keep the branch (git can't merge a checked-out branch)
