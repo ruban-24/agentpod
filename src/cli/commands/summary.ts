@@ -1,5 +1,12 @@
 import { TaskManager } from '../../core/task-manager.js';
+import { ServerManager } from '../../core/server-manager.js';
 import type { TaskRecord } from '../../types.js';
+
+export interface SummaryTask extends TaskRecord {
+  port: number;
+  url: string;
+  server_running: boolean;
+}
 
 export interface SummaryResult {
   total: number;
@@ -13,12 +20,23 @@ export interface SummaryResult {
   errored: number;
   merged: number;
   discarded: number;
-  tasks: TaskRecord[];
+  tasks: SummaryTask[];
 }
 
 export async function summaryCommand(repoRoot: string): Promise<SummaryResult> {
   const tm = new TaskManager(repoRoot);
-  const tasks = await tm.listTasks();
+  const sm = new ServerManager(repoRoot);
+  const rawTasks = await tm.listTasks();
+
+  const tasks: SummaryTask[] = rawTasks.map((task) => {
+    const port = parseInt(task.env.AGENTPOD_PORT, 10);
+    return {
+      ...task,
+      port,
+      url: `http://localhost:${port}`,
+      server_running: task.server_pid != null && sm.isProcessAlive(task.server_pid),
+    };
+  });
 
   const count = (status: string) => tasks.filter((t) => t.status === status).length;
 

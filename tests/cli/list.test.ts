@@ -49,4 +49,13 @@ describe('listCommand', () => {
     expect(result[0]).toHaveProperty('prompt');
     expect(result[0]).toHaveProperty('status');
   });
+
+  it('includes port, url, and server_running on each task', async () => {
+    await taskCreateCommand(repo.path, { prompt: 'list test' });
+    const result = await listCommand(repo.path);
+
+    expect(result[0].port).toBeDefined();
+    expect(result[0].url).toMatch(/^http:\/\/localhost:\d+$/);
+    expect(result[0].server_running).toBe(false);
+  });
 });
