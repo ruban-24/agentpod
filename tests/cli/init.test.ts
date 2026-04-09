@@ -106,6 +106,23 @@ describe('initCommand', () => {
     expect(result.agents).toEqual(['claude-code']);
   });
 
+  it('writes config.yml with run config', async () => {
+    await initCommand(repo.path, {
+      run: { cmd: 'npm run dev', port_env: 'PORT' },
+    });
+
+    const config = await readFile(join(repo.path, '.agentpod', 'config.yml'), 'utf-8');
+    expect(config).toContain('npm run dev');
+    expect(config).toContain('PORT');
+  });
+
+  it('returns run in result', async () => {
+    const result = await initCommand(repo.path, {
+      run: { cmd: 'npm run dev', port_env: 'PORT' },
+    });
+    expect(result.run).toEqual({ cmd: 'npm run dev', port_env: 'PORT' });
+  });
+
   it('does not write config.yml when no verify or provisioning provided', async () => {
     await initCommand(repo.path, {});
     // config.yml should not exist

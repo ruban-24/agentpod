@@ -192,6 +192,55 @@ describe('interactiveInit', () => {
     expect(output).toContain('Which agents do you use?');
   });
 
+  it('detects and confirms run config', async () => {
+    await writeFile(join(repo.path, 'package.json'), JSON.stringify({
+      scripts: { dev: 'next dev' },
+    }));
+
+    const io = createMockIO();
+
+    const promise = interactiveInit(repo.path, io);
+
+    // Prompt 1: confirm verify — no verify detected (no test/lint scripts), editList
+    setTimeout(() => io.input.write('\n'), 50);
+    // Prompt 2: confirm run config (y)
+    setTimeout(() => io.input.write('y\n'), 100);
+    // Prompt 3: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 150);
+
+    const result = await promise;
+
+    expect(result.created).toBe(true);
+    expect(result.run).toEqual({ cmd: 'npm run dev', port_env: 'PORT' });
+
+    const output = io.getOutput();
+    expect(output).toContain('Dev server');
+    expect(output).toContain('npm run dev');
+    expect(output).toContain('port_env');
+  });
+
+  it('rejects detected run config — run is undefined', async () => {
+    await writeFile(join(repo.path, 'package.json'), JSON.stringify({
+      scripts: { dev: 'next dev' },
+    }));
+
+    const io = createMockIO();
+
+    const promise = interactiveInit(repo.path, io);
+
+    // Prompt 1: editList for verify (no test/lint scripts)
+    setTimeout(() => io.input.write('\n'), 50);
+    // Prompt 2: reject run config (n)
+    setTimeout(() => io.input.write('n\n'), 100);
+    // Prompt 3: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 150);
+
+    const result = await promise;
+
+    expect(result.created).toBe(true);
+    expect(result.run).toBeUndefined();
+  });
+
   it('shows no project type when nothing detected', async () => {
     const io = createMockIO();
 

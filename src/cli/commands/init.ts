@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { dump } from 'js-yaml';
 import { AGENTPOD_DIR, TASKS_DIR, WORKTREES_DIR, CONFIG_FILE } from '../../constants.js';
-import type { AgentpodConfig } from '../../types.js';
+import type { AgentpodConfig, RunConfig } from '../../types.js';
 import { type AgentId, writeSkillFiles } from '../skill-writer.js';
 
 export interface InitOptions {
@@ -10,6 +10,7 @@ export interface InitOptions {
   copy?: string[];
   symlink?: string[];
   setup?: string[];
+  run?: RunConfig;
   agents?: AgentId[];
 }
 
@@ -17,6 +18,7 @@ export interface InitResult {
   created: boolean;
   files: string[];
   verify: string[];
+  run?: RunConfig;
   agents: AgentId[];
 }
 
@@ -47,7 +49,7 @@ export async function initCommand(
 
   // Write config.yml with all config fields (verify + provisioning)
   const hasConfig = options.verify?.length || options.copy?.length ||
-    options.symlink?.length || options.setup?.length;
+    options.symlink?.length || options.setup?.length || options.run;
 
   if (hasConfig) {
     const config: AgentpodConfig = {};
@@ -55,6 +57,7 @@ export async function initCommand(
     if (options.copy?.length) config.copy = options.copy;
     if (options.symlink?.length) config.symlink = options.symlink;
     if (options.setup?.length) config.setup = options.setup;
+    if (options.run) config.run = options.run;
     await writeFile(join(agentpodDir, CONFIG_FILE), dump(config));
     files.push('.agentpod/config.yml');
   }
@@ -70,6 +73,7 @@ export async function initCommand(
     created: true,
     files,
     verify: options.verify ?? [],
+    run: options.run,
     agents,
   };
 }

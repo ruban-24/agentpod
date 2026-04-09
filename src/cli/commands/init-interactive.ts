@@ -1,4 +1,5 @@
-import { detectVerifyCommands, detectProvisioning, detectProjectType } from '../../config/auto-detect.js';
+import { detectVerifyCommands, detectProvisioning, detectProjectType, detectRunConfig } from '../../config/auto-detect.js';
+import type { RunConfig } from '../../types.js';
 import { confirm, editList, multiSelect, type PromptIO, type SelectOption } from '../interactive.js';
 import { AGENT_LABELS, VALID_AGENT_IDS, type AgentId } from '../skill-writer.js';
 import { initCommand, type InitResult } from './init.js';
@@ -77,6 +78,25 @@ export async function interactiveInit(
   }
   // If none detected → skip silently
 
+  // 3.5. Detect run config
+  const detectedRun = await detectRunConfig(repoRoot);
+  let run: RunConfig | undefined;
+
+  if (detectedRun) {
+    write('\n  Dev server (auto-detected):\n');
+    write(`    cmd:      ${detectedRun.cmd}\n`);
+    if (detectedRun.port_env) {
+      write(`    port_env: ${detectedRun.port_env}\n`);
+    }
+    write('\n');
+
+    const answer = await confirm('  Use this run config?', { allowEdit: false }, io);
+
+    if (answer === 'yes') {
+      run = detectedRun;
+    }
+  }
+
   // 4. Agent selection
   write('\n  Which agents do you use?\n');
 
@@ -93,6 +113,7 @@ export async function interactiveInit(
     copy,
     symlink,
     setup,
+    run,
     agents: agents.length > 0 ? agents : undefined,
   });
 

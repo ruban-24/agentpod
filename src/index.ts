@@ -88,6 +88,8 @@ program
   .command('init')
   .description('Initialize agentpod in the current repository')
   .option('--verify <commands...>', 'Verification commands to run')
+  .option('--run <cmd>', 'Dev server command')
+  .option('--port-env <var>', 'Env var name for port injection')
   .option('--agents <agents>', 'Agent skill files to generate (comma-separated: claude-code,codex,copilot)')
   .option('--human', 'Human-friendly output', false)
   .action(async (opts) => {
@@ -95,15 +97,20 @@ program
       isHumanMode = opts.human;
       const repoRoot = getRepoRoot();
 
+      if (opts.portEnv && !opts.run) {
+        handleError(new Error('--port-env requires --run'), EXIT_CODES.INVALID_ARGS);
+      }
+
       // Non-interactive when any flag is provided
-      const isNonInteractive = opts.verify || opts.agents;
+      const isNonInteractive = opts.verify || opts.agents || opts.run;
 
       let result;
       if (isNonInteractive) {
         const agents: AgentId[] = opts.agents
           ? opts.agents.split(',').map((s: string) => s.trim()) as AgentId[]
           : [];
-        result = await initCommand(repoRoot, { verify: opts.verify, agents });
+        const run = opts.run ? { cmd: opts.run, ...(opts.portEnv ? { port_env: opts.portEnv } : {}) } : undefined;
+        result = await initCommand(repoRoot, { verify: opts.verify, agents, run });
       } else {
         result = await interactiveInit(repoRoot);
       }
