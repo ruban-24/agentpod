@@ -1,20 +1,21 @@
 import { TaskManager } from '../../core/task-manager.js';
 import { WorkspaceManager } from '../../core/workspace-manager.js';
+import { ServerManager } from '../../core/server-manager.js';
 import type { TaskRecord } from '../../types.js';
 
 export async function discardCommand(
   repoRoot: string,
   taskId: string
-): Promise<TaskRecord> {
+): Promise<TaskRecord & { server_stopped?: boolean }> {
   const tm = new TaskManager(repoRoot);
   const wm = new WorkspaceManager(repoRoot);
+  const sm = new ServerManager(repoRoot);
 
   const task = await tm.getTask(taskId);
   if (!task) {
     throw new Error(`Task not found: ${taskId}`);
   }
 
-  // Validate the transition BEFORE destroying the worktree
   const discardableStatuses = ['ready', 'completed', 'failed', 'errored'];
   if (!discardableStatuses.includes(task.status)) {
     throw new Error(
@@ -23,10 +24,19 @@ export async function discardCommand(
     );
   }
 
+  // Kill server if running
+  let serverStopped = false;
+  if (task.server_pid && sm.isProcessAlive(task.server_pid)) {
+    await sm.killProcess(task.server_pid);
+    serverStopped = true;
+  }
+
   try {
     await wm.removeWorktree(taskId, task.branch);
   } catch {
     // Worktree may already be removed
   }
-  return await tm.updateStatus(taskId, 'discarded');
+
+  const updated = await tm.updateStatus(taskId, 'discarded');
+  return { ...updated, ...(serverStopped ? { server_stopped: true } : {}) };
 }

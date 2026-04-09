@@ -69,4 +69,27 @@ describe('discardCommand', () => {
     // Worktree should be gone
     await expect(access(wtPath)).rejects.toThrow();
   });
+
+  it('auto-kills server before discarding', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    const { dump } = await import('js-yaml');
+    const { taskStartCommand } = await import('../../src/cli/commands/task-start.js');
+    const { ServerManager } = await import('../../src/core/server-manager.js');
+
+    await writeFile(
+      join(repo.path, '.agentpod', 'config.yml'),
+      dump({ run: { cmd: 'sleep 60' } })
+    );
+    const task = await taskCreateCommand(repo.path, { prompt: 'server discard test' });
+    const startResult = await taskStartCommand(repo.path, task.id);
+
+    const sm = new ServerManager(repo.path);
+    expect(sm.isProcessAlive(startResult.server_pid)).toBe(true);
+
+    const result = await discardCommand(repo.path, task.id);
+    expect(result.status).toBe('discarded');
+
+    // Server should be dead
+    expect(sm.isProcessAlive(startResult.server_pid)).toBe(false);
+  });
 });
