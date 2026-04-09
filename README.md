@@ -11,7 +11,7 @@
     <a href="https://www.npmjs.com/package/agentpod"><img src="https://img.shields.io/npm/v/agentpod.svg" alt="npm version"></a>
     <a href="https://github.com/ruban-24/agentpod/blob/main/LICENSE"><img src="https://img.shields.io/npm/l/agentpod.svg" alt="license"></a>
     <a href="https://www.npmjs.com/package/agentpod"><img src="https://img.shields.io/node/v/agentpod.svg" alt="node version"></a>
-    <a href="https://github.com/ruban-24/agentpod"><img src="https://img.shields.io/badge/TypeScript-5.0-blue?logo=typescript&logoColor=white" alt="TypeScript"></a>
+    <a href="https://github.com/ruban-24/agentpod"><img src="https://img.shields.io/badge/TypeScript-blue?logo=typescript&logoColor=white" alt="TypeScript"></a>
   </p>
 </p>
 
@@ -67,6 +67,49 @@ Requires **Node.js >= 20** and **git**.
 `agentpod init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agentpod automatically. After init, go back to your agent and give it a task:
 
 > *"Use agentpod to try 3 different approaches to refactor the auth module, then compare and merge the best one."*
+
+## Two Ways to Use agentpod
+
+### Agent-driven (primary)
+
+Your agent reads the skill file dropped by `agentpod init` and calls agentpod commands directly. You don't need to learn the CLI — your agent already knows it.
+
+```
+You:    "Use agentpod to try 3 approaches to refactor auth"
+Agent:  creates 3 tasks, executes them in parallel worktrees,
+        runs verification, compares results
+You:    agentpod summary --human   ← check in whenever you want
+Agent:  merges the best, discards the rest
+```
+
+This is how most people use agentpod. The skill file teaches your agent the full workflow.
+
+### Subprocess mode (CI, scripting, multi-agent)
+
+You can also orchestrate agentpod directly. This is useful for CI pipelines, shell scripts, and dispatching multiple different agents on the same codebase.
+
+**Key flags:**
+- `--prompt "..."` — describes the task (used for tracking and comparison)
+- `--cmd "..."` — the command to run inside the isolated worktree (any CLI tool)
+- `--wait` — block until the command finishes (without it, the task runs in the background)
+
+```bash
+# Fan out 3 different agents on the same task
+agentpod run --prompt "JWT auth (Claude)" \
+  --cmd "claude -p 'refactor auth to use JWT'" --wait &
+agentpod run --prompt "JWT auth (Codex)" \
+  --cmd "codex -q 'refactor auth to use JWT'" --wait &
+agentpod run --prompt "JWT auth (Copilot)" \
+  --cmd "copilot-cli 'refactor auth to use JWT'" --wait &
+wait
+
+# Compare all three, merge the best
+agentpod compare $(agentpod list --json | jq -r '.[].id' | tr '\n' ' ')
+agentpod merge <best-id>
+agentpod clean
+```
+
+**Each task gets its own environment variables** — `AGENTPOD_TASK_ID`, `AGENTPOD_WORKTREE`, and `AGENTPOD_PORT_OFFSET` — so parallel processes can bind to different ports without conflicts.
 
 ## What Does It Look Like?
 
@@ -144,39 +187,41 @@ $ agentpod compare abc123 def456 ghi789 --human
 - **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
 - **Non-git projects** — agentpod requires git for worktree isolation
 
-## Agent Setup Guides
+## Supported Agents
 
-`agentpod init` drops a skill file into your repo so your agent discovers agentpod automatically. No manual configuration needed.
+`agentpod init` drops a skill file into your repo so your agent discovers agentpod automatically. No manual configuration needed — just start your agent and give it a task.
 
-### Claude Code
+| Agent | Skill file location | Auto-discovered |
+|-------|-------------------|-----------------|
+| Claude Code | `.claude/skills/agentpod/SKILL.md` | Yes |
+| Codex CLI | `.agents/skills/agentpod/SKILL.md` | Yes |
+| Copilot CLI | `.github/skills/agentpod/SKILL.md` | Yes |
 
-After `agentpod init`, Claude Code auto-discovers the skill file at `.claude/skills/agentpod/SKILL.md`. Just start Claude Code and give it a task:
+Any agent that can run shell commands works with agentpod via subprocess mode (`--cmd`). The skill files above teach agents the full agentpod workflow — when to use it, how to create tasks, verify, compare, and merge.
 
-> *"Use agentpod to try two approaches to refactor the auth module — one using JWT, one using sessions. Compare and merge the best."*
+<details>
+<summary>Optional: MCP server for native tool discovery</summary>
 
-> *"Use agentpod to run the API refactor and the frontend migration in parallel."*
+If your agent or IDE supports Model Context Protocol, you can also expose agentpod as an MCP server. This is **not required** — skill files are the recommended path.
 
-> *"Use agentpod to isolate this risky database migration so I can review it before it touches my branch."*
+```json
+{
+  "mcpServers": {
+    "agentpod": {
+      "command": "agentpod-mcp",
+      "args": []
+    }
+  }
+}
+```
 
-### Codex CLI
+**Claude Code** — add to `.claude/settings.json` or `~/.claude/settings.json`
 
-After `agentpod init`, Codex CLI auto-discovers the skill file at `.agents/skills/agentpod/SKILL.md`. Start Codex and give it a task:
+**Cursor** — add to `.cursor/mcp.json`
 
-> *"Use agentpod to try three different caching strategies, verify each, and merge the fastest."*
+All 14 CLI commands are exposed as MCP tools.
 
-### Copilot CLI
-
-After `agentpod init`, Copilot CLI auto-discovers the skill file at `.github/skills/agentpod/SKILL.md`. Start Copilot and give it a task:
-
-> *"Use agentpod to parallelize the test suite refactor — split it into auth tests, API tests, and UI tests."*
-
-### Cross-Agent Orchestration
-
-Your primary agent can delegate subtasks to other agents via agentpod:
-
-> *"Use agentpod to run these in parallel: have Claude Code refactor auth, and have Codex refactor the API layer. Compare results and merge the best of each."*
-
-This works because `agentpod run --cmd "..."` can invoke any CLI tool as a subprocess.
+</details>
 
 ## Commands
 
@@ -275,29 +320,6 @@ pending → provisioning → ready → running → verifying → completed → m
                            ├──→ verifying (direct verify)
                            └──→ merged / discarded
 ```
-
-## MCP Server (Optional)
-
-agentpod includes an MCP server for agents that support Model Context Protocol. This is **not required** — `agentpod init` sets up agent skill files which are the recommended integration path. Use this if your agent or IDE specifically supports MCP tool discovery.
-
-Add to your MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "agentpod": {
-      "command": "agentpod-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-**Claude Code** — add to `.claude/settings.json` or `~/.claude/settings.json`
-
-**Cursor** — add to `.cursor/mcp.json`
-
-All 14 CLI commands are exposed as MCP tools. The agent can then call `agentpod_task_create`, `agentpod_verify`, `agentpod_merge`, etc. directly.
 
 ## Exit Codes
 
