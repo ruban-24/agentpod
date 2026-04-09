@@ -40,6 +40,7 @@ import {
   formatErrorHuman,
 } from './cli/format/human.js';
 import { EXIT_CODES } from './constants.js';
+import { resolveWorktreeContext } from './utils/resolve-context.js';
 
 let isHumanMode = false;
 
@@ -51,6 +52,9 @@ program
   .version('0.1.0');
 
 function getRepoRoot(): string {
+  const ctx = resolveWorktreeContext();
+  if (ctx) return ctx.repoRoot;
+
   const cwd = resolve(process.cwd());
   try {
     execSync('git rev-parse --git-dir', { cwd, stdio: 'ignore' });
@@ -63,6 +67,13 @@ function getRepoRoot(): string {
     process.exit(EXIT_CODES.INVALID_ARGS);
   }
   return cwd;
+}
+
+function resolveTaskId(explicitId?: string): string {
+  if (explicitId) return explicitId;
+  const ctx = resolveWorktreeContext();
+  if (ctx) return ctx.taskId;
+  throw new Error('No task ID provided and cwd is not inside a task worktree');
 }
 
 function requireInit(repoRoot: string): void {
@@ -150,18 +161,19 @@ taskCmd
   });
 
 taskCmd
-  .command('status <id>')
-  .description('Get detailed status for a task')
+  .command('status [id]')
+  .description('Get detailed status for a task (infers ID from cwd if inside a worktree)')
   .option('--human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
+      const taskId = resolveTaskId(id);
       const root = getRepoRoot();
       requireInit(root);
-      const result = await taskStatusCommand(root, id);
+      const result = await taskStatusCommand(root, taskId);
       if (opts.human) {
         let logContent = '';
-        try { logContent = await logCommand(root, id); } catch {}
+        try { logContent = await logCommand(root, taskId); } catch {}
         console.log(humanOutput(formatStatusHuman(result, logContent)));
       } else {
         console.log(formatOutput(result, false));
@@ -294,15 +306,16 @@ program
   });
 
 program
-  .command('verify <id>')
-  .description('Run verification checks against a task')
+  .command('verify [id]')
+  .description('Run verification checks against a task (infers ID from cwd if inside a worktree)')
   .option('--human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
+      const taskId = resolveTaskId(id);
       const root = getRepoRoot();
       requireInit(root);
-      const result = await verifyCommand(root, id);
+      const result = await verifyCommand(root, taskId);
       console.log(opts.human ? humanOutput(formatVerifyHuman(result)) : formatOutput(result, false));
     } catch (err) {
       handleError(err, EXIT_CODES.VERIFICATION_FAILED);
@@ -310,15 +323,16 @@ program
   });
 
 program
-  .command('diff <id>')
-  .description('Show diff of changes in a task')
+  .command('diff [id]')
+  .description('Show diff of changes in a task (infers ID from cwd if inside a worktree)')
   .option('--human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
+      const taskId = resolveTaskId(id);
       const root = getRepoRoot();
       requireInit(root);
-      const result = await diffCommand(root, id);
+      const result = await diffCommand(root, taskId);
       console.log(opts.human ? humanOutput(formatDiffHuman(result)) : formatOutput(result, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
@@ -342,20 +356,21 @@ program
   });
 
 program
-  .command('merge <id>')
-  .description('Merge a task branch into the current branch')
+  .command('merge [id]')
+  .description('Merge a task branch into the current branch (infers ID from cwd if inside a worktree)')
   .option('--human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
+      const taskId = resolveTaskId(id);
       const root = getRepoRoot();
       requireInit(root);
-      const result = await mergeCommand(root, id);
+      const result = await mergeCommand(root, taskId);
       if (!result.merged) {
         if (isHumanMode) {
-          console.error(humanOutput(formatErrorHuman(`Merge conflict on ${id}`)));
+          console.error(humanOutput(formatErrorHuman(`Merge conflict on ${taskId}`)));
         } else {
-          console.error(JSON.stringify({ error: 'Merge conflict', id }));
+          console.error(JSON.stringify({ error: 'Merge conflict', id: taskId }));
         }
         process.exit(EXIT_CODES.MERGE_CONFLICT);
       }
@@ -366,15 +381,16 @@ program
   });
 
 program
-  .command('discard <id>')
-  .description('Discard a task (remove worktree and branch)')
+  .command('discard [id]')
+  .description('Discard a task (remove worktree and branch) (infers ID from cwd if inside a worktree)')
   .option('--human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
+      const taskId = resolveTaskId(id);
       const root = getRepoRoot();
       requireInit(root);
-      const result = await discardCommand(root, id);
+      const result = await discardCommand(root, taskId);
       console.log(opts.human ? humanOutput(formatDiscardHuman(result)) : formatOutput(result, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
