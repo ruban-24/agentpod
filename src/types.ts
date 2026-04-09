@@ -54,9 +54,15 @@ export interface TaskRecord {
   diff_stats?: DiffStats;
 }
 
+export interface RunConfig {
+  cmd: string;
+  port_env?: string;
+}
+
 export interface AgentpodConfig {
   verify?: string[];
   copy?: string[];
   symlink?: string[];
   setup?: string[];
+  run?: RunConfig;
 }

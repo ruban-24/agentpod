@@ -57,6 +57,28 @@ describe('loadConfig', () => {
     expect(config.ports).toEqual({ base: 8000, offset: 50 });
   });
 
+  it('parses run config with cmd and port_env', async () => {
+    const agentpodDir = join(repo.path, '.agentpod');
+    await mkdir(agentpodDir, { recursive: true });
+    await writeFile(
+      join(agentpodDir, 'config.yml'),
+      'run:\n  cmd: "npm run dev"\n  port_env: PORT\n'
+    );
+    const config = await loadConfig(repo.path);
+    expect(config.run).toEqual({ cmd: 'npm run dev', port_env: 'PORT' });
+  });
+
+  it('parses run config with cmd only', async () => {
+    const agentpodDir = join(repo.path, '.agentpod');
+    await mkdir(agentpodDir, { recursive: true });
+    await writeFile(
+      join(agentpodDir, 'config.yml'),
+      'run:\n  cmd: "python manage.py runserver 0.0.0.0:$AGENTPOD_PORT"\n'
+    );
+    const config = await loadConfig(repo.path);
+    expect(config.run).toEqual({ cmd: 'python manage.py runserver 0.0.0.0:$AGENTPOD_PORT' });
+  });
+
   it('parses setup hooks', async () => {
     const agentpodDir = join(repo.path, '.agentpod');
     await mkdir(agentpodDir, { recursive: true });
