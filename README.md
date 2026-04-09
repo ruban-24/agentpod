@@ -49,6 +49,7 @@ That's the whole model. You run one command. Your agent does the rest. You check
 - Create isolated git worktrees (one per task, own branch)
 - Execute commands in each worktree (other agents, scripts, anything)
 - Run verification (tests, lint, build) automatically
+- Provision workspaces (copy secrets, symlink dependencies, run setup hooks)
 - Compare results side-by-side
 - Merge the best approach into your branch
 
@@ -99,7 +100,7 @@ All 3 checks passed (12.4s total)
 ```
 $ agentpod diff abc123 --human
 
-abc123 · JWT approach · +47 -12 across 8 files · 3 commits
+abc123 · JWT approach · +47 -12 across 4 files · 3 commits
 
 COMMITS
   a1b2c3d  refactor: extract auth middleware
@@ -115,7 +116,7 @@ FILES
 → Full diff: git diff HEAD...agentpod/abc123
 ```
 
-**Compare and decide:**
+**Compare and decide** (once all tasks finish)**:**
 ```
 $ agentpod compare abc123 def456 ghi789 --human
 
@@ -184,7 +185,7 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 
 | Command | Description |
 |---------|-------------|
-| `agentpod init [--verify <cmds...>]` | Initialize agentpod in the current repo |
+| `agentpod init` | Initialize agentpod (interactive guided setup) |
 | `agentpod task create --prompt "..."` | Create an isolated workspace |
 | `agentpod task exec <id> --cmd "..." [--wait]` | Run a command in a task's worktree |
 | `agentpod run --prompt "..." --cmd "..." [--wait]` | Shortcut: create + exec |
