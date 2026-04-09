@@ -101,26 +101,36 @@ export async function multiSelect<T>(
   options: SelectOption<T>[],
   io?: PromptIO,
 ): Promise<T[]> {
+  if (options.length === 0) return [];
+
   const { input, output } = io ?? defaultIO();
 
   const selected = new Set<number>();
   let cursor = 0;
+  let hasRendered = false;
 
   function render() {
-    // Move cursor up to overwrite previous render (clear lines)
-    // On first render there's nothing to clear, but we track it
+    if (hasRendered) {
+      // Move cursor up and clear each line to overwrite previous render
+      output.write(`\x1b[${options.length}A`);
+      for (let i = 0; i < options.length; i++) {
+        output.write('\x1b[2K');
+        if (i < options.length - 1) output.write('\n');
+      }
+      output.write(`\x1b[${options.length - 1}A`);
+    }
     const lines = options.map((opt, i) => {
       const marker = selected.has(i) ? '[x]' : '[ ]';
       const pointer = i === cursor ? '>' : ' ';
       return `${pointer} ${marker} ${opt.label}`;
     });
     output.write(lines.join('\n') + '\n');
+    hasRendered = true;
   }
 
   render();
 
   return new Promise<T[]>((resolve) => {
-    // Check if input supports raw mode (real TTY)
     const isRawCapable = 'setRawMode' in input && typeof (input as NodeJS.ReadStream).setRawMode === 'function';
 
     if (isRawCapable) {
@@ -135,21 +145,19 @@ export async function multiSelect<T>(
       for (let i = 0; i < str.length; i++) {
         const ch = str[i];
 
-        // If we're in the middle of an escape sequence
         if (escBuffer.length > 0) {
           escBuffer += ch;
-          // Escape sequences: ESC [ <letter>
-          if (escBuffer.length >= 3 && escBuffer[1] === '[') {
-            const code = escBuffer[2];
-            if (code === 'A') {
-              // Arrow up
+          // CSI sequences terminate with a letter
+          const finalChar = escBuffer[escBuffer.length - 1];
+          if (escBuffer.length >= 3 && escBuffer[1] === '[' && /[A-Za-z]/.test(finalChar)) {
+            if (finalChar === 'A') {
               cursor = cursor > 0 ? cursor - 1 : options.length - 1;
               render();
-            } else if (code === 'B') {
-              // Arrow down
+            } else if (finalChar === 'B') {
               cursor = cursor < options.length - 1 ? cursor + 1 : 0;
               render();
             }
+            // Unrecognized sequences are silently ignored
             escBuffer = '';
           }
           continue;
@@ -161,7 +169,6 @@ export async function multiSelect<T>(
         }
 
         if (ch === ' ') {
-          // Toggle selection
           if (selected.has(cursor)) {
             selected.delete(cursor);
           } else {
@@ -172,15 +179,11 @@ export async function multiSelect<T>(
         }
 
         if (ch === '\r' || ch === '\n') {
-          // Confirm
           input.removeListener('data', handleData);
           if (isRawCapable) {
             (input as NodeJS.ReadStream).setRawMode(false);
           }
-          const result = options
-            .filter((_, i) => selected.has(i))
-            .map((opt) => opt.value);
-          resolve(result);
+          resolve(options.filter((_, idx) => selected.has(idx)).map((opt) => opt.value));
           return;
         }
       }
