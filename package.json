@@ -5,7 +5,7 @@
   "type": "module",
   "bin": {
     "agentpod": "./dist/index.js",
-    "agentpod-mcp": "./dist/mcp/server.js"
+    "agentpod-mcp": "./dist/server.js"
   },
   "scripts": {
     "build": "tsup",

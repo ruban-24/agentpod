@@ -29,6 +29,18 @@ export interface ToolDefinition {
 export function getTools(): ToolDefinition[] {
   return [
     {
+      name: 'agentpod_init',
+      description: 'Initialize agentpod in the current repository',
+      inputSchema: {
+        verify: z.array(z.string()).optional().describe('Verification commands to run'),
+      },
+      handler: async (args) => {
+        return await initCommand(getRepoRoot(), {
+          verify: args.verify as string[] | undefined,
+        });
+      },
+    },
+    {
       name: 'agentpod_task_create',
       description: 'Create a new task with an isolated git worktree workspace',
       inputSchema: {
@@ -40,6 +52,31 @@ export function getTools(): ToolDefinition[] {
           prompt: args.prompt as string,
           cmd: args.cmd as string | undefined,
         });
+      },
+    },
+    {
+      name: 'agentpod_task_exec',
+      description: 'Execute a command inside a task worktree',
+      inputSchema: {
+        id: z.string().describe('Task ID'),
+        cmd: z.string().describe('Command to run'),
+        wait: z.boolean().default(true).describe('Wait for completion'),
+      },
+      handler: async (args) => {
+        return await taskExecCommand(getRepoRoot(), args.id as string, {
+          cmd: args.cmd as string,
+          wait: (args.wait as boolean) ?? true,
+        });
+      },
+    },
+    {
+      name: 'agentpod_log',
+      description: 'Show captured agent output for a task',
+      inputSchema: {
+        id: z.string().describe('Task ID'),
+      },
+      handler: async (args) => {
+        return await logCommand(getRepoRoot(), args.id as string);
       },
     },
     {
