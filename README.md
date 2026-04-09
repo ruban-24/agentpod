@@ -66,7 +66,83 @@ Requires **Node.js >= 20** and **git**.
 
 > *"Use agentpod to try 3 different approaches to refactor the auth module, then compare and merge the best one."*
 
-## 🤖 Agent Setup Guides
+## What Does It Look Like?
+
+Add `--human` to any command for colored terminal output. Here's what a typical session looks like:
+
+**Check on all tasks:**
+```
+$ agentpod summary --human
+
+agentpod · 3 tasks
+3 tasks · 1 completed · 1 running · 1 failed
+
+┃ ✓  abc123  completed   12.4s  3/3  +47 -12 · 8 files   JWT approach
+┃ ▶  def456  running      8.1s                             Sessions approach
+┃ ✗  ghi789  failed      15.2s  1/3  +93 -41 · 14 files   OAuth approach
+```
+
+**Verify a task's results:**
+```
+$ agentpod verify abc123 --human
+
+abc123 · verification
+
+✓ npm test          (4.2s)
+✓ npm run lint      (2.1s)
+✓ npm run build     (6.1s)
+
+All 3 checks passed (12.4s total)
+```
+
+**Review changes:**
+```
+$ agentpod diff abc123 --human
+
+abc123 · JWT approach · +47 -12 across 8 files · 3 commits
+
+COMMITS
+  a1b2c3d  refactor: extract auth middleware
+  d4e5f6a  feat: add JWT token generation
+  b7c8d9e  test: add auth middleware tests
+
+FILES
+  M src/auth/middleware.ts    +18 -4
+  M src/auth/token.ts         +12 -2
+  A src/auth/jwt.ts           +15 -0
+  M tests/auth.test.ts         +2 -6
+
+→ Full diff: git diff HEAD...agentpod/abc123
+```
+
+**Compare and decide:**
+```
+$ agentpod compare abc123 def456 ghi789 --human
+
+  ID       Status      Checks  Changes  Duration  Prompt
+  ──────────────────────────────────────────────────────────
+  abc123   completed   3/3     +47 -12  12.4s     JWT approach
+  def456   completed   3/3     +31 -8    9.2s     Sessions approach
+  ghi789   failed      1/3     +93 -41  15.2s     OAuth approach
+  ──────────────────────────────────────────────────────────
+  3 tasks · 2 completed · 1 failed
+```
+
+## When to Reach for agentpod
+
+- **You want to try multiple approaches and pick the best** — fan out 3 ideas, verify all, merge the winner
+- **You have independent subtasks that can run in parallel** — auth, notifications, and rate limiting don't block each other
+- **You want to experiment without risking your branch** — every task is an isolated worktree, discard costs nothing
+- **You're orchestrating multiple agents on the same codebase** — Claude Code dispatches work to Codex, Aider, or any CLI tool
+- **You want automated verification before merging agent output** — tests, lint, and build run automatically
+
+### When NOT to reach for agentpod
+
+- **Trivial single-file edits** — isolation overhead isn't worth it, just let your agent edit directly
+- **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
+- **Non-git projects** — agentpod requires git for worktree isolation
+
+## Agent Setup Guides
 
 agentpod works with any agent that can run shell commands. Here's how to set it up with popular tools:
 
