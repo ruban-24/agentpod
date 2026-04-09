@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import { detectVerifyCommands, detectProvisioning, detectProjectType } from '../../src/config/auto-detect.js';
+import { detectVerifyCommands, detectProvisioning, detectProjectType, detectRunConfig } from '../../src/config/auto-detect.js';
 import { createTestRepo, type TestRepo } from '../helpers/test-repo.js';
 
 describe('detectVerifyCommands', () => {
@@ -106,6 +106,77 @@ describe('detectProvisioning', () => {
     expect(config.copy).toEqual(['.env']);
     expect(config.symlink).toEqual(['node_modules']);
     expect(config.setup).toEqual(['npm install']);
+  });
+});
+
+describe('detectRunConfig', () => {
+  let repo: TestRepo;
+
+  beforeEach(async () => {
+    repo = await createTestRepo();
+  });
+
+  afterEach(async () => {
+    await repo.cleanup();
+  });
+
+  it('returns null when nothing detected', async () => {
+    const result = await detectRunConfig(repo.path);
+    expect(result).toBeNull();
+  });
+
+  it('detects npm run dev from package.json scripts.dev', async () => {
+    await writeFile(
+      join(repo.path, 'package.json'),
+      JSON.stringify({ scripts: { dev: 'next dev' } })
+    );
+    const result = await detectRunConfig(repo.path);
+    expect(result).toEqual({ cmd: 'npm run dev', port_env: 'PORT' });
+  });
+
+  it('detects npm start from package.json scripts.start when no dev', async () => {
+    await writeFile(
+      join(repo.path, 'package.json'),
+      JSON.stringify({ scripts: { start: 'node server.js' } })
+    );
+    const result = await detectRunConfig(repo.path);
+    expect(result).toEqual({ cmd: 'npm start', port_env: 'PORT' });
+  });
+
+  it('prefers scripts.dev over scripts.start', async () => {
+    await writeFile(
+      join(repo.path, 'package.json'),
+      JSON.stringify({ scripts: { dev: 'next dev', start: 'next start' } })
+    );
+    const result = await detectRunConfig(repo.path);
+    expect(result).toEqual({ cmd: 'npm run dev', port_env: 'PORT' });
+  });
+
+  it('detects Django manage.py', async () => {
+    await writeFile(join(repo.path, 'manage.py'), '#!/usr/bin/env python\n');
+    const result = await detectRunConfig(repo.path);
+    expect(result).toEqual({ cmd: 'python manage.py runserver 0.0.0.0:$AGENTPOD_PORT' });
+  });
+
+  it('detects Flask from pyproject.toml', async () => {
+    await writeFile(
+      join(repo.path, 'pyproject.toml'),
+      '[project]\ndependencies = ["flask"]\n'
+    );
+    const result = await detectRunConfig(repo.path);
+    expect(result).toEqual({ cmd: 'flask run', port_env: 'FLASK_RUN_PORT' });
+  });
+
+  it('detects Rails from Gemfile', async () => {
+    await writeFile(join(repo.path, 'Gemfile'), "source 'https://rubygems.org'\ngem 'rails'\n");
+    const result = await detectRunConfig(repo.path);
+    expect(result).toEqual({ cmd: 'bin/rails server', port_env: 'PORT' });
+  });
+
+  it('returns null for go.mod (too varied)', async () => {
+    await writeFile(join(repo.path, 'go.mod'), 'module example.com/test\n');
+    const result = await detectRunConfig(repo.path);
+    expect(result).toBeNull();
   });
 });
 

@@ -1,6 +1,6 @@
 import { readFile, access, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AgentpodConfig } from '../types.js';
+import type { AgentpodConfig, RunConfig } from '../types.js';
 
 export type ProvisioningConfig = Pick<AgentpodConfig, 'copy' | 'symlink' | 'setup'>;
 
@@ -112,6 +112,58 @@ export async function detectProvisioning(repoRoot: string): Promise<Provisioning
   }
 
   return config;
+}
+
+export async function detectRunConfig(repoRoot: string): Promise<RunConfig | null> {
+  // package.json — check scripts.dev, then scripts.start
+  const pkgPath = join(repoRoot, 'package.json');
+  if (await fileExists(pkgPath)) {
+    try {
+      const pkg = JSON.parse(await readFile(pkgPath, 'utf-8'));
+      const scripts = pkg.scripts || {};
+      if (scripts.dev) {
+        return { cmd: 'npm run dev', port_env: 'PORT' };
+      }
+      if (scripts.start) {
+        return { cmd: 'npm start', port_env: 'PORT' };
+      }
+    } catch {
+      // Invalid JSON, skip
+    }
+  }
+
+  // manage.py — Django
+  if (await fileExists(join(repoRoot, 'manage.py'))) {
+    return { cmd: 'python manage.py runserver 0.0.0.0:$AGENTPOD_PORT' };
+  }
+
+  // pyproject.toml with flask in dependencies
+  const pyprojectPath = join(repoRoot, 'pyproject.toml');
+  if (await fileExists(pyprojectPath)) {
+    try {
+      const content = await readFile(pyprojectPath, 'utf-8');
+      if (/flask/i.test(content)) {
+        return { cmd: 'flask run', port_env: 'FLASK_RUN_PORT' };
+      }
+    } catch {
+      // Skip
+    }
+  }
+
+  // Gemfile with rails
+  const gemfilePath = join(repoRoot, 'Gemfile');
+  if (await fileExists(gemfilePath)) {
+    try {
+      const content = await readFile(gemfilePath, 'utf-8');
+      if (/rails/i.test(content)) {
+        return { cmd: 'bin/rails server', port_env: 'PORT' };
+      }
+    } catch {
+      // Skip
+    }
+  }
+
+  return null;
 }
 
 export async function detectProjectType(repoRoot: string): Promise<string | null> {
