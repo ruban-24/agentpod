@@ -78,7 +78,7 @@ $ agentpod summary --human
 agentpod · 3 tasks
 3 tasks · 1 completed · 1 running · 1 failed
 
-┃ ✓  abc123  completed   12.4s  3/3  +47 -12 · 8 files   JWT approach
+┃ ✓  abc123  completed   12.4s  3/3  +47 -12 · 4 files   JWT approach
 ┃ ▶  def456  running      8.1s                             Sessions approach
 ┃ ✗  ghi789  failed      15.2s  1/3  +93 -41 · 14 files   OAuth approach
 ```
@@ -116,7 +116,7 @@ FILES
 → Full diff: git diff HEAD...agentpod/abc123
 ```
 
-**Compare and decide** (once all tasks finish)**:**
+**Compare and decide** (once all tasks finish):
 ```
 $ agentpod compare abc123 def456 ghi789 --human
 
