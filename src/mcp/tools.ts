@@ -14,6 +14,8 @@ import { summaryCommand } from '../cli/commands/summary.js';
 import { mergeCommand } from '../cli/commands/merge.js';
 import { discardCommand } from '../cli/commands/discard.js';
 import { cleanCommand } from '../cli/commands/clean.js';
+import { taskStartCommand } from '../cli/commands/task-start.js';
+import { taskStopCommand } from '../cli/commands/task-stop.js';
 
 function getRepoRoot(): string {
   return resolve(process.cwd());
@@ -67,6 +69,26 @@ export function getTools(): ToolDefinition[] {
           cmd: args.cmd as string,
           wait: (args.wait as boolean) ?? true,
         });
+      },
+    },
+    {
+      name: 'agentpod_task_start',
+      description: 'Start the configured dev server in a task worktree',
+      inputSchema: {
+        task_id: z.string().describe('Task ID'),
+      },
+      handler: async (args) => {
+        return await taskStartCommand(getRepoRoot(), args.task_id as string);
+      },
+    },
+    {
+      name: 'agentpod_task_stop',
+      description: 'Stop the dev server running in a task worktree',
+      inputSchema: {
+        task_id: z.string().describe('Task ID'),
+      },
+      handler: async (args) => {
+        return await taskStopCommand(getRepoRoot(), args.task_id as string);
       },
     },
     {
