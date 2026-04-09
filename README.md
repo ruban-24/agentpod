@@ -144,85 +144,41 @@ $ agentpod compare abc123 def456 ghi789 --human
 
 ## Agent Setup Guides
 
-agentpod works with any agent that can run shell commands. Here's how to set it up with popular tools:
+`agentpod init` drops a skill file into your repo so your agent discovers agentpod automatically. No manual configuration needed.
 
 ### Claude Code
 
-Claude Code can use agentpod directly since it has shell access. Just tell it:
+After `agentpod init`, Claude Code auto-discovers the skill file at `.claude/skills/agentpod/SKILL.md`. Just start Claude Code and give it a task:
 
-```
-Use agentpod to try 3 different approaches to refactor the auth module.
-Run agentpod init first if .agentpod/ doesn't exist.
-```
+> *"Use agentpod to try two approaches to refactor the auth module — one using JWT, one using sessions. Compare and merge the best."*
 
-Or add agentpod as an MCP server for native tool discovery (see [MCP Server](#mcp-server) below).
+> *"Use agentpod to run the API refactor and the frontend migration in parallel."*
 
-**Cross-agent orchestration** — Claude Code can delegate subtasks to other agents:
-
-```
-Use agentpod to run these in parallel:
-- "claude -p 'refactor auth'" for approach 1
-- "codex -q 'refactor auth'" for approach 2
-Then compare and merge the best one.
-```
+> *"Use agentpod to isolate this risky database migration so I can review it before it touches my branch."*
 
 ### Codex CLI
 
-Codex CLI runs commands in a sandbox. Use agentpod to give it isolated workspaces:
+After `agentpod init`, Codex CLI auto-discovers the skill file at `.agents/skills/agentpod/SKILL.md`. Start Codex and give it a task:
 
-```bash
-agentpod task create --prompt "fix login bug"
-agentpod task exec <id> --cmd "codex -q 'fix the login bug'" --wait
-agentpod verify <id>
-```
+> *"Use agentpod to try three different caching strategies, verify each, and merge the fastest."*
 
-### Aider
+### Copilot CLI
 
-Aider works well with agentpod's workspace-only path:
+After `agentpod init`, Copilot CLI auto-discovers the skill file at `.github/skills/agentpod/SKILL.md`. Start Copilot and give it a task:
 
-```bash
-agentpod task create --prompt "add caching layer"
-cd .agentpod/worktrees/<id>/
-aider --message "add a caching layer to the API"
-cd -
-agentpod verify <id>
-```
+> *"Use agentpod to parallelize the test suite refactor — split it into auth tests, API tests, and UI tests."*
 
-Or use the subprocess path:
+### Cross-Agent Orchestration
 
-```bash
-agentpod run --prompt "add caching" \
-  --cmd "aider --yes --message 'add a caching layer'" --wait
-```
+Your primary agent can delegate subtasks to other agents via agentpod:
 
-### Cursor / Windsurf / Other IDE Agents
+> *"Use agentpod to run these in parallel: have Claude Code refactor auth, and have Codex refactor the API layer. Compare results and merge the best of each."*
 
-IDE-based agents can't call agentpod directly, but you can set up workspaces for them:
-
-```bash
-# Create an isolated workspace
-agentpod task create --prompt "redesign settings page"
-
-# Open the worktree in your IDE
-code .agentpod/worktrees/<id>/
-
-# After the agent finishes, verify and merge from the terminal
-agentpod verify <id>
-agentpod merge <id>
-```
-
-### Any CLI Agent
-
-If it can run in a shell, it works with agentpod:
-
-```bash
-agentpod run --prompt "description of task" \
-  --cmd "your-agent-cli 'instructions'" --wait
-```
+This works because `agentpod run --cmd "..."` can invoke any CLI tool as a subprocess.
 
 ## Commands
 
-All commands output JSON by default (agent-first). Add `--human` for colored terminal output.
+All commands output JSON by default — designed for agent consumption. Add `--human` for colored terminal output when you're checking in.
 
 ### Task Lifecycle
 
@@ -318,9 +274,9 @@ pending → provisioning → ready → running → verifying → completed → m
                            └──→ merged / discarded
 ```
 
-## 🔌 MCP Server
+## MCP Server (Optional)
 
-agentpod includes an MCP server so agents can discover all commands as native tools. It uses **stdio transport** — no ports, no HTTP, just stdin/stdout.
+agentpod includes an MCP server for agents that support Model Context Protocol. This is **not required** — `agentpod init` sets up agent skill files which are the recommended integration path. Use this if your agent or IDE specifically supports MCP tool discovery.
 
 Add to your MCP client config:
 
