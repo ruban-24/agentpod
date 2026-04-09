@@ -188,9 +188,27 @@ describe('formatCompareHuman', () => {
 
 describe('action formatters', () => {
   it('formatInitHuman shows confirmation and next action', () => {
-    const result = stripAnsi(formatInitHuman({ created: true }));
+    const result = stripAnsi(formatInitHuman({
+      created: true,
+      files: ['.agentpod/config.yml', '.claude/skills/agentpod/SKILL.md'],
+      verify: ['npm test'],
+      agents: ['claude-code'],
+    }));
     expect(result).toContain('Initialized');
-    expect(result).toContain('agentpod task create');
+    expect(result).toContain('.agentpod/config.yml');
+    expect(result).toContain('.claude/skills/agentpod/SKILL.md');
+    expect(result).toContain('start your agent');
+  });
+
+  it('formatInitHuman shows minimal output with no files', () => {
+    const result = stripAnsi(formatInitHuman({
+      created: true,
+      files: [],
+      verify: [],
+      agents: [],
+    }));
+    expect(result).toContain('Initialized');
+    expect(result).not.toContain('Created:');
   });
 
   it('formatTaskCreateHuman shows task card', () => {

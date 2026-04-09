@@ -276,10 +276,31 @@ export function formatCompareHuman(data: { tasks: Array<{ id: string; prompt: st
 
 // --- Action formatters ---
 
-export function formatInitHuman(data: { created: boolean }): string {
+export function formatInitHuman(data: {
+  created: boolean;
+  files: string[];
+  verify: string[];
+  agents: string[];
+}): string {
   const lines: string[] = [];
-  lines.push(card('green', [`${green('\u2713')} Initialized agentpod in current repository`]));
-  lines.push(nextAction('agentpod task create --prompt "..."'));
+  const cardLines = [`${green('\u2713')} Initialized agentpod`];
+
+  if (data.files.length > 0) {
+    cardLines.push('');
+    cardLines.push('Created:');
+    for (const file of data.files) {
+      cardLines.push(`  ${file}`);
+    }
+  }
+
+  if (data.agents.length > 0) {
+    cardLines.push('');
+    cardLines.push(dim('Try telling your agent:'));
+    cardLines.push(dim('  "Use agentpod to try two different approaches to [your task]"'));
+  }
+
+  lines.push(card('green', cardLines));
+  lines.push(nextAction('start your agent and give it a task'));
   return lines.join('\n');
 }
 

@@ -3,6 +3,8 @@ import { accessSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import { initCommand } from './cli/commands/init.js';
+import { interactiveInit } from './cli/commands/init-interactive.js';
+import type { AgentId } from './cli/skill-writer.js';
 import { taskCreateCommand } from './cli/commands/task-create.js';
 import { taskStatusCommand } from './cli/commands/task-status.js';
 import { taskExecCommand } from './cli/commands/task-exec.js';
@@ -86,11 +88,26 @@ program
   .command('init')
   .description('Initialize agentpod in the current repository')
   .option('--verify <commands...>', 'Verification commands to run')
+  .option('--agents <agents>', 'Agent skill files to generate (comma-separated: claude-code,codex,copilot)')
   .option('--human', 'Human-friendly output', false)
   .action(async (opts) => {
     try {
       isHumanMode = opts.human;
-      const result = await initCommand(getRepoRoot(), { verify: opts.verify });
+      const repoRoot = getRepoRoot();
+
+      // Non-interactive when any flag is provided
+      const isNonInteractive = opts.verify || opts.agents;
+
+      let result;
+      if (isNonInteractive) {
+        const agents: AgentId[] = opts.agents
+          ? opts.agents.split(',').map((s: string) => s.trim()) as AgentId[]
+          : [];
+        result = await initCommand(repoRoot, { verify: opts.verify, agents });
+      } else {
+        result = await interactiveInit(repoRoot);
+      }
+
       console.log(opts.human ? humanOutput(formatInitHuman(result)) : formatOutput(result, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
