@@ -112,4 +112,29 @@ describe('taskExecCommand', () => {
 
     expect(result.status).toBe('completed');
   });
+
+  it('updates status after non-blocking exec completes', async () => {
+    const { writeFile: wf } = await import('node:fs/promises');
+    const { join: j } = await import('node:path');
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+
+    // Set up a verify command that always passes
+    await wf(j(repo.path, '.agentpod', 'config.yml'), 'verify:\n  - echo pass\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'bg test' });
+
+    const result = await taskExecCommand(repo.path, task.id, {
+      cmd: 'echo "bg done"',
+      wait: false,
+    });
+
+    expect(result.status).toBe('running');
+
+    // Wait for background completion
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
+    const tm = new TaskManager(repo.path);
+    const updated = await tm.getTask(task.id);
+    expect(['completed', 'failed']).toContain(updated!.status);
+  }, 10000);
 });

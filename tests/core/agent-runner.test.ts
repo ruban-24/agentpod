@@ -73,5 +73,17 @@ describe('AgentRunner', () => {
       // Clean up
       handle.kill();
     });
+
+    it('resolves done promise with exit code when process completes', async () => {
+      const handle = runner.spawn('done01', 'echo hello', repo.path, {});
+      const result = await handle.done;
+      expect(result.exitCode).toBe(0);
+    });
+
+    it('resolves done with non-zero exit code on failure', async () => {
+      const handle = runner.spawn('done02', 'exit 42', repo.path, {});
+      const result = await handle.done;
+      expect(result.exitCode).toBe(42);
+    });
   });
 });

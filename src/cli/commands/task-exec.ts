@@ -55,6 +55,34 @@ export async function taskExecCommand(
     // Non-blocking: spawn and return immediately
     const handle = runner.spawn(taskId, options.cmd, wtPath, { ...task.env });
     await tm.updateTask(taskId, { pid: handle.pid, cmd: options.cmd });
+
+    // Register background completion handler
+    handle.done.then(async (runResult) => {
+      try {
+        await tm.updateTask(taskId, { exit_code: runResult.exitCode });
+
+        const verifyCommands = config.verify || (await detectVerifyCommands(wtPath));
+        await tm.updateStatus(taskId, 'verifying');
+        const verification = await verifier.runChecks(wtPath, verifyCommands);
+        await tm.updateTask(taskId, { verification });
+
+        const { Reviewer } = await import('../../core/reviewer.js');
+        const rev = new Reviewer(repoRoot);
+        const diff_stats = await rev.getDiff(task.branch);
+        await tm.updateTask(taskId, { diff_stats });
+
+        const finalStatus = verification.passed ? 'completed' : 'failed';
+        await tm.updateStatus(taskId, finalStatus);
+      } catch (err) {
+        try {
+          await tm.updateTask(taskId, { error: err instanceof Error ? err.message : String(err) });
+          await tm.updateStatus(taskId, 'errored');
+        } catch {
+          // Swallow secondary errors in background handler
+        }
+      }
+    });
+
     return (await tm.getTask(taskId))!;
   }
 }

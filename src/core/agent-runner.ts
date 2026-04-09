@@ -9,6 +9,7 @@ export interface RunResult {
 export interface SpawnHandle {
   pid: number;
   kill: () => void;
+  done: Promise<RunResult>;
 }
 
 export class AgentRunner {
@@ -62,18 +63,17 @@ export class AgentRunner {
       detached: false,
     });
 
-    // Write output to log file asynchronously
-    const writeLog = async () => {
+    const done = (async (): Promise<RunResult> => {
       try {
         await writeFile(logPath, '');
         const result = await subprocess;
         const output = [result.stdout, result.stderr].filter(Boolean).join('\n');
         await appendFile(logPath, output);
+        return { exitCode: result.exitCode ?? 1 };
       } catch {
-        // Process killed or errored
+        return { exitCode: 1 };
       }
-    };
-    writeLog();
+    })();
 
     const pid = subprocess.pid ?? 0;
 
@@ -86,6 +86,7 @@ export class AgentRunner {
           // Already dead
         }
       },
+      done,
     };
   }
 }
