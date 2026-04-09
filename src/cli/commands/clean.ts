@@ -23,11 +23,15 @@ export async function cleanCommand(repoRoot: string): Promise<CleanResult> {
     ) {
       try {
         await wm.removeWorktree(task.id, task.branch);
-        removed.push(task.id);
       } catch {
         // Worktree may already be removed
-        removed.push(task.id);
       }
+      try {
+        await tm.deleteTask(task.id);
+      } catch {
+        // Task file may already be gone
+      }
+      removed.push(task.id);
     } else {
       kept.push(task.id);
     }

@@ -1,10 +1,11 @@
-import { readFile, writeFile, readdir } from 'node:fs/promises';
+import { readFile, writeFile, readdir, unlink } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { generateTaskId } from '../utils/id.js';
 import { calculatePortOffset } from '../utils/port.js';
 import {
   tasksPath,
   taskFilePath,
+  taskLogPath,
   BRANCH_PREFIX,
   DEFAULT_PORTS,
 } from '../constants.js';
@@ -140,5 +141,14 @@ export class TaskManager {
     Object.assign(task, updates);
     await this.saveTask(task);
     return task;
+  }
+
+  async deleteTask(id: string): Promise<void> {
+    const task = await this.getTask(id);
+    if (!task) {
+      throw new Error(`Task not found: ${id}`);
+    }
+    try { await unlink(taskFilePath(this.repoRoot, id)); } catch { /* already gone */ }
+    try { await unlink(taskLogPath(this.repoRoot, id)); } catch { /* already gone */ }
   }
 }

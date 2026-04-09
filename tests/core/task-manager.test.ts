@@ -153,4 +153,17 @@ describe('TaskManager', () => {
       expect(updated.exit_code).toBe(0);
     });
   });
+
+  describe('deleteTask', () => {
+    it('removes the task JSON file', async () => {
+      const task = await tm.createTask({ prompt: 'delete me' });
+      expect(await tm.getTask(task.id)).not.toBeNull();
+      await tm.deleteTask(task.id);
+      expect(await tm.getTask(task.id)).toBeNull();
+    });
+
+    it('throws when task does not exist', async () => {
+      await expect(tm.deleteTask('nonexistent')).rejects.toThrow('Task not found');
+    });
+  });
 });

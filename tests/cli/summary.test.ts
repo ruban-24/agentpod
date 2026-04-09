@@ -51,4 +51,19 @@ describe('summaryCommand', () => {
     expect(result.completed).toBe(0);
     expect(result.failed).toBe(0);
   });
+
+  it('includes all status count fields', async () => {
+    const result = await summaryCommand(repo.path);
+
+    expect(result).toHaveProperty('pending');
+    expect(result).toHaveProperty('provisioning');
+    expect(result).toHaveProperty('verifying');
+    expect(result).toHaveProperty('merged');
+    expect(result).toHaveProperty('discarded');
+    expect(result.pending).toBe(0);
+    expect(result.provisioning).toBe(0);
+    expect(result.verifying).toBe(0);
+    expect(result.merged).toBe(0);
+    expect(result.discarded).toBe(0);
+  });
 });

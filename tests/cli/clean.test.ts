@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'node:child_process';
 import { cleanCommand } from '../../src/cli/commands/clean.js';
+import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
 import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
 
 describe('cleanCommand', () => {
@@ -37,5 +38,22 @@ describe('cleanCommand', () => {
     const result = await cleanCommand(repo.path);
     expect(result.removed).toEqual([]);
     expect(result.kept).toEqual([]);
+  });
+
+  it('removes task JSON files for cleaned tasks', async () => {
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'clean me' });
+    const tm = new TaskManager(repo.path);
+
+    // Force task to completed (cleanable status)
+    const taskData = await tm.getTask(task.id);
+    taskData!.status = 'completed' as any;
+    await tm.saveTask(taskData!);
+
+    await cleanCommand(repo.path);
+
+    const result = await tm.getTask(task.id);
+    expect(result).toBeNull();
   });
 });
