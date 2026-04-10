@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.3.0 — 2026-04-11
+
+### Features
+
+- **Error suggestions** (#31): Error JSON now includes a `suggestion` field with actionable recovery hints (e.g., `"Run 'agex list' to see available tasks"`). Human mode shows `→` hint lines. New `AgexError` class powers suggestions across all error paths.
+- **Verify pass/fail** (#33): `agex verify` JSON output now includes `passed: boolean` and `summary: string` at the top level. Exit code 2 when checks fail (was 0).
+- **Absolute worktree path** (#34): All task JSON output includes `absolute_worktree` — the computed absolute path to the worktree. Available in both CLI and MCP output.
+- **Create task from GitHub issue** (#15): `agex task create --issue 45` (or `--issue owner/repo#45`, `--issue <url>`) pulls issue title, body, labels, and comments as the task prompt. Combine with `--prompt` for additional instructions. Requires `gh` CLI.
+- **Homebrew formula** (#18): `brew install ruban-24/tap/agex` now works. Formula auto-updates on new releases via GitHub Actions.
+
+### Improvements
+
+- **Provisioning cleanup** (#32): Failed `task create` now auto-rolls back — deletes worktree, branch, and task JSON. No more orphaned resources. `agex clean` also handles `errored` tasks.
+- **Dirty merge detection**: `agex merge` now detects uncommitted changes in the working tree before merging and shows a clear error instead of a misleading "Merge conflict" message.
+- **Shell hardening**: GitHub issue fetcher uses `execa` array form instead of shell interpolation.
+- **SKILL.md updated** for v0.3.0: documents `absolute_worktree`, `--issue`, verify `passed`/`summary`, error suggestions.
+
 ## 0.2.0 — 2026-04-11
 
 ### Features
