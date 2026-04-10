@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.1 — 2026-04-10
+
+### Bug Fixes
+
+- **Fix EEXIST crash during worktree provisioning**: `task create` no longer crashes when the symlink destination already exists (e.g. `node_modules` created by `git worktree add`). The symlink step now skips EEXIST gracefully.
+- **Allow discard from provisioning state**: Tasks stuck in `provisioning` from a failed `task create` can now be discarded and cleaned up.
+- **Fix `agex init` not exiting**: Interactive init could leave readline handles open, preventing the process from exiting.
+
+### Internal (v0.2.0 work-in-progress, backward compatible)
+
+- Add `needs-input` and `retried` task states with state machine transitions
+- Add `ParsedError`, `NeedsInputPayload`, `QAPair`, `VerifyCommand` types
+- Add output parsers for jest/vitest, TypeScript, ESLint, and pytest
+- Integrate parsers into verifier (`VerifyCommand[]` with optional `parser` field)
+- Add needs-input detection in task completion handler (`.agex/needs-input.json`)
+
 ## 0.1.0 — 2026-04-10
 
 Initial public release.
