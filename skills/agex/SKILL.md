@@ -59,22 +59,22 @@ Explore the solution space — try N different approaches and pick the winner.
 
 ```bash
 # Create isolated tasks for each approach
-agex task create --prompt "Implement caching using Redis"
-agex task create --prompt "Implement caching using in-memory LRU"
-agex task create --prompt "Implement caching using SQLite"
+agex create --prompt "Implement caching using Redis"
+agex create --prompt "Implement caching using in-memory LRU"
+agex create --prompt "Implement caching using SQLite"
 
 # Execute an agent in each worktree
-agex task exec <id1> --cmd "<your-agent> 'Implement Redis caching per the prompt'"
-agex task exec <id2> --cmd "<your-agent> 'Implement LRU caching per the prompt'"
-agex task exec <id3> --cmd "<your-agent> 'Implement SQLite caching per the prompt'"
+agex exec <id1> --cmd "<your-agent> 'Implement Redis caching per the prompt'"
+agex exec <id2> --cmd "<your-agent> 'Implement LRU caching per the prompt'"
+agex exec <id3> --cmd "<your-agent> 'Implement SQLite caching per the prompt'"
 
 # Wait for all to finish, then compare
 agex compare <id1> <id2> <id3>
 
 # Merge the best, discard the rest
-agex merge <best-id>
-agex discard <other-id>
-agex discard <other-id>
+agex accept <best-id>
+agex reject <other-id>
+agex reject <other-id>
 agex clean
 ```
 
@@ -83,25 +83,25 @@ agex clean
 Decompose a large task into pieces that don't depend on each other and run them simultaneously.
 
 ```bash
-agex task create --prompt "Add user authentication endpoints"
-agex task create --prompt "Add email notification service"
-agex task create --prompt "Add rate limiting middleware"
+agex create --prompt "Add user authentication endpoints"
+agex create --prompt "Add email notification service"
+agex create --prompt "Add rate limiting middleware"
 
 # Execute all (non-blocking by default — returns immediately)
-agex task exec <id1> --cmd "<your-agent> '...'"
-agex task exec <id2> --cmd "<your-agent> '...'"
-agex task exec <id3> --cmd "<your-agent> '...'"
+agex exec <id1> --cmd "<your-agent> '...'"
+agex exec <id2> --cmd "<your-agent> '...'"
+agex exec <id3> --cmd "<your-agent> '...'"
 
 # Monitor progress
 agex summary
 
 # Verify each, then merge passing tasks sequentially
 agex verify <id1>
-agex merge <id1>
+agex accept <id1>
 agex verify <id2>
-agex merge <id2>
+agex accept <id2>
 agex verify <id3>
-agex merge <id3>
+agex accept <id3>
 agex clean
 ```
 
@@ -114,11 +114,11 @@ Safely sandbox a risky change.
 agex run --prompt "Migrate database schema to v2" --cmd "<your-agent> '...'" --wait
 
 # Review and verify
-agex diff <id>
+agex review <id>
 agex verify <id>
 
 # Merge if good, discard if not
-agex merge <id>    # or: agex discard <id>
+agex accept <id>    # or: agex reject <id>
 ```
 
 ### 4. Verify-Compare-Decide
@@ -134,12 +134,12 @@ agex verify <id2>
 agex compare <id1> <id2>
 
 # Inspect the diffs if needed
-agex diff <id1>
-agex diff <id2>
+agex review <id1>
+agex review <id2>
 
 # Decide and act
-agex merge <winner>
-agex discard <loser>
+agex accept <winner>
+agex reject <loser>
 ```
 
 ### 5. Retry with Feedback
@@ -174,19 +174,19 @@ Start a dev server in each worktree to visually test approaches.
 
 ```bash
 # Config already has run field — start servers
-agex task start <id1>
-agex task start <id2>
+agex start <id1>
+agex start <id2>
 
 # Check which URLs to test
-agex task status <id1>   # shows port and url
-agex task status <id2>
+agex status <id1>   # shows port and url
+agex status <id2>
 
 # Test, compare, then stop servers
-agex task stop <id1>
-agex task stop <id2>
+agex stop <id1>
+agex stop <id2>
 ```
 
-For multi-service apps (frontend + backend), create separate tasks and read each task's URL from `task status`.
+For multi-service apps (frontend + backend), create separate tasks and read each task's URL from `status`.
 
 ### 8. When You're Stuck
 
@@ -201,7 +201,7 @@ When you hit a decision that requires human input, signal it instead of guessing
 }
 ```
 2. Exit normally — agex will detect the file and pause the task
-3. The human responds with `agex respond <id> --answer "jwt"`
+3. The human responds with `agex answer <id> --text "jwt"`
 4. Your agent is re-invoked with the full Q&A context appended to the prompt
 
 **Do this when:**
@@ -214,23 +214,23 @@ When you hit a decision that requires human input, signal it instead of guessing
 | Command | Purpose |
 |---------|---------|
 | `agex init [--verify <cmds...>]` | Initialize in current repo |
-| `agex task create --prompt <text>` | Create isolated task with its own worktree |
-| `agex task exec <id> --cmd <cmd> [--wait]` | Run command in task worktree |
-| `agex task start <id>` | Start dev server in task worktree |
-| `agex task stop <id>` | Stop dev server in task worktree |
-| `agex task status <id>` | Get task details |
+| `agex create --prompt <text>` | Create isolated task with its own worktree |
+| `agex exec <id> --cmd <cmd> [--wait]` | Run command in task worktree |
+| `agex start <id>` | Start dev server in task worktree |
+| `agex stop <id>` | Stop dev server in task worktree |
+| `agex status <id>` | Get task details |
 | `agex run --prompt <text> --cmd <cmd> [--wait]` | Create + execute shortcut |
 | `agex list` | List all tasks |
 | `agex summary` | Status overview with counts |
-| `agex log <id>` | Show captured agent output |
+| `agex output <id>` | Show captured agent output |
 | `agex verify <id>` | Run verification checks |
-| `agex diff <id>` | Show changes vs base branch |
+| `agex review <id>` | Show changes vs base branch |
 | `agex compare <id1> <id2> [...]` | Side-by-side task comparison |
-| `agex merge <id>` | Merge task branch into current branch |
-| `agex discard <id>` | Remove task worktree and branch |
+| `agex accept <id>` | Merge task branch into current branch |
+| `agex reject <id>` | Remove task worktree and branch |
 | `agex clean` | Clean up all finished tasks |
 | `agex retry <id> --feedback <text>` | Retry failed task with feedback |
-| `agex respond <id> --answer <text>` | Answer a needs-input task question |
+| `agex answer <id> --text <text>` | Answer a needs-input task question |
 
 All commands output JSON by default. Add `--human` for colored terminal output.
 
@@ -238,7 +238,7 @@ All commands output JSON by default. Add `--human` for colored terminal output.
 
 ```
 pending -> provisioning -> ready -> running -> verifying -> completed -> merged
-                                            -> needs-input -> running (after respond)
+                                            -> needs-input -> running (after answer)
                                                            -> discarded
                                                verifying -> failed    -> retried (after retry)
                                                                       -> discarded
@@ -267,12 +267,12 @@ pending -> provisioning -> ready -> running -> verifying -> completed -> merged
 
 | Mistake | Fix |
 |---------|-----|
-| Merging without verifying | Always `verify` before `merge` |
+| Merging without verifying | Always `verify` before `accept` |
 | Force-merging failed tasks | Discard and retry with better prompts |
 | Creating dependent tasks in parallel | Only parallelize truly independent work |
 | Skipping `compare` with multiple tasks | Compare reveals the best approach — don't guess |
 | Forgetting to clean up | Run `agex clean` after merge/discard cycles |
 | Using `--human` in agent workflows | Default JSON output is designed for agents — use it |
-| Starting servers you don't need | Only `task start` when you need to test the running app |
+| Starting servers you don't need | Only `start` when you need to test the running app |
 | Discarding and recreating instead of retrying | Use `agex retry --feedback` to build on previous work |
 | Erroring out when stuck on a decision | Write `.agex/needs-input.json` and exit — the human will respond |

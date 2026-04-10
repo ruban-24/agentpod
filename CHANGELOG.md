@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.1 — 2026-04-11
+
+### Breaking Changes (MCP)
+
+- **MCP tool renames**: All `agex_task_*` tools renamed to `agex_*` (e.g., `agex_task_create` -> `agex_create`). Command renames: `agex_diff` -> `agex_review`, `agex_merge` -> `agex_accept`, `agex_discard` -> `agex_reject`, `agex_respond` -> `agex_answer`, `agex_log` -> `agex_output`.
+
+### Features
+
+- **Agent-centric command names**: `diff` -> `review`, `merge` -> `accept`, `discard` -> `reject`, `respond` -> `answer`, `log` -> `output`. Old names preserved as CLI aliases.
+- **Flattened namespace**: `task create`, `task exec`, `task status`, `task start`, `task stop` are now top-level commands (`agex create`, `agex exec`, etc.). The `task` prefix still works as an alias.
+- **`answer --text`**: The `respond --answer` flag renamed to `answer --text` to avoid redundancy.
+
+### Improvements
+
+- **MCP server version**: Fixed stale `0.1.0` version string in MCP server (now matches package version).
+
 ## 0.3.0 — 2026-04-11
 
 ### Features

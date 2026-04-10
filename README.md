@@ -62,7 +62,7 @@ That's the whole model. You run one command. Your agent does the rest. You check
 
 **For you:** install, init, go back to what you were doing. Check in when you want with `agex summary --human`.
 
-**For your agent:** 14 commands covering the full lifecycle — create, execute, verify, compare, merge, discard. JSON output by default. Agent skill files for auto-discovery.
+**For your agent:** 18 commands covering the full lifecycle — create, execute, verify, compare, accept, reject. JSON output by default. Agent skill files for auto-discovery.
 
 **No cloud. No accounts. No team buy-in needed.** Everything lives in `.agex/` (gitignored) and optional skill files (committed).
 
@@ -97,7 +97,7 @@ All 3 checks passed (12.4s total)
 
 **Review changes:**
 ```
-$ agex diff abc123 --human
+$ agex review abc123 --human
 
 abc123 · JWT approach · +47 -12 across 4 files · 3 commits
 
@@ -112,7 +112,7 @@ FILES
   A src/auth/jwt.ts           +15 -0
   M tests/auth.test.ts         +2 -6
 
-→ Full diff: git diff HEAD...agex/abc123
+→ Full review: git diff HEAD...agex/abc123
 ```
 
 **Compare and decide** (once all tasks finish):
@@ -163,17 +163,19 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 | Command | Description |
 |---------|-------------|
 | `agex init` | Initialize agex (interactive guided setup) |
-| `agex task create --prompt "..." [--issue <ref>]` | Create an isolated workspace (from prompt, GitHub issue, or both) |
-| `agex task exec <id> --cmd "..." [--wait]` | Run a command in a task's worktree |
-| `agex run --prompt "..." --cmd "..." [--wait]` | Shortcut: create + exec |
+| `agex create --prompt "..." [--issue <ref>]` | Create an isolated workspace (from prompt, GitHub issue, or both) |
+| `agex exec <id> --cmd "..." [--wait]` | Run a command in a task's worktree |
+| `agex run --prompt "..." --cmd "..." [--wait]` | Shortcut for create + exec |
+| `agex start <id>` | Start dev server in task worktree |
+| `agex stop <id>` | Stop dev server |
 
 ### Monitoring
 
 | Command | Description |
 |---------|-------------|
-| `agex task status <id>` | Get detailed task info |
+| `agex status <id>` | Get detailed task info |
 | `agex list` | List all tasks |
-| `agex log <id>` | Show captured agent output |
+| `agex output <id>` | Show captured agent output |
 | `agex summary` | Status breakdown of all tasks |
 
 ### Review
@@ -181,15 +183,15 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 | Command | Description |
 |---------|-------------|
 | `agex verify <id>` | Run verification checks |
-| `agex diff <id>` | Diff stats, commits, per-file changes |
+| `agex review <id>` | Diff stats, commits, per-file changes |
 | `agex compare <id1> <id2> ...` | Compare tasks side-by-side |
 
 ### Resolution
 
 | Command | Description |
 |---------|-------------|
-| `agex merge <id>` | Merge task branch into current branch |
-| `agex discard <id>` | Remove task worktree and branch |
+| `agex accept <id>` | Merge task branch into current branch |
+| `agex reject <id>` | Remove task worktree and branch |
 | `agex clean` | Clean up all finished tasks |
 
 ## Configuration
@@ -278,9 +280,9 @@ agex run --prompt "JWT auth (Copilot)" \
   --cmd "copilot-cli 'refactor auth to use JWT'" --wait &
 wait
 
-# Compare all three, merge the best
+# Compare all three, accept the best
 agex compare $(agex list --json | jq -r '.[].id' | tr '\n' ' ')
-agex merge <best-id>
+agex accept <best-id>
 agex clean
 ```
 
@@ -308,7 +310,7 @@ If your agent or IDE supports Model Context Protocol, you can also expose agex a
 
 **Cursor** — add to `.cursor/mcp.json`
 
-All 14 CLI commands are exposed as MCP tools.
+All 18 CLI commands are exposed as MCP tools.
 
 </details>
 

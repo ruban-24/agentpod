@@ -23,15 +23,15 @@ Show
 Sleep 500ms
 
 # Beat 1-3: Fan out three parallel tasks
-Type "agex task create --prompt 'Add JWT auth with refresh tokens'"
+Type "agex create --prompt 'Add JWT auth with refresh tokens'"
 Enter
 Sleep 1.5s
 
-Type "agex task create --prompt 'Refactor session middleware to Redis'"
+Type "agex create --prompt 'Refactor session middleware to Redis'"
 Enter
 Sleep 1.5s
 
-Type "agex task create --prompt 'Fix token expiry race condition'"
+Type "agex create --prompt 'Fix token expiry race condition'"
 Enter
 Sleep 2s
 
@@ -51,6 +51,6 @@ Enter
 Sleep 3s
 
 # Beat 7: Merge the winner
-Type "agex merge a1b2c3 -H"
+Type "agex accept a1b2c3 -H"
 Enter
 Sleep 2s

@@ -17,7 +17,7 @@ body:
       label: Proposed solution
       description: How you'd like it to work. CLI examples are great.
       placeholder: |
-        agex task create --parallel 3 "refactor auth"
+        agex create --prompt "refactor auth"
     validations:
       required: false
 
