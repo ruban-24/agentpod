@@ -27,6 +27,16 @@ export class WorkspaceManager {
     return wtPath;
   }
 
+  async createWorktreeFromBranch(taskId: string, newBranch: string, baseBranch: string): Promise<string> {
+    const git = simpleGit(this.repoRoot);
+    const wtPath = worktreePath(this.repoRoot, taskId);
+
+    // Create new branch from baseBranch and check it out in worktree
+    await git.raw(['worktree', 'add', '-b', newBranch, wtPath, baseBranch]);
+
+    return wtPath;
+  }
+
   async provision(
     taskId: string,
     config: { copy?: string[]; symlink?: string[] }
