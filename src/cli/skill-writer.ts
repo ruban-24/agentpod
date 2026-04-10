@@ -36,7 +36,7 @@ If you are about to edit more than one file, STOP — create an agex task first.
 When multiple parts of the work are independent, create separate agex tasks and work them in parallel.
 `;
 
-// Inlined from skills/agex/SKILL.md — update both when content changes.
+// Compact version of skills/agex/SKILL.md — written by `agex init` into agent skill directories.
 export const SKILL_CONTENT = `---
 name: agex
 description: Use when a task involves changes to multiple files, multiple independent subtasks, or anything beyond a trivial single-file edit in a git repository. Creates isolated worktrees so work doesn't touch main until verified and merged.

@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
-import { AGEX_DIR, WORKTREES_DIR } from '../constants.js';
+import { AGEX_DIR, TASKS_DIR } from '../constants.js';
 
-const WORKTREE_SEGMENT = `/${AGEX_DIR}/${WORKTREES_DIR}/`;
+const WORKTREE_SEGMENT = `/${AGEX_DIR}/${TASKS_DIR}/`;
 
 export interface WorktreeContext {
   repoRoot: string;

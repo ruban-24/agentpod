@@ -3,7 +3,6 @@ import { join } from 'node:path';
 export const AGEX_DIR = '.agex';
 export const CONFIG_FILE = 'config.yml';
 export const TASKS_DIR = 'tasks';
-export const WORKTREES_DIR = 'tasks';
 
 export function agexPath(repoRoot: string): string {
   return join(repoRoot, AGEX_DIR);
@@ -17,10 +16,6 @@ export function tasksPath(repoRoot: string): string {
   return join(repoRoot, AGEX_DIR, TASKS_DIR);
 }
 
-export function worktreesPath(repoRoot: string): string {
-  return join(repoRoot, AGEX_DIR, WORKTREES_DIR);
-}
-
 export function taskFilePath(repoRoot: string, taskId: string): string {
   return join(repoRoot, AGEX_DIR, TASKS_DIR, `${taskId}.json`);
 }
@@ -30,7 +25,7 @@ export function taskLogPath(repoRoot: string, taskId: string): string {
 }
 
 export function worktreePath(repoRoot: string, taskId: string): string {
-  return join(repoRoot, AGEX_DIR, WORKTREES_DIR, taskId);
+  return join(repoRoot, AGEX_DIR, TASKS_DIR, taskId);
 }
 
 export const EXIT_CODES = {

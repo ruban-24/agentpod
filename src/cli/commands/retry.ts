@@ -87,7 +87,7 @@ export async function retryCommand(
     retryDepth,
     retryFeedback: options.feedback,
     retryFromScratch: options.fromScratch || false,
-  } as any);
+  });
 
   // Transition to provisioning
   await tm.updateStatus(newTask.id, 'provisioning');
