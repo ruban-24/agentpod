@@ -1,10 +1,9 @@
 ## agentpod
 
 This repo uses agentpod for worktree-isolated task management.
-Use `agentpod task create` instead of working directly on the main branch when:
-- The task involves more than a single-file edit
-- You want to try multiple approaches to the same problem
-- Multiple independent tasks can be worked in parallel
-- The change is risky (refactors, migrations, dependency changes)
 
-Skip agentpod for trivial fixes, typos, or config tweaks.
+**All non-trivial work MUST go through `agentpod task create`.** NEVER edit code files directly on main unless it is a single-file trivial fix (typo, config tweak, one-line change).
+
+If you are about to edit more than one file, STOP — create an agentpod task first. No exceptions, no rationalizing ("the files overlap", "it's easier sequentially", "I'll just do it quickly"). Those are exactly the cases where isolation prevents mistakes.
+
+When multiple parts of the work are independent, create separate agentpod tasks and work them in parallel.

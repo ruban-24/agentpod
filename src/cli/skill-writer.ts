@@ -28,22 +28,23 @@ const INSTRUCTION_BLOCK = `
 ## agentpod
 
 This repo uses agentpod for worktree-isolated task management.
-Use \`agentpod task create\` instead of working directly on the main branch when:
-- The task involves more than a single-file edit
-- You want to try multiple approaches to the same problem
-- Multiple independent tasks can be worked in parallel
-- The change is risky (refactors, migrations, dependency changes)
 
-Skip agentpod for trivial fixes, typos, or config tweaks.
+**All non-trivial work MUST go through \`agentpod task create\`.** NEVER edit code files directly on main unless it is a single-file trivial fix (typo, config tweak, one-line change).
+
+If you are about to edit more than one file, STOP — create an agentpod task first. No exceptions, no rationalizing ("the files overlap", "it's easier sequentially", "I'll just do it quickly"). Those are exactly the cases where isolation prevents mistakes.
+
+When multiple parts of the work are independent, create separate agentpod tasks and work them in parallel.
 `;
 
 // Inlined from skills/agentpod/SKILL.md — update both when content changes.
 export const SKILL_CONTENT = `---
 name: agentpod
-description: Use when working in a git repository and needing to try multiple approaches, isolate risky changes in safe worktrees, or verify and compare results before merging. You are the agent — create tasks, work inside their worktrees, then verify and merge.
+description: Use when a task involves changes to multiple files, multiple independent subtasks, or anything beyond a trivial single-file edit in a git repository. Creates isolated worktrees so work doesn't touch main until verified and merged.
 ---
 
 # agentpod
+
+**All non-trivial work goes through agentpod.** If you are about to edit files directly on main and the change touches more than one file, stop — create an agentpod task first.
 
 You have access to \`agentpod\`, a CLI tool for managing isolated git worktrees. Each task gets its own branch and worktree directory. Nothing touches the main branch until you explicitly merge.
 
@@ -51,12 +52,12 @@ You have access to \`agentpod\`, a CLI tool for managing isolated git worktrees.
 
 ## When to Use
 
-- The user asks you to try multiple approaches — create a task per approach, work each one, compare
-- The user asks for a risky change (refactor, migration) — isolate it in a task
-- The user asks for independent subtasks — fan them out into separate tasks
-- You want to verify your work (tests, lint, build) before merging
+- The task has 2+ independent parts that touch different files — create a task per part
+- The change modifies more than one file — isolate it
+- The change is risky (refactor, migration, dependency change) — isolate it
+- You want to verify before merging (tests, lint, build)
 
-**When NOT to use:** Trivial single-file edits, non-git projects.
+**Only skip agentpod for:** single-file trivial fixes (typos, config tweaks, one-line changes), or non-git projects.
 
 ## Workflow
 
