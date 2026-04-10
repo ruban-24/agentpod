@@ -23,7 +23,7 @@ npm run lint       # Typecheck with tsc --noEmit
 ```bash
 npx tsx src/index.ts --help
 npx tsx src/index.ts init
-npx tsx src/index.ts task create --prompt "test"
+npx tsx src/index.ts create --prompt "test"
 ```
 
 ## Project Structure

@@ -16,7 +16,7 @@ RST='\033[0m'  # reset
 args="$*"
 
 case "$args" in
-  *"task create"*"JWT"*)
+  *"create"*"JWT"*)
     echo ""
     echo -e "${G}┃${RST} ${G}✓${RST} Created task ${BD}${B}a1b2c3${RST}"
     echo -e "${G}┃${RST} Add JWT auth with refresh tokens"
@@ -24,7 +24,7 @@ case "$args" in
     echo ""
     ;;
 
-  *"task create"*"session"*)
+  *"create"*"session"*)
     echo ""
     echo -e "${G}┃${RST} ${G}✓${RST} Created task ${BD}${B}d4e5f6${RST}"
     echo -e "${G}┃${RST} Refactor session middleware to Redis"
@@ -32,7 +32,7 @@ case "$args" in
     echo ""
     ;;
 
-  *"task create"*"token"*)
+  *"create"*"token"*)
     echo ""
     echo -e "${G}┃${RST} ${G}✓${RST} Created task ${BD}${B}g7h8i9${RST}"
     echo -e "${G}┃${RST} Fix token expiry race condition"
@@ -75,9 +75,9 @@ case "$args" in
     echo ""
     ;;
 
-  *"merge"*)
+  *"accept"*)
     echo ""
-    echo -e "${G}┃${RST} ${G}✓${RST} Merged ${BD}${B}a1b2c3${RST} into main"
+    echo -e "${G}┃${RST} ${G}✓${RST} Accepted ${BD}${B}a1b2c3${RST} into main"
     echo -e "${G}┃${RST} ${D}strategy: fast-forward · commit: e9f2a17${RST}"
     echo ""
     ;;

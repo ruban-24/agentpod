@@ -25,10 +25,10 @@ You have access to `agex`, a CLI tool for managing isolated git worktrees. Each 
 ### Step 1: Create a task
 
 ```bash
-agex task create --prompt "Implement caching using Redis"
-agex task create --issue 45
-agex task create --issue owner/repo#45
-agex task create --issue 45 --prompt "Focus on the Redis approach"
+agex create --prompt "Implement caching using Redis"
+agex create --issue 45
+agex create --issue owner/repo#45
+agex create --issue 45 --prompt "Focus on the Redis approach"
 ```
 
 This returns JSON with `id`, `worktree`, and `absolute_worktree` (the full absolute path — use this to `cd` into the worktree). `--prompt` and `--issue` can be used together: the issue content provides context and the prompt adds additional instructions.
@@ -53,8 +53,8 @@ Runs the configured verification commands (tests, lint, build). Returns JSON wit
 ### Step 4: Review and merge
 
 ```bash
-agex diff <id>         # See what changed
-agex merge <id>        # Merge into current branch
+agex review <id>         # See what changed
+agex accept <id>        # Merge into current branch
 agex clean             # Remove finished task worktrees
 ```
 
@@ -64,8 +64,8 @@ When the user wants you to explore alternatives:
 
 ```bash
 # Create one task per approach
-agex task create --prompt "Approach A: use Redis"
-agex task create --prompt "Approach B: use in-memory LRU"
+agex create --prompt "Approach A: use Redis"
+agex create --prompt "Approach B: use in-memory LRU"
 
 # Work on each — cd into each worktree and implement
 # Then verify both
@@ -76,8 +76,8 @@ agex verify <id2>
 agex compare <id1> <id2>
 
 # Present results to the user, merge the winner
-agex merge <winner-id>
-agex discard <loser-id>
+agex accept <winner-id>
+agex reject <loser-id>
 agex clean
 ```
 
@@ -94,8 +94,8 @@ Check the `suggestion` field for actionable next steps when a command fails.
 ## When Things Fail
 
 ```bash
-agex diff <id>           # See what you changed
-agex discard <id>        # Throw it away
+agex review <id>           # See what you changed
+agex reject <id>        # Throw it away
 # Create a new task and try again with a different approach
 ```
 
@@ -103,24 +103,24 @@ agex discard <id>        # Throw it away
 
 | Command | Purpose |
 |---------|---------|
-| `agex task create --prompt <text> [--issue <ref>]` | Create isolated task — returns `id` and `absolute_worktree` path. `--prompt` and `--issue` can be used together (issue content + additional instructions). |
-| `agex task status <id>` | Get task details |
+| `agex create --prompt <text> [--issue <ref>]` | Create isolated task — returns `id` and `absolute_worktree` path. `--prompt` and `--issue` can be used together (issue content + additional instructions). |
+| `agex status <id>` | Get task details |
 | `agex list` | List all tasks |
 | `agex verify <id>` | Run verification checks (tests, lint, build) |
-| `agex diff <id>` | Show changes vs base branch |
+| `agex review <id>` | Show changes vs base branch |
 | `agex compare <id1> <id2> [...]` | Side-by-side task comparison |
-| `agex merge <id>` | Merge task branch into current branch |
-| `agex discard <id>` | Remove task worktree and branch |
+| `agex accept <id>` | Merge task branch into current branch |
+| `agex reject <id>` | Remove task worktree and branch |
 | `agex clean` | Clean up all finished tasks |
 
 All commands output JSON — parse the output to get task IDs, worktree paths, and status.
 
 ## Key Details
 
-- `task create` returns `{ "id": "...", "worktree": "...", "absolute_worktree": "/full/path/to/worktree", ... }` — use `absolute_worktree` to `cd` into
+- `create` returns `{ "id": "...", "worktree": "...", "absolute_worktree": "/full/path/to/worktree", ... }` — use `absolute_worktree` to `cd` into
 - `verify` returns `{ "passed": true/false, "summary": "3/3 checks passed", ... }` — check `passed` for quick pass/fail
-- Always `verify` before `merge`
+- Always `verify` before `accept`
 - Always `compare` when you have multiple tasks
 - Always `clean` after merging/discarding
 - Merge conflicts auto-abort and preserve the worktree so you can fix and retry
-- `cd` back to the original repo directory before running `merge` or other agex commands
+- `cd` back to the original repo directory before running `accept` or other agex commands
