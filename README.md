@@ -163,7 +163,7 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 | Command | Description |
 |---------|-------------|
 | `agex init` | Initialize agex (interactive guided setup) |
-| `agex task create --prompt "..."` | Create an isolated workspace |
+| `agex task create --prompt "..." [--issue <ref>]` | Create an isolated workspace (from prompt, GitHub issue, or both) |
 | `agex task exec <id> --cmd "..." [--wait]` | Run a command in a task's worktree |
 | `agex run --prompt "..." --cmd "..." [--wait]` | Shortcut: create + exec |
 
