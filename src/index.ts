@@ -391,12 +391,10 @@ program
       requireInit(root);
       const result = await mergeCommand(root, taskId);
       if (!result.merged) {
-        if (isHumanMode) {
-          console.error(humanOutput(formatErrorHuman(`Merge conflict on ${taskId}`)));
-        } else {
-          console.error(JSON.stringify({ error: 'Merge conflict', id: taskId }));
-        }
-        process.exit(EXIT_CODES.MERGE_CONFLICT);
+        throw new AgexError('Merge conflict', {
+          suggestion: `Run 'agex diff ${taskId}' to see changes, or 'agex discard ${taskId}' to abandon`,
+          exitCode: EXIT_CODES.MERGE_CONFLICT,
+        });
       }
       console.log(opts.human ? humanOutput(formatMergeHuman(result)) : formatOutput(result, false));
     } catch (err) {
