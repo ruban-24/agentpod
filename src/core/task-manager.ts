@@ -28,7 +28,7 @@ export class TaskManager {
     const existingTasks = await this.listTasks();
     const taskIndex = existingTasks.length;
     const port = calculatePort(taskIndex, DEFAULT_PORTS.base, DEFAULT_PORTS.step);
-    const worktreeAbsolute = resolve(this.repoRoot, '.agentpod', 'worktrees', id);
+    const worktreeAbsolute = resolve(this.repoRoot, '.agex', 'worktrees', id);
 
     const task: TaskRecord = {
       id,
@@ -36,12 +36,12 @@ export class TaskManager {
       cmd: options.cmd,
       status: 'pending',
       branch: `${BRANCH_PREFIX}${id}`,
-      worktree: `.agentpod/worktrees/${id}`,
+      worktree: `.agex/worktrees/${id}`,
       created_at: new Date().toISOString(),
       env: {
-        AGENTPOD_TASK_ID: id,
-        AGENTPOD_WORKTREE: worktreeAbsolute,
-        AGENTPOD_PORT: String(port),
+        AGEX_TASK_ID: id,
+        AGEX_WORKTREE: worktreeAbsolute,
+        AGEX_PORT: String(port),
       },
     };
 

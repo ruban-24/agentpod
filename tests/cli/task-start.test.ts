@@ -6,13 +6,13 @@ import { dump } from 'js-yaml';
 import { taskStartCommand } from '../../src/cli/commands/task-start.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
 import { TaskManager } from '../../src/core/task-manager.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('taskStartCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -47,7 +47,7 @@ describe('taskStartCommand', () => {
 
   it('throws when task is in terminal state', async () => {
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       dump({ run: { cmd: 'echo hello' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'test' });
@@ -65,7 +65,7 @@ describe('taskStartCommand', () => {
 
   it('starts a server and returns port/url/pid', async () => {
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       dump({ run: { cmd: 'sleep 60' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'test' });
@@ -84,7 +84,7 @@ describe('taskStartCommand', () => {
 
   it('throws when server is already running', async () => {
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       dump({ run: { cmd: 'sleep 60' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'test' });
@@ -101,8 +101,8 @@ describe('taskStartCommand', () => {
 
   it('injects port_env into server environment', async () => {
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
-      dump({ run: { cmd: 'env > /tmp/agentpod-test-env.txt && sleep 60', port_env: 'PORT' } })
+      join(repo.path, '.agex', 'config.yml'),
+      dump({ run: { cmd: 'env > /tmp/agex-test-env.txt && sleep 60', port_env: 'PORT' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'test' });
 
@@ -112,12 +112,12 @@ describe('taskStartCommand', () => {
     await new Promise((r) => setTimeout(r, 500));
 
     const { readFile } = await import('node:fs/promises');
-    const envContent = await readFile('/tmp/agentpod-test-env.txt', 'utf-8');
+    const envContent = await readFile('/tmp/agex-test-env.txt', 'utf-8');
     expect(envContent).toContain(`PORT=${result.port}`);
-    expect(envContent).toContain(`AGENTPOD_PORT=${result.port}`);
+    expect(envContent).toContain(`AGEX_PORT=${result.port}`);
 
     // Clean up
     try { process.kill(result.server_pid, 'SIGKILL'); } catch {}
-    try { const { unlink } = await import('node:fs/promises'); await unlink('/tmp/agentpod-test-env.txt'); } catch {}
+    try { const { unlink } = await import('node:fs/promises'); await unlink('/tmp/agex-test-env.txt'); } catch {}
   });
 });

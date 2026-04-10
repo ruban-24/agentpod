@@ -1,8 +1,8 @@
 import { readFile, access, stat } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { AgentpodConfig, RunConfig } from '../types.js';
+import type { AgexConfig, RunConfig } from '../types.js';
 
-export type ProvisioningConfig = Pick<AgentpodConfig, 'copy' | 'symlink' | 'setup'>;
+export type ProvisioningConfig = Pick<AgexConfig, 'copy' | 'symlink' | 'setup'>;
 
 async function fileExists(path: string): Promise<boolean> {
   try {
@@ -134,7 +134,7 @@ export async function detectRunConfig(repoRoot: string): Promise<RunConfig | nul
 
   // manage.py — Django
   if (await fileExists(join(repoRoot, 'manage.py'))) {
-    return { cmd: 'python manage.py runserver 0.0.0.0:$AGENTPOD_PORT' };
+    return { cmd: 'python manage.py runserver 0.0.0.0:$AGEX_PORT' };
   }
 
   // pyproject.toml with flask in dependencies

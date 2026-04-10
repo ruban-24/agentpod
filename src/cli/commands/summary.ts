@@ -29,7 +29,7 @@ export async function summaryCommand(repoRoot: string): Promise<SummaryResult> {
   const rawTasks = await tm.listTasks();
 
   const tasks: SummaryTask[] = rawTasks.map((task) => {
-    const port = parseInt(task.env.AGENTPOD_PORT, 10);
+    const port = parseInt(task.env.AGEX_PORT, 10);
     return {
       ...task,
       port,

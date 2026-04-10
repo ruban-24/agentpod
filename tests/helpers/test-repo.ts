@@ -9,7 +9,7 @@ export interface TestRepo {
 }
 
 export async function createTestRepo(): Promise<TestRepo> {
-  const path = await mkdtemp(join(tmpdir(), 'agentpod-test-'));
+  const path = await mkdtemp(join(tmpdir(), 'agex-test-'));
   execSync('git init', { cwd: path, stdio: 'ignore' });
   execSync('git config user.email "test@test.com"', { cwd: path, stdio: 'ignore' });
   execSync('git config user.name "Test"', { cwd: path, stdio: 'ignore' });
@@ -24,10 +24,10 @@ export async function createTestRepo(): Promise<TestRepo> {
   };
 }
 
-export async function createTestRepoWithAgentpod(): Promise<TestRepo> {
+export async function createTestRepoWithAgex(): Promise<TestRepo> {
   const repo = await createTestRepo();
-  const agentpodDir = join(repo.path, '.agentpod');
-  await mkdir(join(agentpodDir, 'tasks'), { recursive: true });
-  await mkdir(join(agentpodDir, 'worktrees'), { recursive: true });
+  const agexDir = join(repo.path, '.agex');
+  await mkdir(join(agexDir, 'tasks'), { recursive: true });
+  await mkdir(join(agexDir, 'worktrees'), { recursive: true });
   return repo;
 }

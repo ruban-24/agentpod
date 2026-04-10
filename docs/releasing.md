@@ -1,9 +1,9 @@
-# Releasing agentpod
+# Releasing agex
 
 ## Prerequisites (one-time setup)
 
 1. Generate an npm granular access token at https://www.npmjs.com/settings/~/tokens
-   - Scope: read & write, limited to `agentpod`
+   - Scope: read & write, limited to `agex`
 2. Add it as a GitHub repo secret named `NPM_TOKEN`
    - Repo → Settings → Secrets and variables → Actions → New repository secret
 
@@ -30,8 +30,8 @@ That's it. The `release.yml` workflow will:
 
 ## Checking the Release
 
-- **GitHub Actions:** https://github.com/ruban-24/agentpod/actions/workflows/release.yml
-- **npm:** https://www.npmjs.com/package/agentpod
+- **GitHub Actions:** https://github.com/ruban-24/agex/actions/workflows/release.yml
+- **npm:** https://www.npmjs.com/package/agex
 
 ## Versioning Guide (while pre-1.0)
 

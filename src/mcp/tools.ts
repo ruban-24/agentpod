@@ -31,8 +31,8 @@ export interface ToolDefinition {
 export function getTools(): ToolDefinition[] {
   return [
     {
-      name: 'agentpod_init',
-      description: 'Initialize agentpod in the current repository',
+      name: 'agex_init',
+      description: 'Initialize agex in the current repository',
       inputSchema: {
         verify: z.array(z.string()).optional().describe('Verification commands to run'),
       },
@@ -43,7 +43,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_task_create',
+      name: 'agex_task_create',
       description: 'Create a new task with an isolated git worktree workspace',
       inputSchema: {
         prompt: z.string().describe('Description of the task'),
@@ -57,7 +57,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_task_exec',
+      name: 'agex_task_exec',
       description: 'Execute a command inside a task worktree',
       inputSchema: {
         id: z.string().describe('Task ID'),
@@ -72,7 +72,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_task_start',
+      name: 'agex_task_start',
       description: 'Start the configured dev server in a task worktree',
       inputSchema: {
         task_id: z.string().describe('Task ID'),
@@ -82,7 +82,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_task_stop',
+      name: 'agex_task_stop',
       description: 'Stop the dev server running in a task worktree',
       inputSchema: {
         task_id: z.string().describe('Task ID'),
@@ -92,7 +92,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_log',
+      name: 'agex_log',
       description: 'Show captured agent output for a task',
       inputSchema: {
         id: z.string().describe('Task ID'),
@@ -102,7 +102,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_run',
+      name: 'agex_run',
       description: 'Create a task and run a command in its workspace (shortcut for create + exec)',
       inputSchema: {
         prompt: z.string().describe('Description of the task'),
@@ -118,7 +118,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_task_status',
+      name: 'agex_task_status',
       description: 'Get detailed status for a task',
       inputSchema: {
         id: z.string().describe('Task ID'),
@@ -128,7 +128,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_verify',
+      name: 'agex_verify',
       description: 'Run verification checks against a task worktree',
       inputSchema: {
         id: z.string().describe('Task ID'),
@@ -138,7 +138,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_diff',
+      name: 'agex_diff',
       description: 'Show diff of changes in a task',
       inputSchema: {
         id: z.string().describe('Task ID'),
@@ -148,7 +148,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_compare',
+      name: 'agex_compare',
       description: 'Compare multiple tasks side by side',
       inputSchema: {
         ids: z.array(z.string()).describe('Task IDs to compare'),
@@ -158,14 +158,14 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_list',
+      name: 'agex_list',
       description: 'List all tasks',
       handler: async () => {
         return await listCommand(getRepoRoot());
       },
     },
     {
-      name: 'agentpod_merge',
+      name: 'agex_merge',
       description: 'Merge a task branch into the current branch',
       inputSchema: {
         id: z.string().describe('Task ID to merge'),
@@ -175,7 +175,7 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_discard',
+      name: 'agex_discard',
       description: 'Discard a task (remove worktree and branch)',
       inputSchema: {
         id: z.string().describe('Task ID to discard'),
@@ -185,14 +185,14 @@ export function getTools(): ToolDefinition[] {
       },
     },
     {
-      name: 'agentpod_clean',
+      name: 'agex_clean',
       description: 'Clean up all completed/discarded task worktrees',
       handler: async () => {
         return await cleanCommand(getRepoRoot());
       },
     },
     {
-      name: 'agentpod_summary',
+      name: 'agex_summary',
       description: 'Get a summary of all tasks',
       handler: async () => {
         return await summaryCommand(getRepoRoot());

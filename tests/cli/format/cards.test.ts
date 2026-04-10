@@ -34,8 +34,8 @@ describe('summaryLine', () => {
 
 describe('nextAction', () => {
   it('renders a next action hint', () => {
-    const plain = stripAnsi(nextAction('agentpod merge abc123'));
+    const plain = stripAnsi(nextAction('agex merge abc123'));
     expect(plain).toContain('→');
-    expect(plain).toContain('agentpod merge abc123');
+    expect(plain).toContain('agex merge abc123');
   });
 });

@@ -26,13 +26,13 @@ function makeTask(overrides: Partial<TaskRecord> = {}): TaskRecord {
     id: 'abc123',
     prompt: 'Fix the login bug',
     status: 'completed',
-    branch: 'agentpod/abc123',
-    worktree: '.agentpod/worktrees/abc123',
+    branch: 'agex/abc123',
+    worktree: '.agex/worktrees/abc123',
     created_at: '2026-04-09T00:00:00Z',
     env: {
-      AGENTPOD_TASK_ID: 'abc123',
-      AGENTPOD_WORKTREE: '/tmp/test/.agentpod/worktrees/abc123',
-      AGENTPOD_PORT: '3100',
+      AGEX_TASK_ID: 'abc123',
+      AGEX_WORKTREE: '/tmp/test/.agex/worktrees/abc123',
+      AGEX_PORT: '3100',
     },
     ...overrides,
   };
@@ -72,7 +72,7 @@ describe('formatStatusHuman', () => {
     expect(result).toContain('abc123');
     expect(result).toContain('Fix the login bug');
     expect(result).toContain('DETAILS');
-    expect(result).toContain('agentpod/abc123');
+    expect(result).toContain('agex/abc123');
     expect(result).toContain('VERIFICATION');
     expect(result).toContain('npm test');
   });
@@ -80,7 +80,7 @@ describe('formatStatusHuman', () => {
   it('shows next action hint for completed task', () => {
     const task = makeTask({ status: 'completed' });
     const result = stripAnsi(formatStatusHuman(task, ''));
-    expect(result).toContain('agentpod merge abc123');
+    expect(result).toContain('agex merge abc123');
   });
 
   it('includes log tail when provided', () => {
@@ -121,7 +121,7 @@ describe('formatDiffHuman', () => {
       insertions: 30,
       deletions: 5,
       diff: '',
-      branch: 'agentpod/abc123',
+      branch: 'agex/abc123',
       commits: [
         { sha: 'bae224d', message: 'Add validation logging' },
         { sha: 'c3f891a', message: 'Fix expiry check' },
@@ -138,7 +138,7 @@ describe('formatDiffHuman', () => {
     expect(result).toContain('Add validation logging');
     expect(result).toContain('FILES');
     expect(result).toContain('src/auth.ts');
-    expect(result).toContain('agentpod/abc123');
+    expect(result).toContain('agex/abc123');
     expect(result).not.toContain('git diff main');
   });
 });
@@ -192,15 +192,15 @@ describe('action formatters', () => {
   it('formatInitHuman shows confirmation and next action', () => {
     const result = stripAnsi(formatInitHuman({
       created: true,
-      files: ['.agentpod/config.yml', '.claude/skills/agentpod/SKILL.md'],
+      files: ['.agex/config.yml', '.claude/skills/agex/SKILL.md'],
       verify: ['npm test'],
       agents: ['claude-code'],
     }));
     expect(result).toContain('Initialized');
-    expect(result).toContain('.agentpod/config.yml');
-    expect(result).toContain('.claude/skills/agentpod/SKILL.md');
+    expect(result).toContain('.agex/config.yml');
+    expect(result).toContain('.claude/skills/agex/SKILL.md');
     expect(result).toContain('Try:');
-    expect(result).toContain('agentpod');
+    expect(result).toContain('agex');
   });
 
   it('formatInitHuman shows minimal output with no files', () => {
@@ -219,7 +219,7 @@ describe('action formatters', () => {
     const task = makeTask({ status: 'ready' });
     const result = stripAnsi(formatTaskCreateHuman(task));
     expect(result).toContain('Created task abc123');
-    expect(result).toContain('agentpod task exec');
+    expect(result).toContain('agex task exec');
   });
 
   it('formatMergeHuman shows merge result with target branch', () => {
@@ -227,7 +227,7 @@ describe('action formatters', () => {
     expect(result).toContain('Merged abc123');
     expect(result).toContain('into main');
     expect(result).toContain('fast-forward');
-    expect(result).toContain('agentpod clean');
+    expect(result).toContain('agex clean');
   });
 
   it('formatMergeHuman falls back to current branch when targetBranch missing', () => {
@@ -254,7 +254,7 @@ describe('action formatters', () => {
     const result = stripAnsi(formatRunHuman(task));
     expect(result).toContain('completed');
     expect(result).toContain('abc123');
-    expect(result).toContain('agentpod diff');
+    expect(result).toContain('agex diff');
   });
 
   it('formatTaskExecHuman shows running task for non-blocking', () => {

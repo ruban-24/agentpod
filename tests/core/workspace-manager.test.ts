@@ -3,14 +3,14 @@ import { access, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { WorkspaceManager } from '../../src/core/workspace-manager.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('WorkspaceManager', () => {
   let repo: TestRepo;
   let wm: WorkspaceManager;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
     wm = new WorkspaceManager(repo.path);
   });
 
@@ -41,8 +41,8 @@ describe('WorkspaceManager', () => {
   describe('createWorktree', () => {
     it('creates a git worktree at the expected path', async () => {
       const taskId = 'abc123';
-      const branch = 'agentpod/abc123';
-      const worktreePath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const branch = 'agex/abc123';
+      const worktreePath = join(repo.path, '.agex', 'worktrees', taskId);
 
       await wm.createWorktree(taskId, branch);
 
@@ -54,7 +54,7 @@ describe('WorkspaceManager', () => {
 
     it('creates a new branch for the worktree', async () => {
       const taskId = 'abc123';
-      const branch = 'agentpod/abc123';
+      const branch = 'agex/abc123';
 
       await wm.createWorktree(taskId, branch);
 
@@ -66,12 +66,12 @@ describe('WorkspaceManager', () => {
   describe('removeWorktree', () => {
     it('removes the worktree and deletes the branch', async () => {
       const taskId = 'abc123';
-      const branch = 'agentpod/abc123';
+      const branch = 'agex/abc123';
 
       await wm.createWorktree(taskId, branch);
       await wm.removeWorktree(taskId, branch);
 
-      const worktreePath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const worktreePath = join(repo.path, '.agex', 'worktrees', taskId);
       await expect(access(worktreePath)).rejects.toThrow();
     });
   });
@@ -82,12 +82,12 @@ describe('WorkspaceManager', () => {
       await wf(join(repo.path, '.env'), 'SECRET=abc123\n');
 
       const taskId = 'prov01';
-      const branch = 'agentpod/prov01';
+      const branch = 'agex/prov01';
       await wm.createWorktree(taskId, branch);
 
       await wm.provision(taskId, { copy: ['.env'] });
 
-      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
       const envContent = await readFile(join(wtPath, '.env'), 'utf-8');
       expect(envContent).toBe('SECRET=abc123\n');
     });
@@ -99,19 +99,19 @@ describe('WorkspaceManager', () => {
       await wf(join(repo.path, 'node_modules', 'fake-pkg', 'index.js'), 'module.exports = 1;\n');
 
       const taskId = 'prov02';
-      const branch = 'agentpod/prov02';
+      const branch = 'agex/prov02';
       await wm.createWorktree(taskId, branch);
 
       await wm.provision(taskId, { symlink: ['node_modules'] });
 
-      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
       const stat = await lstat(join(wtPath, 'node_modules'));
       expect(stat.isSymbolicLink()).toBe(true);
     });
 
     it('does nothing when no copy or symlink configured', async () => {
       const taskId = 'prov03';
-      const branch = 'agentpod/prov03';
+      const branch = 'agex/prov03';
       await wm.createWorktree(taskId, branch);
 
       // Should not throw
@@ -122,11 +122,11 @@ describe('WorkspaceManager', () => {
   describe('reattachWorktree', () => {
     it('attaches a worktree to an existing branch', async () => {
       const taskId = 'reattach01';
-      const branch = 'agentpod/reattach01';
+      const branch = 'agex/reattach01';
 
       // Create worktree (creates branch), then remove worktree only (keep branch)
       await wm.createWorktree(taskId, branch);
-      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
       execSync(`git worktree remove --force "${wtPath}"`, { cwd: repo.path, stdio: 'ignore' });
 
       // Reattach
@@ -137,7 +137,7 @@ describe('WorkspaceManager', () => {
 
     it('throws when branch does not exist', async () => {
       await expect(
-        wm.reattachWorktree('ghost', 'agentpod/nonexistent')
+        wm.reattachWorktree('ghost', 'agex/nonexistent')
       ).rejects.toThrow();
     });
   });
@@ -146,10 +146,10 @@ describe('WorkspaceManager', () => {
     it('runs blocking setup commands in the worktree directory', async () => {
       const { writeFile: wf } = await import('node:fs/promises');
       const taskId = 'setup1';
-      const branch = 'agentpod/setup1';
+      const branch = 'agex/setup1';
       await wm.createWorktree(taskId, branch);
 
-      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
 
       await wm.runSetupHooks(taskId, ['touch setup-marker.txt']);
 
@@ -158,10 +158,10 @@ describe('WorkspaceManager', () => {
 
     it('runs multiple setup commands in order', async () => {
       const taskId = 'setup2';
-      const branch = 'agentpod/setup2';
+      const branch = 'agex/setup2';
       await wm.createWorktree(taskId, branch);
 
-      const wtPath = join(repo.path, '.agentpod', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
 
       await wm.runSetupHooks(taskId, [
         'echo "step1" > order.txt',
@@ -174,7 +174,7 @@ describe('WorkspaceManager', () => {
 
     it('throws when a setup command fails', async () => {
       const taskId = 'setup3';
-      const branch = 'agentpod/setup3';
+      const branch = 'agex/setup3';
       await wm.createWorktree(taskId, branch);
 
       await expect(
@@ -184,7 +184,7 @@ describe('WorkspaceManager', () => {
 
     it('does nothing with empty setup array', async () => {
       const taskId = 'setup4';
-      const branch = 'agentpod/setup4';
+      const branch = 'agex/setup4';
       await wm.createWorktree(taskId, branch);
 
       // Should not throw

@@ -2,13 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { execSync } from 'node:child_process';
 import { verifyCommand } from '../../src/cli/commands/verify.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('verifyCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -40,7 +40,7 @@ describe('verifyCommand', () => {
 
     // Set up verify commands in config
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       'verify:\n  - echo "check passed"\n'
     );
 
@@ -57,7 +57,7 @@ describe('verifyCommand', () => {
     const { join: j } = await import('node:path');
     const { TaskManager } = await import('../../src/core/task-manager.js');
 
-    await wf(j(repo.path, '.agentpod', 'config.yml'), 'verify:\n  - echo pass\n');
+    await wf(j(repo.path, '.agex', 'config.yml'), 'verify:\n  - echo pass\n');
 
     const task = await taskCreateCommand(repo.path, { prompt: 'verify transitions test' });
     const tm = new TaskManager(repo.path);
@@ -80,7 +80,7 @@ describe('verifyCommand', () => {
     const { join: j } = await import('node:path');
     const { TaskManager } = await import('../../src/core/task-manager.js');
 
-    await wf(j(repo.path, '.agentpod', 'config.yml'), 'verify:\n  - echo pass\n');
+    await wf(j(repo.path, '.agex', 'config.yml'), 'verify:\n  - echo pass\n');
 
     const task = await taskCreateCommand(repo.path, { prompt: 'reverify test' });
     const tm = new TaskManager(repo.path);

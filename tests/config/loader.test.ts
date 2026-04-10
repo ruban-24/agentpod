@@ -21,10 +21,10 @@ describe('loadConfig', () => {
   });
 
   it('parses verify commands from config.yml', async () => {
-    const agentpodDir = join(repo.path, '.agentpod');
-    await mkdir(agentpodDir, { recursive: true });
+    const agexDir = join(repo.path, '.agex');
+    await mkdir(agexDir, { recursive: true });
     await writeFile(
-      join(agentpodDir, 'config.yml'),
+      join(agexDir, 'config.yml'),
       'verify:\n  - npm test\n  - npm run lint\n'
     );
 
@@ -33,10 +33,10 @@ describe('loadConfig', () => {
   });
 
   it('parses copy and symlink arrays', async () => {
-    const agentpodDir = join(repo.path, '.agentpod');
-    await mkdir(agentpodDir, { recursive: true });
+    const agexDir = join(repo.path, '.agex');
+    await mkdir(agexDir, { recursive: true });
     await writeFile(
-      join(agentpodDir, 'config.yml'),
+      join(agexDir, 'config.yml'),
       'copy:\n  - .env\n  - .env.local\nsymlink:\n  - node_modules\n'
     );
 
@@ -46,10 +46,10 @@ describe('loadConfig', () => {
   });
 
   it('parses ports configuration', async () => {
-    const agentpodDir = join(repo.path, '.agentpod');
-    await mkdir(agentpodDir, { recursive: true });
+    const agexDir = join(repo.path, '.agex');
+    await mkdir(agexDir, { recursive: true });
     await writeFile(
-      join(agentpodDir, 'config.yml'),
+      join(agexDir, 'config.yml'),
       'ports:\n  base: 8000\n  offset: 50\n'
     );
 
@@ -58,10 +58,10 @@ describe('loadConfig', () => {
   });
 
   it('parses run config with cmd and port_env', async () => {
-    const agentpodDir = join(repo.path, '.agentpod');
-    await mkdir(agentpodDir, { recursive: true });
+    const agexDir = join(repo.path, '.agex');
+    await mkdir(agexDir, { recursive: true });
     await writeFile(
-      join(agentpodDir, 'config.yml'),
+      join(agexDir, 'config.yml'),
       'run:\n  cmd: "npm run dev"\n  port_env: PORT\n'
     );
     const config = await loadConfig(repo.path);
@@ -69,21 +69,21 @@ describe('loadConfig', () => {
   });
 
   it('parses run config with cmd only', async () => {
-    const agentpodDir = join(repo.path, '.agentpod');
-    await mkdir(agentpodDir, { recursive: true });
+    const agexDir = join(repo.path, '.agex');
+    await mkdir(agexDir, { recursive: true });
     await writeFile(
-      join(agentpodDir, 'config.yml'),
-      'run:\n  cmd: "python manage.py runserver 0.0.0.0:$AGENTPOD_PORT"\n'
+      join(agexDir, 'config.yml'),
+      'run:\n  cmd: "python manage.py runserver 0.0.0.0:$AGEX_PORT"\n'
     );
     const config = await loadConfig(repo.path);
-    expect(config.run).toEqual({ cmd: 'python manage.py runserver 0.0.0.0:$AGENTPOD_PORT' });
+    expect(config.run).toEqual({ cmd: 'python manage.py runserver 0.0.0.0:$AGEX_PORT' });
   });
 
   it('parses setup hooks', async () => {
-    const agentpodDir = join(repo.path, '.agentpod');
-    await mkdir(agentpodDir, { recursive: true });
+    const agexDir = join(repo.path, '.agex');
+    await mkdir(agexDir, { recursive: true });
     await writeFile(
-      join(agentpodDir, 'config.yml'),
+      join(agexDir, 'config.yml'),
       'setup:\n  - npm install\nsetup_background:\n  - npm run dev\n'
     );
 

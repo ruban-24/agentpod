@@ -1,14 +1,14 @@
 ---
-name: agentpod
+name: agex
 description: Use when working in a git repository and needing to run coding tasks in parallel, try multiple approaches, isolate risky changes in worktrees, compare agent outputs, or safely experiment without affecting the main branch. Also use when orchestrating multiple coding agents simultaneously.
-compatibility: Requires git and Node.js >= 20. agentpod must be installed globally (npm i -g agentpod).
+compatibility: Requires git and Node.js >= 20. agex must be installed globally (npm i -g agex).
 ---
 
-# agentpod
+# agex
 
 ## Overview
 
-agentpod is a CLI runtime for running parallel AI coding tasks in isolated git worktrees. Instead of implementing one approach and hoping it works, fan out multiple approaches in parallel, verify all of them, and merge the best one.
+agex is a CLI runtime for running parallel AI coding tasks in isolated git worktrees. Instead of implementing one approach and hoping it works, fan out multiple approaches in parallel, verify all of them, and merge the best one.
 
 **Mental model:** docker-compose for AI coding tasks. Each task gets its own branch and worktree. Nothing touches your main branch until you explicitly merge.
 
@@ -29,13 +29,13 @@ agentpod is a CLI runtime for running parallel AI coding tasks in isolated git w
 
 ```bash
 # Initialize (auto-detects verify commands from package.json, Makefile, Cargo.toml, etc.)
-agentpod init
+agex init
 
 # Or specify verify commands explicitly
-agentpod init --verify "npm test" "npm run lint"
+agex init --verify "npm test" "npm run lint"
 ```
 
-Optional `.agentpod/config.yml`:
+Optional `.agex/config.yml`:
 ```yaml
 verify:  ["npm test", "npm run lint"]
 copy:    [".env"]              # Files copied into each worktree
@@ -54,23 +54,23 @@ Explore the solution space — try N different approaches and pick the winner.
 
 ```bash
 # Create isolated tasks for each approach
-agentpod task create --prompt "Implement caching using Redis"
-agentpod task create --prompt "Implement caching using in-memory LRU"
-agentpod task create --prompt "Implement caching using SQLite"
+agex task create --prompt "Implement caching using Redis"
+agex task create --prompt "Implement caching using in-memory LRU"
+agex task create --prompt "Implement caching using SQLite"
 
 # Execute an agent in each worktree
-agentpod task exec <id1> --cmd "<your-agent> 'Implement Redis caching per the prompt'"
-agentpod task exec <id2> --cmd "<your-agent> 'Implement LRU caching per the prompt'"
-agentpod task exec <id3> --cmd "<your-agent> 'Implement SQLite caching per the prompt'"
+agex task exec <id1> --cmd "<your-agent> 'Implement Redis caching per the prompt'"
+agex task exec <id2> --cmd "<your-agent> 'Implement LRU caching per the prompt'"
+agex task exec <id3> --cmd "<your-agent> 'Implement SQLite caching per the prompt'"
 
 # Wait for all to finish, then compare
-agentpod compare <id1> <id2> <id3>
+agex compare <id1> <id2> <id3>
 
 # Merge the best, discard the rest
-agentpod merge <best-id>
-agentpod discard <other-id>
-agentpod discard <other-id>
-agentpod clean
+agex merge <best-id>
+agex discard <other-id>
+agex discard <other-id>
+agex clean
 ```
 
 ### 2. Parallel Independent Subtasks
@@ -78,26 +78,26 @@ agentpod clean
 Decompose a large task into pieces that don't depend on each other and run them simultaneously.
 
 ```bash
-agentpod task create --prompt "Add user authentication endpoints"
-agentpod task create --prompt "Add email notification service"
-agentpod task create --prompt "Add rate limiting middleware"
+agex task create --prompt "Add user authentication endpoints"
+agex task create --prompt "Add email notification service"
+agex task create --prompt "Add rate limiting middleware"
 
 # Execute all (non-blocking by default — returns immediately)
-agentpod task exec <id1> --cmd "<your-agent> '...'"
-agentpod task exec <id2> --cmd "<your-agent> '...'"
-agentpod task exec <id3> --cmd "<your-agent> '...'"
+agex task exec <id1> --cmd "<your-agent> '...'"
+agex task exec <id2> --cmd "<your-agent> '...'"
+agex task exec <id3> --cmd "<your-agent> '...'"
 
 # Monitor progress
-agentpod summary
+agex summary
 
 # Verify each, then merge passing tasks sequentially
-agentpod verify <id1>
-agentpod merge <id1>
-agentpod verify <id2>
-agentpod merge <id2>
-agentpod verify <id3>
-agentpod merge <id3>
-agentpod clean
+agex verify <id1>
+agex merge <id1>
+agex verify <id2>
+agex merge <id2>
+agex verify <id3>
+agex merge <id3>
+agex clean
 ```
 
 ### 3. Isolated Single Task
@@ -106,14 +106,14 @@ Safely sandbox a risky change.
 
 ```bash
 # Create + execute in one step (--wait blocks until done)
-agentpod run --prompt "Migrate database schema to v2" --cmd "<your-agent> '...'" --wait
+agex run --prompt "Migrate database schema to v2" --cmd "<your-agent> '...'" --wait
 
 # Review and verify
-agentpod diff <id>
-agentpod verify <id>
+agex diff <id>
+agex verify <id>
 
 # Merge if good, discard if not
-agentpod merge <id>    # or: agentpod discard <id>
+agex merge <id>    # or: agex discard <id>
 ```
 
 ### 4. Verify-Compare-Decide
@@ -122,19 +122,19 @@ Never merge blind. Always verify. Always compare when multiple tasks exist.
 
 ```bash
 # Verify all candidates
-agentpod verify <id1>
-agentpod verify <id2>
+agex verify <id1>
+agex verify <id2>
 
 # Compare: checks passed, diff size, files changed
-agentpod compare <id1> <id2>
+agex compare <id1> <id2>
 
 # Inspect the diffs if needed
-agentpod diff <id1>
-agentpod diff <id2>
+agex diff <id1>
+agex diff <id2>
 
 # Decide and act
-agentpod merge <winner>
-agentpod discard <loser>
+agex merge <winner>
+agex discard <loser>
 ```
 
 ### 5. Discard and Retry
@@ -143,15 +143,15 @@ When approaches fail verification, don't force-merge. Learn and retry.
 
 ```bash
 # Understand what went wrong
-agentpod log <id>
-agentpod diff <id>
+agex log <id>
+agex diff <id>
 
 # Discard failed attempts
-agentpod discard <id1>
-agentpod discard <id2>
+agex discard <id1>
+agex discard <id2>
 
 # Retry with refined prompts incorporating what you learned
-agentpod run --prompt "Implement X using Y (avoid Z because it caused ...)" --cmd "..."
+agex run --prompt "Implement X using Y (avoid Z because it caused ...)" --cmd "..."
 ```
 
 ### 6. Clean Up
@@ -160,7 +160,7 @@ Prevent worktree and branch sprawl.
 
 ```bash
 # Removes worktrees and state for all merged/discarded/completed/failed tasks
-agentpod clean
+agex clean
 ```
 
 Run `clean` after every merge/discard cycle.
@@ -171,16 +171,16 @@ Start a dev server in each worktree to visually test approaches.
 
 ```bash
 # Config already has run field — start servers
-agentpod task start <id1>
-agentpod task start <id2>
+agex task start <id1>
+agex task start <id2>
 
 # Check which URLs to test
-agentpod task status <id1>   # shows port and url
-agentpod task status <id2>
+agex task status <id1>   # shows port and url
+agex task status <id2>
 
 # Test, compare, then stop servers
-agentpod task stop <id1>
-agentpod task stop <id2>
+agex task stop <id1>
+agex task stop <id2>
 ```
 
 For multi-service apps (frontend + backend), create separate tasks and read each task's URL from `task status`.
@@ -189,22 +189,22 @@ For multi-service apps (frontend + backend), create separate tasks and read each
 
 | Command | Purpose |
 |---------|---------|
-| `agentpod init [--verify <cmds...>]` | Initialize in current repo |
-| `agentpod task create --prompt <text>` | Create isolated task with its own worktree |
-| `agentpod task exec <id> --cmd <cmd> [--wait]` | Run command in task worktree |
-| `agentpod task start <id>` | Start dev server in task worktree |
-| `agentpod task stop <id>` | Stop dev server in task worktree |
-| `agentpod task status <id>` | Get task details |
-| `agentpod run --prompt <text> --cmd <cmd> [--wait]` | Create + execute shortcut |
-| `agentpod list` | List all tasks |
-| `agentpod summary` | Status overview with counts |
-| `agentpod log <id>` | Show captured agent output |
-| `agentpod verify <id>` | Run verification checks |
-| `agentpod diff <id>` | Show changes vs base branch |
-| `agentpod compare <id1> <id2> [...]` | Side-by-side task comparison |
-| `agentpod merge <id>` | Merge task branch into current branch |
-| `agentpod discard <id>` | Remove task worktree and branch |
-| `agentpod clean` | Clean up all finished tasks |
+| `agex init [--verify <cmds...>]` | Initialize in current repo |
+| `agex task create --prompt <text>` | Create isolated task with its own worktree |
+| `agex task exec <id> --cmd <cmd> [--wait]` | Run command in task worktree |
+| `agex task start <id>` | Start dev server in task worktree |
+| `agex task stop <id>` | Stop dev server in task worktree |
+| `agex task status <id>` | Get task details |
+| `agex run --prompt <text> --cmd <cmd> [--wait]` | Create + execute shortcut |
+| `agex list` | List all tasks |
+| `agex summary` | Status overview with counts |
+| `agex log <id>` | Show captured agent output |
+| `agex verify <id>` | Run verification checks |
+| `agex diff <id>` | Show changes vs base branch |
+| `agex compare <id1> <id2> [...]` | Side-by-side task comparison |
+| `agex merge <id>` | Merge task branch into current branch |
+| `agex discard <id>` | Remove task worktree and branch |
+| `agex clean` | Clean up all finished tasks |
 
 All commands output JSON by default. Add `--human` for colored terminal output.
 
@@ -224,8 +224,8 @@ pending -> provisioning -> ready -> running -> verifying -> completed -> merged
 
 - **JSON-first**: All output is JSON by default — designed for agent consumption
 - **Auto-detection**: Verify commands detected from package.json, Makefile, pyproject.toml, Cargo.toml, go.mod
-- **Port isolation**: Each task gets `AGENTPOD_PORT` env var to avoid port conflicts
-- **Env vars injected**: `AGENTPOD_TASK_ID`, `AGENTPOD_WORKTREE`, `AGENTPOD_PORT`
+- **Port isolation**: Each task gets `AGEX_PORT` env var to avoid port conflicts
+- **Env vars injected**: `AGEX_TASK_ID`, `AGEX_WORKTREE`, `AGEX_PORT`
 - **Merge strategy**: Fast-forward first, merge commit fallback. Conflicts abort cleanly.
 - **Exit codes**: 0=success, 1=agent failed, 2=verification failed, 3=merge conflict, 4=invalid args, 5=workspace error
 
@@ -237,6 +237,6 @@ pending -> provisioning -> ready -> running -> verifying -> completed -> merged
 | Force-merging failed tasks | Discard and retry with better prompts |
 | Creating dependent tasks in parallel | Only parallelize truly independent work |
 | Skipping `compare` with multiple tasks | Compare reveals the best approach — don't guess |
-| Forgetting to clean up | Run `agentpod clean` after merge/discard cycles |
+| Forgetting to clean up | Run `agex clean` after merge/discard cycles |
 | Using `--human` in agent workflows | Default JSON output is designed for agents — use it |
 | Starting servers you don't need | Only `task start` when you need to test the running app |

@@ -1,10 +1,10 @@
-# Contributing to agentpod
+# Contributing to agex
 
 ## Development Setup
 
 ```bash
-git clone https://github.com/ruban-24/agentpod.git
-cd agentpod
+git clone https://github.com/ruban-24/agex.git
+cd agex
 npm install
 ```
 

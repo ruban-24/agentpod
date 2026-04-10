@@ -155,7 +155,7 @@ describe('detectRunConfig', () => {
   it('detects Django manage.py', async () => {
     await writeFile(join(repo.path, 'manage.py'), '#!/usr/bin/env python\n');
     const result = await detectRunConfig(repo.path);
-    expect(result).toEqual({ cmd: 'python manage.py runserver 0.0.0.0:$AGENTPOD_PORT' });
+    expect(result).toEqual({ cmd: 'python manage.py runserver 0.0.0.0:$AGEX_PORT' });
   });
 
   it('detects Flask from pyproject.toml', async () => {

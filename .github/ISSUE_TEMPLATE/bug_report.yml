@@ -17,8 +17,8 @@ body:
       label: Steps to reproduce
       description: Minimal steps to reproduce the issue.
       placeholder: |
-        1. Run `agentpod init`
-        2. Run `agentpod task create "fix bug"`
+        1. Run `agex init`
+        2. Run `agex task create "fix bug"`
         3. See error...
     validations:
       required: true
@@ -26,8 +26,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: agentpod version
-      description: Output of `agentpod --version`
+      label: agex version
+      description: Output of `agex --version`
       placeholder: "0.1.0"
     validations:
       required: true

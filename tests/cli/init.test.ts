@@ -15,19 +15,19 @@ describe('initCommand', () => {
     await repo.cleanup();
   });
 
-  it('creates .agentpod directory with tasks and worktrees subdirs', async () => {
+  it('creates .agex directory with tasks and worktrees subdirs', async () => {
     await initCommand(repo.path, {});
 
-    await access(join(repo.path, '.agentpod'));
-    await access(join(repo.path, '.agentpod', 'tasks'));
-    await access(join(repo.path, '.agentpod', 'worktrees'));
+    await access(join(repo.path, '.agex'));
+    await access(join(repo.path, '.agex', 'tasks'));
+    await access(join(repo.path, '.agex', 'worktrees'));
   });
 
-  it('adds .agentpod/ to .gitignore', async () => {
+  it('adds .agex/ to .gitignore', async () => {
     await initCommand(repo.path, {});
 
     const gitignore = await readFile(join(repo.path, '.gitignore'), 'utf-8');
-    expect(gitignore).toContain('.agentpod/');
+    expect(gitignore).toContain('.agex/');
   });
 
   it('creates .gitignore if it does not exist', async () => {
@@ -41,22 +41,22 @@ describe('initCommand', () => {
     await initCommand(repo.path, {});
 
     const gitignore = await readFile(join(repo.path, '.gitignore'), 'utf-8');
-    expect(gitignore).toContain('.agentpod/');
+    expect(gitignore).toContain('.agex/');
   });
 
-  it('does not duplicate .agentpod/ in .gitignore on re-init', async () => {
+  it('does not duplicate .agex/ in .gitignore on re-init', async () => {
     await initCommand(repo.path, {});
     await initCommand(repo.path, {});
 
     const gitignore = await readFile(join(repo.path, '.gitignore'), 'utf-8');
-    const matches = gitignore.match(/\.agentpod\//g);
+    const matches = gitignore.match(/\.agex\//g);
     expect(matches).toHaveLength(1);
   });
 
   it('creates config.yml with verify commands when --verify provided', async () => {
     await initCommand(repo.path, { verify: ['npm test', 'npm run lint'] });
 
-    const config = await readFile(join(repo.path, '.agentpod', 'config.yml'), 'utf-8');
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
     expect(config).toContain('npm test');
     expect(config).toContain('npm run lint');
   });
@@ -69,7 +69,7 @@ describe('initCommand', () => {
       setup: ['npm install'],
     });
 
-    const config = await readFile(join(repo.path, '.agentpod', 'config.yml'), 'utf-8');
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
     expect(config).toContain('npm test');
     expect(config).toContain('.env');
     expect(config).toContain('node_modules');
@@ -82,14 +82,14 @@ describe('initCommand', () => {
 
   it('writes skill files for selected agents', async () => {
     await initCommand(repo.path, { agents: ['claude-code'] });
-    const content = await readFile(join(repo.path, '.claude', 'skills', 'agentpod', 'SKILL.md'), 'utf-8');
-    expect(content).toContain('name: agentpod');
+    const content = await readFile(join(repo.path, '.claude', 'skills', 'agex', 'SKILL.md'), 'utf-8');
+    expect(content).toContain('name: agex');
   });
 
   it('writes skill files for multiple agents', async () => {
     await initCommand(repo.path, { agents: ['claude-code', 'codex'] });
-    await access(join(repo.path, '.claude', 'skills', 'agentpod', 'SKILL.md'));
-    await access(join(repo.path, '.agents', 'skills', 'agentpod', 'SKILL.md'));
+    await access(join(repo.path, '.claude', 'skills', 'agex', 'SKILL.md'));
+    await access(join(repo.path, '.agents', 'skills', 'agex', 'SKILL.md'));
   });
 
   it('returns list of created files', async () => {
@@ -97,8 +97,8 @@ describe('initCommand', () => {
       verify: ['npm test'],
       agents: ['claude-code'],
     });
-    expect(result.files).toContain('.agentpod/config.yml');
-    expect(result.files).toContain('.claude/skills/agentpod/SKILL.md');
+    expect(result.files).toContain('.agex/config.yml');
+    expect(result.files).toContain('.claude/skills/agex/SKILL.md');
   });
 
   it('returns verify and agents in result', async () => {
@@ -115,7 +115,7 @@ describe('initCommand', () => {
       run: { cmd: 'npm run dev', port_env: 'PORT' },
     });
 
-    const config = await readFile(join(repo.path, '.agentpod', 'config.yml'), 'utf-8');
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
     expect(config).toContain('npm run dev');
     expect(config).toContain('PORT');
   });
@@ -130,7 +130,7 @@ describe('initCommand', () => {
   it('does not write config.yml when no verify or provisioning provided', async () => {
     await initCommand(repo.path, {});
     // config.yml should not exist
-    await expect(access(join(repo.path, '.agentpod', 'config.yml'))).rejects.toThrow();
+    await expect(access(join(repo.path, '.agex', 'config.yml'))).rejects.toThrow();
   });
 });
 

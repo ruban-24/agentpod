@@ -4,13 +4,13 @@ import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { compareCommand } from '../../src/cli/commands/compare.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('compareCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -49,7 +49,7 @@ describe('compareCommand', () => {
 
   it('includes duration and diff stats in comparison', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'enriched compare' });
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'file.ts'), 'export const x = 1;\n');
     execSync('git add . && git commit -m "add file"', { cwd: wtPath, stdio: 'ignore' });
 

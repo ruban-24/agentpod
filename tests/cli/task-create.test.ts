@@ -1,12 +1,12 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('taskCreateCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -41,9 +41,9 @@ describe('taskCreateCommand', () => {
 
     expect(result.id).toMatch(/^[a-z0-9]{6}$/);
     expect(result.status).toBe('ready');
-    expect(result.branch).toContain('agentpod/');
-    expect(result.worktree).toContain('.agentpod/worktrees/');
-    expect(result.env.AGENTPOD_TASK_ID).toBe(result.id);
+    expect(result.branch).toContain('agex/');
+    expect(result.worktree).toContain('.agex/worktrees/');
+    expect(result.env.AGEX_TASK_ID).toBe(result.id);
   });
 
   it('provisions the workspace with config copy/symlink', async () => {
@@ -53,13 +53,13 @@ describe('taskCreateCommand', () => {
     // Create a .env file and config
     await writeFile(join(repo.path, '.env'), 'SECRET=test\n');
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       'copy:\n  - .env\n'
     );
 
     const result = await taskCreateCommand(repo.path, { prompt: 'test' });
 
-    const envPath = join(repo.path, '.agentpod', 'worktrees', result.id, '.env');
+    const envPath = join(repo.path, '.agex', 'worktrees', result.id, '.env');
     const { readFile } = await import('node:fs/promises');
     const content = await readFile(envPath, 'utf-8');
     expect(content).toBe('SECRET=test\n');

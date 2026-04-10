@@ -15,7 +15,7 @@ export async function taskStatusCommand(
   const sm = new ServerManager(repoRoot);
   const task = await sm.clearStaleServer(taskId);
 
-  const port = parseInt(task.env.AGENTPOD_PORT, 10);
+  const port = parseInt(task.env.AGEX_PORT, 10);
 
   return {
     ...task,

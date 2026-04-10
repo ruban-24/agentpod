@@ -1,8 +1,8 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { dump } from 'js-yaml';
-import { AGENTPOD_DIR, TASKS_DIR, WORKTREES_DIR, CONFIG_FILE } from '../../constants.js';
-import type { AgentpodConfig, RunConfig } from '../../types.js';
+import { AGEX_DIR, TASKS_DIR, WORKTREES_DIR, CONFIG_FILE } from '../../constants.js';
+import type { AgexConfig, RunConfig } from '../../types.js';
 import { type AgentId, writeSkillFiles } from '../skill-writer.js';
 
 const SECTION_COMMENTS: Record<string, string> = {
@@ -13,7 +13,7 @@ const SECTION_COMMENTS: Record<string, string> = {
   run: '# Dev server started per-task so agents can test against it',
 };
 
-export function dumpConfigWithComments(config: AgentpodConfig): string {
+export function dumpConfigWithComments(config: AgexConfig): string {
   const sections: string[] = [];
 
   for (const key of ['verify', 'copy', 'symlink', 'setup', 'run'] as const) {
@@ -49,12 +49,12 @@ export async function initCommand(
   repoRoot: string,
   options: InitOptions
 ): Promise<InitResult> {
-  const agentpodDir = join(repoRoot, AGENTPOD_DIR);
+  const agexDir = join(repoRoot, AGEX_DIR);
   const files: string[] = [];
 
   // Create directories
-  await mkdir(join(agentpodDir, TASKS_DIR), { recursive: true });
-  await mkdir(join(agentpodDir, WORKTREES_DIR), { recursive: true });
+  await mkdir(join(agexDir, TASKS_DIR), { recursive: true });
+  await mkdir(join(agexDir, WORKTREES_DIR), { recursive: true });
 
   // Handle .gitignore
   const gitignorePath = join(repoRoot, '.gitignore');
@@ -65,8 +65,8 @@ export async function initCommand(
     // File doesn't exist
   }
 
-  if (!gitignoreContent.includes('.agentpod/')) {
-    gitignoreContent = gitignoreContent.trimEnd() + '\n.agentpod/\n';
+  if (!gitignoreContent.includes('.agex/')) {
+    gitignoreContent = gitignoreContent.trimEnd() + '\n.agex/\n';
     await writeFile(gitignorePath, gitignoreContent);
   }
 
@@ -75,14 +75,14 @@ export async function initCommand(
     options.symlink?.length || options.setup?.length || options.run;
 
   if (hasConfig) {
-    const config: AgentpodConfig = {};
+    const config: AgexConfig = {};
     if (options.verify?.length) config.verify = options.verify;
     if (options.copy?.length) config.copy = options.copy;
     if (options.symlink?.length) config.symlink = options.symlink;
     if (options.setup?.length) config.setup = options.setup;
     if (options.run) config.run = options.run;
-    await writeFile(join(agentpodDir, CONFIG_FILE), dumpConfigWithComments(config));
-    files.push('.agentpod/config.yml');
+    await writeFile(join(agexDir, CONFIG_FILE), dumpConfigWithComments(config));
+    files.push('.agex/config.yml');
   }
 
   // Write skill files for selected agents

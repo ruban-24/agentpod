@@ -2,7 +2,7 @@
 
 ## Goal
 
-Create a ~25-30 second GIF for the agentpod README that showcases the tool's value to developers who already use AI coding agents. The GIF tells the story from the human's perspective: create isolated tasks, check in anytime with `-H`, pick the winner.
+Create a ~25-30 second GIF for the agex README that showcases the tool's value to developers who already use AI coding agents. The GIF tells the story from the human's perspective: create isolated tasks, check in anytime with `-H`, pick the winner.
 
 ## Audience
 
@@ -18,7 +18,7 @@ Developers already using AI coding agents (Claude Code, Codex, Copilot CLI). The
 
 ## Technical approach: fake shell
 
-VHS can't run real agentpod commands against a live repo, so we use a fake shell script that pattern-matches commands and prints pre-baked ANSI-colored output. This gives us:
+VHS can't run real agex commands against a live repo, so we use a fake shell script that pattern-matches commands and prints pre-baked ANSI-colored output. This gives us:
 
 - Deterministic, pixel-perfect output every time
 - Easy to iterate on wording, timing, colors
@@ -29,7 +29,7 @@ VHS can't run real agentpod commands against a live repo, so we use a fake shell
 
 | File | Purpose |
 |------|---------|
-| `demo/fake-agentpod.sh` | Shell script that intercepts agentpod commands and prints pre-baked colored output |
+| `demo/fake-agex.sh` | Shell script that intercepts agex commands and prints pre-baked colored output |
 | `demo.tape` | VHS tape file — rewritten to use fake shell with tuned timing |
 | `docs/demo.gif` | Output GIF (generated, not committed) |
 
@@ -40,14 +40,14 @@ VHS can't run real agentpod commands against a live repo, so we use a fake shell
 The fan-out moment. Three creates in quick succession showing instant worktree isolation.
 
 ```
-$ agentpod task create --prompt "Approach 1: JWT tokens"
-✓ Created task a1b2c3 · branch: agentpod/a1b2c3
+$ agex task create --prompt "Approach 1: JWT tokens"
+✓ Created task a1b2c3 · branch: agex/a1b2c3
 
-$ agentpod task create --prompt "Approach 2: session cookies"
-✓ Created task d4e5f6 · branch: agentpod/d4e5f6
+$ agex task create --prompt "Approach 2: session cookies"
+✓ Created task d4e5f6 · branch: agex/d4e5f6
 
-$ agentpod task create --prompt "Approach 3: OAuth2 flow"
-✓ Created task g7h8i9 · branch: agentpod/g7h8i9
+$ agex task create --prompt "Approach 3: OAuth2 flow"
+✓ Created task g7h8i9 · branch: agex/g7h8i9
 ```
 
 ### Beat 4: Summary with -H (~5s)
@@ -55,9 +55,9 @@ $ agentpod task create --prompt "Approach 3: OAuth2 flow"
 The "check in anytime" moment. Shows mixed task states with the `-H` shorthand.
 
 ```
-$ agentpod summary -H
+$ agex summary -H
 
-agentpod · 3 tasks
+agex · 3 tasks
 1 completed · 1 running · 1 failed
 
 ┃ ✓  a1b2c3  completed   12.4s  ✓ 3/3  +47 -12 · 4 files   JWT tokens
@@ -70,7 +70,7 @@ agentpod · 3 tasks
 Automated verification — tests, lint, build all pass.
 
 ```
-$ agentpod verify a1b2c3 -H
+$ agex verify a1b2c3 -H
 
 a1b2c3 · verification
 ✓ npm test          (4.2s)
@@ -84,7 +84,7 @@ All 3 checks passed (12.4s total)
 Side-by-side decision table. The winner is obvious.
 
 ```
-$ agentpod compare a1b2c3 d4e5f6 g7h8i9 -H
+$ agex compare a1b2c3 d4e5f6 g7h8i9 -H
 
   ID       Status      Checks  Changes  Duration  Prompt
   ──────────────────────────────────────────────────────────
@@ -98,7 +98,7 @@ $ agentpod compare a1b2c3 d4e5f6 g7h8i9 -H
 One command to ship. Satisfying ending.
 
 ```
-$ agentpod merge a1b2c3 -H
+$ agex merge a1b2c3 -H
 ✓ Merged a1b2c3 into main · fast-forward · 3 commits
 ```
 
@@ -121,15 +121,15 @@ Set Padding 20
 
 ## What we deliberately excluded
 
-- `agentpod init` — setup story belongs in docs, not the GIF
-- `agentpod diff` — compare already shows the decision; diff is detail
-- `agentpod discard` / `agentpod clean` — merge is the satisfying ending
+- `agex init` — setup story belongs in docs, not the GIF
+- `agex diff` — compare already shows the decision; diff is detail
+- `agex discard` / `agex clean` — merge is the satisfying ending
 - Agent execution — audience already uses agents, they don't need to see the agent typing
 - Worktree paths in create output — branch name is sufficient, keeps it clean
 
 ## Implementation notes
 
-- `demo/fake-agentpod.sh` should be a bash script that reads `$@`, matches against known commands, and `echo -e` the pre-baked ANSI output
-- The VHS tape sets `Set Shell "bash"` and `Set Env "PATH" "/path/to/demo:$PATH"` so the fake script intercepts `agentpod`
+- `demo/fake-agex.sh` should be a bash script that reads `$@`, matches against known commands, and `echo -e` the pre-baked ANSI output
+- The VHS tape sets `Set Shell "bash"` and `Set Env "PATH" "/path/to/demo:$PATH"` so the fake script intercepts `agex`
 - Colors should match the actual `--human` formatter output (green for success, red for failure, yellow for running, dim for labels)
-- The fake script should be executable and named `agentpod` inside `demo/` so PATH resolution picks it up
+- The fake script should be executable and named `agex` inside `demo/` so PATH resolution picks it up

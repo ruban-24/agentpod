@@ -12,9 +12,9 @@ export const AGENT_LABELS: Record<AgentId, string> = {
 };
 
 export const AGENT_PATHS: Record<AgentId, string> = {
-  'claude-code': '.claude/skills/agentpod/SKILL.md',
-  'codex': '.agents/skills/agentpod/SKILL.md',
-  'copilot': '.github/skills/agentpod/SKILL.md',
+  'claude-code': '.claude/skills/agex/SKILL.md',
+  'codex': '.agents/skills/agex/SKILL.md',
+  'copilot': '.github/skills/agex/SKILL.md',
 };
 
 // Instruction files that agents read at session start (CLAUDE.md = when, SKILL.md = how)
@@ -25,28 +25,28 @@ export const AGENT_INSTRUCTION_FILES: Record<AgentId, string> = {
 };
 
 const INSTRUCTION_BLOCK = `
-## agentpod
+## agex
 
-This repo uses agentpod for worktree-isolated task management.
+This repo uses agex for worktree-isolated task management.
 
-**All non-trivial work MUST go through \`agentpod task create\`.** NEVER edit code files directly on main unless it is a single-file trivial fix (typo, config tweak, one-line change).
+**All non-trivial work MUST go through \`agex task create\`.** NEVER edit code files directly on main unless it is a single-file trivial fix (typo, config tweak, one-line change).
 
-If you are about to edit more than one file, STOP — create an agentpod task first. No exceptions, no rationalizing ("the files overlap", "it's easier sequentially", "I'll just do it quickly"). Those are exactly the cases where isolation prevents mistakes.
+If you are about to edit more than one file, STOP — create an agex task first. No exceptions, no rationalizing ("the files overlap", "it's easier sequentially", "I'll just do it quickly"). Those are exactly the cases where isolation prevents mistakes.
 
-When multiple parts of the work are independent, create separate agentpod tasks and work them in parallel.
+When multiple parts of the work are independent, create separate agex tasks and work them in parallel.
 `;
 
-// Inlined from skills/agentpod/SKILL.md — update both when content changes.
+// Inlined from skills/agex/SKILL.md — update both when content changes.
 export const SKILL_CONTENT = `---
-name: agentpod
+name: agex
 description: Use when a task involves changes to multiple files, multiple independent subtasks, or anything beyond a trivial single-file edit in a git repository. Creates isolated worktrees so work doesn't touch main until verified and merged.
 ---
 
-# agentpod
+# agex
 
-**All non-trivial work goes through agentpod.** If you are about to edit files directly on main and the change touches more than one file, stop — create an agentpod task first.
+**All non-trivial work goes through agex.** If you are about to edit files directly on main and the change touches more than one file, stop — create an agex task first.
 
-You have access to \`agentpod\`, a CLI tool for managing isolated git worktrees. Each task gets its own branch and worktree directory. Nothing touches the main branch until you explicitly merge.
+You have access to \`agex\`, a CLI tool for managing isolated git worktrees. Each task gets its own branch and worktree directory. Nothing touches the main branch until you explicitly merge.
 
 **You are the agent.** Create tasks, \`cd\` into their worktree paths, do your work there (edit files, run commands), then verify and merge back.
 
@@ -57,14 +57,14 @@ You have access to \`agentpod\`, a CLI tool for managing isolated git worktrees.
 - The change is risky (refactor, migration, dependency change) — isolate it
 - You want to verify before merging (tests, lint, build)
 
-**Only skip agentpod for:** single-file trivial fixes (typos, config tweaks, one-line changes), or non-git projects.
+**Only skip agex for:** single-file trivial fixes (typos, config tweaks, one-line changes), or non-git projects.
 
 ## Workflow
 
 ### Step 1: Create a task
 
 \`\`\`bash
-agentpod task create --prompt "Implement caching using Redis"
+agex task create --prompt "Implement caching using Redis"
 \`\`\`
 
 This returns JSON with \`id\` and \`worktree\` (the directory path).
@@ -81,7 +81,7 @@ cd <worktree-path>
 ### Step 3: Verify
 
 \`\`\`bash
-agentpod verify <id>
+agex verify <id>
 \`\`\`
 
 Runs the configured verification commands (tests, lint, build). Check the output — if anything fails, fix it in the worktree and re-verify.
@@ -89,9 +89,9 @@ Runs the configured verification commands (tests, lint, build). Check the output
 ### Step 4: Review and merge
 
 \`\`\`bash
-agentpod diff <id>         # See what changed
-agentpod merge <id>        # Merge into current branch
-agentpod clean             # Remove finished task worktrees
+agex diff <id>         # See what changed
+agex merge <id>        # Merge into current branch
+agex clean             # Remove finished task worktrees
 \`\`\`
 
 ## Multiple Approaches
@@ -100,28 +100,28 @@ When the user wants you to explore alternatives:
 
 \`\`\`bash
 # Create one task per approach
-agentpod task create --prompt "Approach A: use Redis"
-agentpod task create --prompt "Approach B: use in-memory LRU"
+agex task create --prompt "Approach A: use Redis"
+agex task create --prompt "Approach B: use in-memory LRU"
 
 # Work on each — cd into each worktree and implement
 # Then verify both
-agentpod verify <id1>
-agentpod verify <id2>
+agex verify <id1>
+agex verify <id2>
 
 # Compare them
-agentpod compare <id1> <id2>
+agex compare <id1> <id2>
 
 # Present results to the user, merge the winner
-agentpod merge <winner-id>
-agentpod discard <loser-id>
-agentpod clean
+agex merge <winner-id>
+agex discard <loser-id>
+agex clean
 \`\`\`
 
 ## When Things Fail
 
 \`\`\`bash
-agentpod diff <id>           # See what you changed
-agentpod discard <id>        # Throw it away
+agex diff <id>           # See what you changed
+agex discard <id>        # Throw it away
 # Create a new task and try again with a different approach
 \`\`\`
 
@@ -129,15 +129,15 @@ agentpod discard <id>        # Throw it away
 
 | Command | Purpose |
 |---------|---------|
-| \`agentpod task create --prompt <text>\` | Create isolated task — returns \`id\` and \`worktree\` path |
-| \`agentpod task status <id>\` | Get task details |
-| \`agentpod list\` | List all tasks |
-| \`agentpod verify <id>\` | Run verification checks (tests, lint, build) |
-| \`agentpod diff <id>\` | Show changes vs base branch |
-| \`agentpod compare <id1> <id2> [...]\` | Side-by-side task comparison |
-| \`agentpod merge <id>\` | Merge task branch into current branch |
-| \`agentpod discard <id>\` | Remove task worktree and branch |
-| \`agentpod clean\` | Clean up all finished tasks |
+| \`agex task create --prompt <text>\` | Create isolated task — returns \`id\` and \`worktree\` path |
+| \`agex task status <id>\` | Get task details |
+| \`agex list\` | List all tasks |
+| \`agex verify <id>\` | Run verification checks (tests, lint, build) |
+| \`agex diff <id>\` | Show changes vs base branch |
+| \`agex compare <id1> <id2> [...]\` | Side-by-side task comparison |
+| \`agex merge <id>\` | Merge task branch into current branch |
+| \`agex discard <id>\` | Remove task worktree and branch |
+| \`agex clean\` | Clean up all finished tasks |
 
 All commands output JSON — parse the output to get task IDs, worktree paths, and status.
 
@@ -148,11 +148,11 @@ All commands output JSON — parse the output to get task IDs, worktree paths, a
 - Always \`compare\` when you have multiple tasks
 - Always \`clean\` after merging/discarding
 - Merge conflicts auto-abort and preserve the worktree so you can fix and retry
-- \`cd\` back to the original repo directory before running \`merge\` or other agentpod commands
+- \`cd\` back to the original repo directory before running \`merge\` or other agex commands
 `;
 
 /**
- * Write the agentpod SKILL.md file and append instructions to the agent's
+ * Write the agex SKILL.md file and append instructions to the agent's
  * instruction file (CLAUDE.md / AGENTS.md) for each selected agent.
  * Creates parent directories as needed.
  * Returns the array of relative paths that were written or modified.
@@ -185,7 +185,7 @@ export async function writeSkillFiles(
       // File doesn't exist yet
     }
 
-    if (!existing.includes('## agentpod')) {
+    if (!existing.includes('## agex')) {
       const content = existing.trimEnd() + '\n' + INSTRUCTION_BLOCK;
       await writeFile(instrPath, content, 'utf-8');
       written.push(instrFile);

@@ -70,11 +70,11 @@ function taskCardLine(task: ServerAwareTask): string {
 
 function nextActionForStatus(id: string, status: TaskStatus): string | null {
   switch (status) {
-    case 'completed': return `agentpod diff ${id} to review, agentpod merge ${id} to accept`;
-    case 'failed': return `agentpod log ${id} to see output, agentpod verify ${id} to re-check`;
-    case 'errored': return `agentpod log ${id} to see output`;
-    case 'running': return `agentpod task status ${id} to check progress`;
-    case 'ready': return `agentpod task exec ${id} --cmd "..." --wait`;
+    case 'completed': return `agex diff ${id} to review, agex merge ${id} to accept`;
+    case 'failed': return `agex log ${id} to see output, agex verify ${id} to re-check`;
+    case 'errored': return `agex log ${id} to see output`;
+    case 'running': return `agex task status ${id} to check progress`;
+    case 'ready': return `agex task exec ${id} --cmd "..." --wait`;
     default: return null;
   }
 }
@@ -176,7 +176,7 @@ export function formatSummaryHuman(data: { total: number; completed: number; fai
   const lines: string[] = [];
   const counts = statusCounts(data.tasks);
 
-  lines.push(bold(`agentpod · ${data.total} tasks`));
+  lines.push(bold(`agex · ${data.total} tasks`));
   lines.push(summaryLine(data.total, counts));
   lines.push('');
 
@@ -217,7 +217,7 @@ export function formatDiffHuman(data: { id: string; prompt: string; branch?: str
     lines.push('');
   }
 
-  lines.push(dim(`→ Full diff: git diff HEAD...${data.branch || `agentpod/${data.id}`}`));
+  lines.push(dim(`→ Full diff: git diff HEAD...${data.branch || `agex/${data.id}`}`));
 
   return lines.join('\n');
 }
@@ -306,7 +306,7 @@ export function formatInitHuman(data: {
   agents: string[];
 }): string {
   const lines: string[] = [];
-  const cardLines = [`${green('\u2713')} Initialized agentpod`];
+  const cardLines = [`${green('\u2713')} Initialized agex`];
 
   if (data.files.length > 0) {
     cardLines.push('');
@@ -319,7 +319,7 @@ export function formatInitHuman(data: {
   lines.push(card('green', cardLines));
 
   if (data.agents.length > 0) {
-    lines.push(dim('  Try: "Use agentpod to try two different approaches to [your task]"'));
+    lines.push(dim('  Try: "Use agex to try two different approaches to [your task]"'));
   } else {
     lines.push(nextAction('start your agent and give it a task'));
   }
@@ -333,7 +333,7 @@ export function formatTaskCreateHuman(task: TaskRecord): string {
     task.prompt,
     dim(`branch: ${task.branch} \u00b7 worktree: ${task.worktree}`),
   ]));
-  lines.push(nextAction(`agentpod task exec ${task.id} --cmd "..." --wait`));
+  lines.push(nextAction(`agex task exec ${task.id} --cmd "..." --wait`));
   return lines.join('\n');
 }
 
@@ -347,7 +347,7 @@ export function formatMergeHuman(data: { id: string; merged: boolean; strategy?:
     cardLines.push(dim('auto-committed uncommitted changes before merge'));
   }
   lines.push(card('green', cardLines));
-  lines.push(nextAction('agentpod clean'));
+  lines.push(nextAction('agex clean'));
   return lines.join('\n');
 }
 

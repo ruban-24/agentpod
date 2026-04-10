@@ -9,22 +9,22 @@ import {
 import { createTestRepo, type TestRepo } from '../helpers/test-repo.js';
 
 describe('AGENT_PATHS', () => {
-  it('maps claude-code to .claude/skills/agentpod/SKILL.md', () => {
-    expect(AGENT_PATHS['claude-code']).toBe('.claude/skills/agentpod/SKILL.md');
+  it('maps claude-code to .claude/skills/agex/SKILL.md', () => {
+    expect(AGENT_PATHS['claude-code']).toBe('.claude/skills/agex/SKILL.md');
   });
 
-  it('maps codex to .agents/skills/agentpod/SKILL.md', () => {
-    expect(AGENT_PATHS['codex']).toBe('.agents/skills/agentpod/SKILL.md');
+  it('maps codex to .agents/skills/agex/SKILL.md', () => {
+    expect(AGENT_PATHS['codex']).toBe('.agents/skills/agex/SKILL.md');
   });
 
-  it('maps copilot to .github/skills/agentpod/SKILL.md', () => {
-    expect(AGENT_PATHS['copilot']).toBe('.github/skills/agentpod/SKILL.md');
+  it('maps copilot to .github/skills/agex/SKILL.md', () => {
+    expect(AGENT_PATHS['copilot']).toBe('.github/skills/agex/SKILL.md');
   });
 });
 
 describe('SKILL_CONTENT', () => {
-  it('contains the agentpod skill frontmatter', () => {
-    expect(SKILL_CONTENT).toContain('name: agentpod');
+  it('contains the agex skill frontmatter', () => {
+    expect(SKILL_CONTENT).toContain('name: agex');
   });
 
   it('contains the workflow section', () => {
@@ -46,23 +46,23 @@ describe('writeSkillFiles', () => {
   it('writes skill file and instruction file for claude-code', async () => {
     const written = await writeSkillFiles(repo.path, ['claude-code']);
 
-    expect(written).toContain('.claude/skills/agentpod/SKILL.md');
+    expect(written).toContain('.claude/skills/agex/SKILL.md');
     expect(written).toContain('CLAUDE.md');
 
-    const skill = await readFile(join(repo.path, '.claude/skills/agentpod/SKILL.md'), 'utf-8');
+    const skill = await readFile(join(repo.path, '.claude/skills/agex/SKILL.md'), 'utf-8');
     expect(skill).toBe(SKILL_CONTENT);
 
     const instructions = await readFile(join(repo.path, 'CLAUDE.md'), 'utf-8');
-    expect(instructions).toContain('## agentpod');
-    expect(instructions).toContain('agentpod task create');
+    expect(instructions).toContain('## agex');
+    expect(instructions).toContain('agex task create');
   });
 
   it('writes skill files for multiple agents with shared AGENTS.md', async () => {
     const written = await writeSkillFiles(repo.path, ['claude-code', 'codex', 'copilot']);
 
-    expect(written).toContain('.claude/skills/agentpod/SKILL.md');
-    expect(written).toContain('.agents/skills/agentpod/SKILL.md');
-    expect(written).toContain('.github/skills/agentpod/SKILL.md');
+    expect(written).toContain('.claude/skills/agex/SKILL.md');
+    expect(written).toContain('.agents/skills/agex/SKILL.md');
+    expect(written).toContain('.github/skills/agex/SKILL.md');
     expect(written).toContain('CLAUDE.md');
     expect(written).toContain('AGENTS.md');
 
@@ -78,19 +78,19 @@ describe('writeSkillFiles', () => {
   it('creates parent directories as needed', async () => {
     const written = await writeSkillFiles(repo.path, ['codex']);
 
-    expect(written).toContain('.agents/skills/agentpod/SKILL.md');
+    expect(written).toContain('.agents/skills/agex/SKILL.md');
     expect(written).toContain('AGENTS.md');
 
-    const skill = await readFile(join(repo.path, '.agents/skills/agentpod/SKILL.md'), 'utf-8');
+    const skill = await readFile(join(repo.path, '.agents/skills/agex/SKILL.md'), 'utf-8');
     expect(skill).toBe(SKILL_CONTENT);
   });
 
-  it('does not duplicate agentpod block if already present', async () => {
+  it('does not duplicate agex block if already present', async () => {
     await writeSkillFiles(repo.path, ['claude-code']);
     await writeSkillFiles(repo.path, ['claude-code']);
 
     const instructions = await readFile(join(repo.path, 'CLAUDE.md'), 'utf-8');
-    const matches = instructions.match(/## agentpod/g);
+    const matches = instructions.match(/## agex/g);
     expect(matches).toHaveLength(1);
   });
 
@@ -103,6 +103,6 @@ describe('writeSkillFiles', () => {
 
     const content = await readFile(join(repo.path, 'CLAUDE.md'), 'utf-8');
     expect(content).toContain('# My Project');
-    expect(content).toContain('## agentpod');
+    expect(content).toContain('## agex');
   });
 });

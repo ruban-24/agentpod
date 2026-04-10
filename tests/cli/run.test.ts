@@ -5,13 +5,13 @@ import { join } from 'node:path';
 import { runCommand } from '../../src/cli/commands/run.js';
 import { taskExecCommand } from '../../src/cli/commands/task-exec.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('runCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -55,7 +55,7 @@ describe('runCommand', () => {
       wait: true,
     });
 
-    const logPath = join(repo.path, '.agentpod', 'tasks', `${result.id}.log`);
+    const logPath = join(repo.path, '.agex', 'tasks', `${result.id}.log`);
     const log = await readFile(logPath, 'utf-8');
     expect(log).toContain('captured');
   });
@@ -76,7 +76,7 @@ describe('taskExecCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -149,7 +149,7 @@ describe('taskExecCommand', () => {
     const { TaskManager } = await import('../../src/core/task-manager.js');
 
     // Set up a verify command that always passes
-    await wf(j(repo.path, '.agentpod', 'config.yml'), 'verify:\n  - echo pass\n');
+    await wf(j(repo.path, '.agex', 'config.yml'), 'verify:\n  - echo pass\n');
 
     const task = await taskCreateCommand(repo.path, { prompt: 'bg test' });
 

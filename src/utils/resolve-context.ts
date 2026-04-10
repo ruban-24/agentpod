@@ -1,7 +1,7 @@
 import { resolve } from 'node:path';
-import { AGENTPOD_DIR, WORKTREES_DIR } from '../constants.js';
+import { AGEX_DIR, WORKTREES_DIR } from '../constants.js';
 
-const WORKTREE_SEGMENT = `/${AGENTPOD_DIR}/${WORKTREES_DIR}/`;
+const WORKTREE_SEGMENT = `/${AGEX_DIR}/${WORKTREES_DIR}/`;
 
 export interface WorktreeContext {
   repoRoot: string;
@@ -9,7 +9,7 @@ export interface WorktreeContext {
 }
 
 /**
- * If cwd is inside a task worktree (.agentpod/worktrees/<taskId>),
+ * If cwd is inside a task worktree (.agex/worktrees/<taskId>),
  * returns the main repo root and the task ID.
  * Returns null if cwd is not inside a worktree.
  */

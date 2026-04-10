@@ -2,14 +2,14 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { TaskManager } from '../../src/core/task-manager.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('TaskManager', () => {
   let repo: TestRepo;
   let tm: TaskManager;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
     tm = new TaskManager(repo.path);
   });
 
@@ -24,18 +24,18 @@ describe('TaskManager', () => {
       expect(task.id).toMatch(/^[a-z0-9]{6}$/);
       expect(task.prompt).toBe('refactor auth');
       expect(task.status).toBe('pending');
-      expect(task.branch).toBe(`agentpod/${task.id}`);
-      expect(task.worktree).toBe(`.agentpod/worktrees/${task.id}`);
+      expect(task.branch).toBe(`agex/${task.id}`);
+      expect(task.worktree).toBe(`.agex/worktrees/${task.id}`);
       expect(task.created_at).toBeTruthy();
-      expect(task.env.AGENTPOD_TASK_ID).toBe(task.id);
-      expect(task.env.AGENTPOD_WORKTREE).toContain(task.id);
-      expect(task.env.AGENTPOD_PORT).toBeTruthy();
+      expect(task.env.AGEX_TASK_ID).toBe(task.id);
+      expect(task.env.AGEX_WORKTREE).toContain(task.id);
+      expect(task.env.AGEX_PORT).toBeTruthy();
     });
 
     it('persists task record as JSON file', async () => {
       const task = await tm.createTask({ prompt: 'add tests' });
 
-      const filePath = join(repo.path, '.agentpod', 'tasks', `${task.id}.json`);
+      const filePath = join(repo.path, '.agex', 'tasks', `${task.id}.json`);
       const content = JSON.parse(await readFile(filePath, 'utf-8'));
       expect(content.id).toBe(task.id);
       expect(content.prompt).toBe('add tests');
@@ -55,8 +55,8 @@ describe('TaskManager', () => {
       const task1 = await tm.createTask({ prompt: 'task 1' });
       const task2 = await tm.createTask({ prompt: 'task 2' });
 
-      const port1 = parseInt(task1.env.AGENTPOD_PORT, 10);
-      const port2 = parseInt(task2.env.AGENTPOD_PORT, 10);
+      const port1 = parseInt(task1.env.AGEX_PORT, 10);
+      const port2 = parseInt(task2.env.AGEX_PORT, 10);
       expect(port2).toBe(port1 + 100);
     });
   });

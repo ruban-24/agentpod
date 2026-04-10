@@ -1,36 +1,36 @@
 import { join } from 'node:path';
 
-export const AGENTPOD_DIR = '.agentpod';
+export const AGEX_DIR = '.agex';
 export const CONFIG_FILE = 'config.yml';
 export const TASKS_DIR = 'tasks';
 export const WORKTREES_DIR = 'worktrees';
 
-export function agentpodPath(repoRoot: string): string {
-  return join(repoRoot, AGENTPOD_DIR);
+export function agexPath(repoRoot: string): string {
+  return join(repoRoot, AGEX_DIR);
 }
 
 export function configPath(repoRoot: string): string {
-  return join(repoRoot, AGENTPOD_DIR, CONFIG_FILE);
+  return join(repoRoot, AGEX_DIR, CONFIG_FILE);
 }
 
 export function tasksPath(repoRoot: string): string {
-  return join(repoRoot, AGENTPOD_DIR, TASKS_DIR);
+  return join(repoRoot, AGEX_DIR, TASKS_DIR);
 }
 
 export function worktreesPath(repoRoot: string): string {
-  return join(repoRoot, AGENTPOD_DIR, WORKTREES_DIR);
+  return join(repoRoot, AGEX_DIR, WORKTREES_DIR);
 }
 
 export function taskFilePath(repoRoot: string, taskId: string): string {
-  return join(repoRoot, AGENTPOD_DIR, TASKS_DIR, `${taskId}.json`);
+  return join(repoRoot, AGEX_DIR, TASKS_DIR, `${taskId}.json`);
 }
 
 export function taskLogPath(repoRoot: string, taskId: string): string {
-  return join(repoRoot, AGENTPOD_DIR, TASKS_DIR, `${taskId}.log`);
+  return join(repoRoot, AGEX_DIR, TASKS_DIR, `${taskId}.log`);
 }
 
 export function worktreePath(repoRoot: string, taskId: string): string {
-  return join(repoRoot, AGENTPOD_DIR, WORKTREES_DIR, taskId);
+  return join(repoRoot, AGEX_DIR, WORKTREES_DIR, taskId);
 }
 
 export const EXIT_CODES = {
@@ -47,4 +47,4 @@ export const DEFAULT_PORTS = {
   step: 100,
 } as const;
 
-export const BRANCH_PREFIX = 'agentpod/';
+export const BRANCH_PREFIX = 'agex/';

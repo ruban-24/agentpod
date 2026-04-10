@@ -21,7 +21,7 @@ export async function taskStartCommand(
   const config = await loadConfig(repoRoot);
   if (!config.run) {
     throw new Error(
-      'No run command configured. Add a `run` field to .agentpod/config.yml'
+      'No run command configured. Add a `run` field to .agex/config.yml'
     );
   }
 
@@ -42,7 +42,7 @@ export async function taskStartCommand(
     throw new Error(`Server already running (pid ${task.server_pid})`);
   }
 
-  const port = parseInt(task.env.AGENTPOD_PORT, 10);
+  const port = parseInt(task.env.AGEX_PORT, 10);
   const wtPath = resolve(repoRoot, task.worktree);
 
   const env: Record<string, string> = {

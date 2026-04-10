@@ -47,7 +47,7 @@ let isHumanMode = false;
 const program = new Command();
 
 program
-  .name('agentpod')
+  .name('agex')
   .description('A CLI runtime for running parallel AI coding tasks safely inside real repos')
   .version('0.1.0');
 
@@ -78,12 +78,12 @@ function resolveTaskId(explicitId?: string): string {
 
 function requireInit(repoRoot: string): void {
   try {
-    accessSync(join(repoRoot, '.agentpod'));
+    accessSync(join(repoRoot, '.agex'));
   } catch {
     console.error(
       isHumanMode
-        ? humanOutput(formatErrorHuman('agentpod not initialized. Run: agentpod init'))
-        : JSON.stringify({ error: 'agentpod not initialized. Run: agentpod init' })
+        ? humanOutput(formatErrorHuman('agex not initialized. Run: agex init'))
+        : JSON.stringify({ error: 'agex not initialized. Run: agex init' })
     );
     process.exit(EXIT_CODES.WORKSPACE_ERROR);
   }
@@ -101,7 +101,7 @@ function handleError(err: unknown, exitCode: number = EXIT_CODES.INVALID_ARGS): 
 
 program
   .command('init')
-  .description('Initialize agentpod in the current repository')
+  .description('Initialize agex in the current repository')
   .option('--verify <commands...>', 'Verification commands to run')
   .option('--run <cmd>', 'Dev server command')
   .option('--port-env <var>', 'Env var name for port injection')

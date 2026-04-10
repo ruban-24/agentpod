@@ -1,11 +1,11 @@
 {
-  "name": "@ruban24/agentpod",
+  "name": "@ruban24/agex",
   "version": "0.1.0",
   "description": "A CLI runtime for running parallel AI coding tasks safely inside real repos",
   "type": "module",
   "bin": {
-    "agentpod": "./dist/index.js",
-    "agentpod-mcp": "./dist/mcp/server.js"
+    "agex": "./dist/index.js",
+    "agex-mcp": "./dist/mcp/server.js"
   },
   "scripts": {
     "build": "node build.js",
@@ -26,11 +26,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ruban-24/agentpod.git"
+    "url": "git+https://github.com/ruban-24/agex.git"
   },
-  "homepage": "https://github.com/ruban-24/agentpod#readme",
+  "homepage": "https://github.com/ruban-24/agex#readme",
   "bugs": {
-    "url": "https://github.com/ruban-24/agentpod/issues"
+    "url": "https://github.com/ruban-24/agex/issues"
   },
   "files": [
     "dist",

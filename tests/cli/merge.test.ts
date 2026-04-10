@@ -4,13 +4,13 @@ import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { mergeCommand } from '../../src/cli/commands/merge.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('mergeCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -40,7 +40,7 @@ describe('mergeCommand', () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'merge test' });
 
     // Make a change in the worktree
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'merged.ts'), 'export const merged = true;\n');
     execSync('git add . && git commit -m "add merged file"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -60,7 +60,7 @@ describe('mergeCommand', () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'auto-commit test' });
 
     // Make a change in the worktree but do NOT commit
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'uncommitted.ts'), 'export const uncommitted = true;\n');
 
     const result = await mergeCommand(repo.path, task.id);
@@ -80,7 +80,7 @@ describe('mergeCommand', () => {
   it('does not set auto_committed when changes were already committed', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'pre-committed test' });
 
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'committed.ts'), 'export const committed = true;\n');
     execSync('git add . && git commit -m "manual commit"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -92,7 +92,7 @@ describe('mergeCommand', () => {
 
   it('restores worktree when merge fails due to conflict', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'conflict test' });
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
 
     // Make a change in the worktree on README.md (exists from initial commit)
     await writeFile(join(wtPath, 'README.md'), '# Modified by task\n');

@@ -4,13 +4,13 @@ import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { discardCommand } from '../../src/cli/commands/discard.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('discardCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -53,13 +53,13 @@ describe('discardCommand', () => {
     );
 
     // Worktree should still exist
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await acc(wtPath);
   });
 
   it('discards a task by removing worktree and branch', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'discard test' });
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
 
     const result = await discardCommand(repo.path, task.id);
 
@@ -72,7 +72,7 @@ describe('discardCommand', () => {
 
   it('warns about uncommitted changes when discarding', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'dirty discard test' });
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
 
     // Make uncommitted changes
     await writeFile(join(wtPath, 'dirty.ts'), 'export const dirty = true;\n');
@@ -99,7 +99,7 @@ describe('discardCommand', () => {
     const { ServerManager } = await import('../../src/core/server-manager.js');
 
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       dump({ run: { cmd: 'sleep 60' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'server discard test' });

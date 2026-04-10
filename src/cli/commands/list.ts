@@ -14,7 +14,7 @@ export async function listCommand(repoRoot: string): Promise<ListTask[]> {
   const tasks = await tm.listTasks();
 
   return tasks.map((task) => {
-    const port = parseInt(task.env.AGENTPOD_PORT, 10);
+    const port = parseInt(task.env.AGEX_PORT, 10);
     return {
       ...task,
       port,

@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { ServerManager } from '../../src/core/server-manager.js';
 import { TaskManager } from '../../src/core/task-manager.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('ServerManager', () => {
   let repo: TestRepo;
@@ -9,7 +9,7 @@ describe('ServerManager', () => {
   let sm: ServerManager;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
     tm = new TaskManager(repo.path);
     sm = new ServerManager(repo.path);
   });

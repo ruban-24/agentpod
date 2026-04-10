@@ -11,9 +11,9 @@ export type TaskStatus =
   | 'discarded';
 
 export interface TaskEnv {
-  AGENTPOD_TASK_ID: string;
-  AGENTPOD_WORKTREE: string;
-  AGENTPOD_PORT: string;
+  AGEX_TASK_ID: string;
+  AGEX_WORKTREE: string;
+  AGEX_PORT: string;
 }
 
 export interface VerificationCheck {
@@ -61,7 +61,7 @@ export interface RunConfig {
   port_env?: string;
 }
 
-export interface AgentpodConfig {
+export interface AgexConfig {
   verify?: string[];
   copy?: string[];
   symlink?: string[];

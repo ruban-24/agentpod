@@ -55,7 +55,7 @@ describe('interactiveInit', () => {
     expect(result.created).toBe(true);
     expect(result.verify).toEqual(['npm test', 'npm run lint']);
     expect(result.agents).toEqual(['claude-code']);
-    expect(result.files).toContain('.agentpod/config.yml');
+    expect(result.files).toContain('.agex/config.yml');
 
     const output = stripAnsi(io.getOutput());
     expect(output).toContain('Detected project: Node.js (package.json)');
@@ -174,7 +174,7 @@ describe('interactiveInit', () => {
 
     expect(result.created).toBe(true);
     expect(result.verify).toEqual(['npm test']);
-    expect(result.files).toContain('.agentpod/config.yml');
+    expect(result.files).toContain('.agex/config.yml');
   });
 
   it('displays "Which agents do you use?" heading for agent selection', async () => {

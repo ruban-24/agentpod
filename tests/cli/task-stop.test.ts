@@ -7,13 +7,13 @@ import { taskStopCommand } from '../../src/cli/commands/task-stop.js';
 import { taskStartCommand } from '../../src/cli/commands/task-start.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
 import { TaskManager } from '../../src/core/task-manager.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('taskStopCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -41,7 +41,7 @@ describe('taskStopCommand', () => {
 
   it('throws when no server is running', async () => {
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       dump({ run: { cmd: 'sleep 60' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'test' });
@@ -52,7 +52,7 @@ describe('taskStopCommand', () => {
 
   it('stops a running server', async () => {
     await writeFile(
-      join(repo.path, '.agentpod', 'config.yml'),
+      join(repo.path, '.agex', 'config.yml'),
       dump({ run: { cmd: 'sleep 60' } })
     );
     const task = await taskCreateCommand(repo.path, { prompt: 'test' });

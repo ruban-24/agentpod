@@ -4,7 +4,7 @@ import { getTools } from './tools.js';
 
 export async function startMcpServer(): Promise<void> {
   const server = new McpServer({
-    name: 'agentpod',
+    name: 'agex',
     version: '0.1.0',
   });
 

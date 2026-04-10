@@ -4,13 +4,13 @@ import { join } from 'node:path';
 import { execSync } from 'node:child_process';
 import { diffCommand } from '../../src/cli/commands/diff.js';
 import { taskCreateCommand } from '../../src/cli/commands/task-create.js';
-import { createTestRepoWithAgentpod, type TestRepo } from '../helpers/test-repo.js';
+import { createTestRepoWithAgex, type TestRepo } from '../helpers/test-repo.js';
 
 describe('diffCommand', () => {
   let repo: TestRepo;
 
   beforeEach(async () => {
-    repo = await createTestRepoWithAgentpod();
+    repo = await createTestRepoWithAgex();
   });
 
   afterEach(async () => {
@@ -40,7 +40,7 @@ describe('diffCommand', () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'diff test' });
 
     // Make a change in the worktree
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'newfile.ts'), 'export const x = 1;\n');
     execSync('git add . && git commit -m "add file"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -48,13 +48,13 @@ describe('diffCommand', () => {
 
     expect(result.id).toBe(task.id);
     expect(result.branch).toBeDefined();
-    expect(result.branch).toContain('agentpod/');
+    expect(result.branch).toContain('agex/');
     expect(result.files_changed).toBe(1);
   });
 
   it('includes commit log in result', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'commits test' });
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'file.ts'), 'export const y = 1;\n');
     execSync('git add . && git commit -m "test commit"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -66,7 +66,7 @@ describe('diffCommand', () => {
 
   it('includes per-file stats in result', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'files test' });
-    const wtPath = join(repo.path, '.agentpod', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
     await writeFile(join(wtPath, 'stats.ts'), 'export const z = 1;\n');
     execSync('git add . && git commit -m "add stats file"', { cwd: wtPath, stdio: 'ignore' });
 
