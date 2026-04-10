@@ -30,6 +30,22 @@ describe('SKILL_CONTENT', () => {
   it('contains the workflow section', () => {
     expect(SKILL_CONTENT).toContain('## Workflow');
   });
+
+  it('contains retry command reference', () => {
+    expect(SKILL_CONTENT).toContain('agex retry');
+  });
+
+  it('contains respond command reference', () => {
+    expect(SKILL_CONTENT).toContain('agex respond');
+  });
+
+  it('contains needs-input workflow section', () => {
+    expect(SKILL_CONTENT).toContain('needs-input.json');
+  });
+
+  it('contains updated lifecycle with needs-input', () => {
+    expect(SKILL_CONTENT).toContain('needs-input');
+  });
 });
 
 describe('writeSkillFiles', () => {

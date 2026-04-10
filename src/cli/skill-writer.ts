@@ -120,10 +120,21 @@ agex clean
 ## When Things Fail
 
 \`\`\`bash
-agex diff <id>           # See what you changed
-agex discard <id>        # Throw it away
-# Create a new task and try again with a different approach
+agex log <id>              # See what went wrong
+agex retry <id> --feedback "Fix X because Y"  # Retry with context
+# Or if the approach is fundamentally wrong:
+agex discard <id>          # Throw it away and start fresh
 \`\`\`
+
+## When You're Stuck
+
+If you need a human decision before continuing:
+
+1. Write \`.agex/needs-input.json\` in your worktree:
+   \`{"question": "JWT or sessions?", "options": ["jwt", "sessions"]}\`
+2. Exit — agex pauses the task
+3. Human responds with \`agex respond <id> --answer "jwt"\`
+4. You're re-invoked with the answer in your prompt
 
 ## Command Reference
 
@@ -138,8 +149,18 @@ agex discard <id>        # Throw it away
 | \`agex merge <id>\` | Merge task branch into current branch |
 | \`agex discard <id>\` | Remove task worktree and branch |
 | \`agex clean\` | Clean up all finished tasks |
+| \`agex retry <id> --feedback <text>\` | Retry failed task with enhanced prompt |
+| \`agex respond <id> --answer <text>\` | Answer a task's question and resume |
 
 All commands output JSON — parse the output to get task IDs, worktree paths, and status.
+
+## Task Lifecycle
+
+\`\`\`
+pending -> provisioning -> ready -> running -> verifying -> completed -> merged
+                                            -> needs-input -> running (after respond)
+                                               verifying -> failed -> retried (after retry)
+\`\`\`
 
 ## Key Details
 

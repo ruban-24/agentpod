@@ -37,7 +37,12 @@ agex init --verify "npm test" "npm run lint"
 
 Optional `.agex/config.yml`:
 ```yaml
-verify:  ["npm test", "npm run lint"]
+verify:
+  - cmd: "npm test"
+    parser: jest
+  - cmd: "tsc --noEmit"
+    parser: typescript
+  - "npm run lint"          # plain string, no parser
 copy:    [".env"]              # Files copied into each worktree
 symlink: ["node_modules"]      # Shared directories symlinked
 setup:   ["npm install"]       # Runs after workspace creation
@@ -137,21 +142,19 @@ agex merge <winner>
 agex discard <loser>
 ```
 
-### 5. Discard and Retry
+### 5. Retry with Feedback
 
-When approaches fail verification, don't force-merge. Learn and retry.
+Task failed verification? Retry with context instead of starting over.
 
 ```bash
-# Understand what went wrong
-agex log <id>
-agex diff <id>
+# Task failed verification? Retry with context instead of starting over
+agex retry <id> --feedback "The auth test fails because login() returns undefined — check the session module"
 
-# Discard failed attempts
-agex discard <id1>
-agex discard <id2>
+# Preview what the retry prompt will look like without creating a task
+agex retry <id> --feedback "..." --dry-run
 
-# Retry with refined prompts incorporating what you learned
-agex run --prompt "Implement X using Y (avoid Z because it caused ...)" --cmd "..."
+# Start fresh from main instead of building on the failed branch
+agex retry <id> --feedback "..." --from-scratch
 ```
 
 ### 6. Clean Up
@@ -185,6 +188,27 @@ agex task stop <id2>
 
 For multi-service apps (frontend + backend), create separate tasks and read each task's URL from `task status`.
 
+### 8. When You're Stuck
+
+When you hit a decision that requires human input, signal it instead of guessing:
+
+1. Write a file in your worktree: `.agex/needs-input.json`
+```json
+{
+  "question": "Should the auth module use JWT or server-side sessions?",
+  "options": ["jwt", "sessions"],
+  "context": "JWT is stateless but can't be revoked. Sessions need Redis."
+}
+```
+2. Exit normally — agex will detect the file and pause the task
+3. The human responds with `agex respond <id> --answer "jwt"`
+4. Your agent is re-invoked with the full Q&A context appended to the prompt
+
+**Do this when:**
+- There are multiple valid approaches and the choice depends on project constraints you don't know
+- You need credentials, API keys, or configuration values
+- The spec is ambiguous and guessing wrong would waste the entire task
+
 ## Quick Reference
 
 | Command | Purpose |
@@ -205,6 +229,8 @@ For multi-service apps (frontend + backend), create separate tasks and read each
 | `agex merge <id>` | Merge task branch into current branch |
 | `agex discard <id>` | Remove task worktree and branch |
 | `agex clean` | Clean up all finished tasks |
+| `agex retry <id> --feedback <text>` | Retry failed task with feedback |
+| `agex respond <id> --answer <text>` | Answer a needs-input task question |
 
 All commands output JSON by default. Add `--human` for colored terminal output.
 
@@ -212,11 +238,18 @@ All commands output JSON by default. Add `--human` for colored terminal output.
 
 ```
 pending -> provisioning -> ready -> running -> verifying -> completed -> merged
-                                                         -> failed    -> discarded
+                                            -> needs-input -> running (after respond)
+                                                           -> discarded
+                                               verifying -> failed    -> retried (after retry)
+                                                                      -> discarded
+                                                          -> errored  -> retried (after retry)
+                                                                      -> discarded
 ```
 
 - `ready`: can execute, verify, merge, or discard
 - `completed`/`failed`: can merge or discard
+- `needs-input`: agent signaled it needs a human decision — respond to continue
+- `retried`: task was superseded by a retry — terminal
 - `merged`/`discarded`: terminal — task is done
 - Merge conflicts auto-abort and reattach the worktree so work can continue
 
@@ -240,3 +273,5 @@ pending -> provisioning -> ready -> running -> verifying -> completed -> merged
 | Forgetting to clean up | Run `agex clean` after merge/discard cycles |
 | Using `--human` in agent workflows | Default JSON output is designed for agents — use it |
 | Starting servers you don't need | Only `task start` when you need to test the running app |
+| Discarding and recreating instead of retrying | Use `agex retry --feedback` to build on previous work |
+| Erroring out when stuck on a decision | Write `.agex/needs-input.json` and exit — the human will respond |
