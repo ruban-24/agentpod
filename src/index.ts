@@ -22,6 +22,7 @@ import { retryCommand } from './cli/commands/retry.js';
 import { respondCommand } from './cli/commands/respond.js';
 import { taskStartCommand } from './cli/commands/task-start.js';
 import { taskStopCommand } from './cli/commands/task-stop.js';
+import { withAbsoluteWorktree, withAbsoluteWorktrees } from './cli/enrich.js';
 import { formatOutput, humanOutput } from './cli/output.js';
 import {
   formatListHuman,
@@ -162,7 +163,8 @@ taskCmd
         prompt: opts.prompt,
         cmd: opts.cmd,
       });
-      console.log(opts.human ? humanOutput(formatTaskCreateHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktree(result, root);
+      console.log(opts.human ? humanOutput(formatTaskCreateHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
     }
@@ -179,12 +181,13 @@ taskCmd
       const root = getRepoRoot();
       requireInit(root);
       const result = await taskStatusCommand(root, taskId);
+      const enriched = withAbsoluteWorktree(result, root);
       if (opts.human) {
         let logContent = '';
         try { logContent = await logCommand(root, taskId); } catch {}
-        console.log(humanOutput(formatStatusHuman(result, logContent)));
+        console.log(humanOutput(formatStatusHuman(enriched, logContent)));
       } else {
-        console.log(formatOutput(result, false));
+        console.log(formatOutput(enriched, false));
       }
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
@@ -206,7 +209,8 @@ taskCmd
         cmd: opts.cmd,
         wait: opts.wait,
       });
-      console.log(opts.human ? humanOutput(formatTaskExecHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktree(result, root);
+      console.log(opts.human ? humanOutput(formatTaskExecHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.AGENT_FAILED);
     }
@@ -254,7 +258,8 @@ taskCmd
       const root = getRepoRoot();
       requireInit(root);
       const result = await listCommand(root);
-      console.log(opts.human ? humanOutput(formatListHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktrees(result, root);
+      console.log(opts.human ? humanOutput(formatListHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
     }
@@ -277,7 +282,8 @@ program
         cmd: opts.cmd,
         wait: opts.wait,
       });
-      console.log(opts.human ? humanOutput(formatRunHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktree(result, root);
+      console.log(opts.human ? humanOutput(formatRunHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.AGENT_FAILED);
     }
@@ -293,7 +299,8 @@ program
       const root = getRepoRoot();
       requireInit(root);
       const result = await listCommand(root);
-      console.log(opts.human ? humanOutput(formatListHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktrees(result, root);
+      console.log(opts.human ? humanOutput(formatListHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
     }
@@ -418,7 +425,8 @@ program
       const root = getRepoRoot();
       requireInit(root);
       const result = await discardCommand(root, taskId);
-      console.log(opts.human ? humanOutput(formatDiscardHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktree(result, root);
+      console.log(opts.human ? humanOutput(formatDiscardHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
     }
@@ -465,7 +473,8 @@ program
       if (opts.dryRun) {
         console.log(opts.human ? humanOutput(formatRetryDryRunHuman(result.prompt)) : formatOutput({ prompt: result.prompt }, false));
       } else {
-        console.log(opts.human ? humanOutput(formatRetryHuman(result)) : formatOutput(result, false));
+        const enriched = withAbsoluteWorktree(result, repoRoot);
+        console.log(opts.human ? humanOutput(formatRetryHuman(enriched)) : formatOutput(enriched, false));
       }
     } catch (err) {
       handleError(err, EXIT_CODES.INVALID_ARGS);
@@ -490,7 +499,8 @@ program
         cmd: opts.cmd,
         wait: opts.wait,
       });
-      console.log(opts.human ? humanOutput(formatRespondHuman(result)) : formatOutput(result, false));
+      const enriched = withAbsoluteWorktree(result, repoRoot);
+      console.log(opts.human ? humanOutput(formatRespondHuman(enriched)) : formatOutput(enriched, false));
     } catch (err) {
       handleError(err, EXIT_CODES.INVALID_ARGS);
     }

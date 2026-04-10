@@ -46,6 +46,18 @@ describe('taskCreateCommand', () => {
     expect(result.env.AGEX_TASK_ID).toBe(result.id);
   });
 
+  it('task worktree field is a relative path that resolves correctly', async () => {
+    const { resolve } = await import('node:path');
+    const { withAbsoluteWorktree } = await import('../../src/cli/enrich.js');
+
+    const result = await taskCreateCommand(repo.path, { prompt: 'path test' });
+    const enriched = withAbsoluteWorktree(result, repo.path);
+
+    expect(enriched.worktree).toBe(`.agex/tasks/${result.id}`);
+    expect(enriched.absolute_worktree).toBe(resolve(repo.path, `.agex/tasks/${result.id}`));
+    expect(enriched.absolute_worktree).toBe(enriched.env.AGEX_WORKTREE);
+  });
+
   it('provisions the workspace with config copy/symlink', async () => {
     const { writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
