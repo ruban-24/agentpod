@@ -8,8 +8,8 @@
 
 ### Features
 
-- **Agent-centric command names**: `diff` -> `review`, `merge` -> `accept`, `discard` -> `reject`, `respond` -> `answer`, `log` -> `output`. Old names preserved as CLI aliases.
-- **Flattened namespace**: `task create`, `task exec`, `task status`, `task start`, `task stop` are now top-level commands (`agex create`, `agex exec`, etc.). The `task` prefix still works as an alias.
+- **Agent-centric command names**: `diff` -> `review`, `merge` -> `accept`, `discard` -> `reject`, `respond` -> `answer`, `log` -> `output`. Old names removed.
+- **Flattened namespace**: `task create`, `task exec`, `task status`, `task start`, `task stop` are now top-level commands (`agex create`, `agex exec`, etc.). The `task` subcommand group is removed.
 - **`answer --text`**: The `respond --answer` flag renamed to `answer --text` to avoid redundancy.
 
 ### Improvements
