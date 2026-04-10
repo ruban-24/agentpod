@@ -204,6 +204,35 @@ setup:
   - "npm install"
 ```
 
+### Monorepos
+
+agex works in monorepos but doesn't auto-detect workspace layouts yet. You'll need to manually configure `.agex/config.yml` to list per-package files:
+
+```yaml
+# Example: pnpm monorepo with packages/api and packages/web
+copy:
+  - .env
+  - packages/api/.env
+  - packages/web/.env
+
+symlink: []  # avoid symlinking node_modules in monorepos — hoisting makes it fragile
+
+setup:
+  - pnpm install  # regenerates all node_modules correctly in the worktree
+
+verify:
+  - pnpm run lint
+  - pnpm run test
+  - pnpm run build
+```
+
+**What to know:**
+
+- **Don't symlink `node_modules`** in monorepos. Use `setup: pnpm install` (or `yarn install`) instead — it regenerates dependencies correctly per the workspace layout.
+- **List each `.env` explicitly.** Auto-detection only finds the root `.env`, not ones nested in packages.
+- **Auto-detection only checks the repo root** for `package.json`, lock files, etc. It won't detect your package manager from `pnpm-workspace.yaml` or the `workspaces` field — set `setup` manually.
+- **Worktrees are full repo checkouts.** Each task gets the entire monorepo, not a single package. This is fine — your agent can be told to work on a specific package via the task prompt.
+
 ### Auto-Detection
 
 If no `verify` commands are configured, agex auto-detects from your project:
