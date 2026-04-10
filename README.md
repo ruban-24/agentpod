@@ -4,7 +4,7 @@
     <strong><em><strong>ag</strong></em>ent <em><strong>ex</strong></em>ecution, parallelized.</strong>
   </p>
   <p align="center">
-    Isolated worktrees for every AI task. Parallel by default. Verified before merge. Nothing touches main.
+    Run N agents in parallel. Each gets its own branch. Nothing touches main until you say so.
   </p>
   <p align="center">
     <a href="https://github.com/ruban-24/agex/actions"><img src="https://github.com/ruban-24/agex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -21,21 +21,23 @@
 
 ---
 
+## Get Started
+
+```bash
+npm install -g @ruban24/agex
+cd your-project
+agex init
+```
+
+Requires **Node.js >= 20** and **git**. `agex init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agex automatically. Then just tell your agent:
+
+> *"Use agex to try 3 different approaches to refactor the auth module, then compare and merge the best one."*
+
 ## Why agex?
 
 AI coding agents are fast — but they work on your branch, one task at a time.
 
 **What if you could run 5 agents in parallel, each in an isolated workspace, and pick the best result?**
-
-agex gives your agent a fleet of git worktrees. Each task gets its own branch — full isolation, no conflicts. Your agent creates tasks, runs them in parallel, verifies results automatically, and you decide what ships.
-
-**For you:** install, init, go back to what you were doing. Check in when you want with `agex summary --human`.
-
-**For your agent:** 14 commands covering the full lifecycle — create, execute, verify, compare, merge, discard. JSON output by default. Agent skill files for auto-discovery.
-
-**No cloud. No accounts. No team buy-in needed.** Everything lives in `.agex/` (gitignored) and optional skill files (committed).
-
-## How It Works
 
 ```
 1. You run    →  agex init             →  guided setup, drops agent skill files
@@ -45,74 +47,15 @@ agex gives your agent a fleet of git worktrees. Each task gets its own branch �
 
 That's the whole model. You run one command. Your agent does the rest. You check in when you want.
 
-**Under the hood**, your agent uses agex to:
-- Create isolated git worktrees (one per task, own branch)
-- Execute commands in each worktree (other agents, scripts, anything)
-- Run verification (tests, lint, build) automatically
-- Provision workspaces (copy secrets, symlink dependencies, run setup hooks)
-- Compare results side-by-side
-- Merge the best approach into your branch
+**For you:** install, init, go back to what you were doing. Check in when you want with `agex summary --human`.
 
-## Get Started
+**For your agent:** 14 commands covering the full lifecycle — create, execute, verify, compare, merge, discard. JSON output by default. Agent skill files for auto-discovery.
 
-```bash
-npm install -g @ruban24/agex
-cd your-project
-agex init
-```
-
-Requires **Node.js >= 20** and **git**.
-
-`agex init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agex automatically. After init, go back to your agent and give it a task:
-
-> *"Use agex to try 3 different approaches to refactor the auth module, then compare and merge the best one."*
-
-## Two Ways to Use agex
-
-### Agent-driven (primary)
-
-Your agent reads the skill file dropped by `agex init` and calls agex commands directly. You don't need to learn the CLI — your agent already knows it.
-
-```
-You:    "Use agex to try 3 approaches to refactor auth"
-Agent:  creates 3 tasks, executes them in parallel worktrees,
-        runs verification, compares results
-You:    agex summary --human   ← check in whenever you want
-Agent:  merges the best, discards the rest
-```
-
-This is how most people use agex. The skill file teaches your agent the full workflow.
-
-### Subprocess mode (CI, scripting, multi-agent)
-
-You can also orchestrate agex directly. This is useful for CI pipelines, shell scripts, and dispatching multiple different agents on the same codebase.
-
-**Key flags:**
-- `--prompt "..."` — describes the task (used for tracking and comparison)
-- `--cmd "..."` — the command to run inside the isolated worktree (any CLI tool)
-- `--wait` — block until the command finishes (without it, the task runs in the background)
-
-```bash
-# Fan out 3 different agents on the same task
-agex run --prompt "JWT auth (Claude)" \
-  --cmd "claude -p 'refactor auth to use JWT'" --wait &
-agex run --prompt "JWT auth (Codex)" \
-  --cmd "codex -q 'refactor auth to use JWT'" --wait &
-agex run --prompt "JWT auth (Copilot)" \
-  --cmd "copilot-cli 'refactor auth to use JWT'" --wait &
-wait
-
-# Compare all three, merge the best
-agex compare $(agex list --json | jq -r '.[].id' | tr '\n' ' ')
-agex merge <best-id>
-agex clean
-```
-
-**Each task gets its own environment variables** — `AGEX_TASK_ID`, `AGEX_WORKTREE`, and `AGEX_PORT` — so parallel processes can bind to different ports without conflicts.
+**No cloud. No accounts. No team buy-in needed.** Everything lives in `.agex/` (gitignored) and optional skill files (committed).
 
 ## What Does It Look Like?
 
-Add `--human` to any command for colored terminal output. Here's what a typical session looks like:
+Add `--human` to any command for colored terminal output:
 
 **Check on all tasks:**
 ```
@@ -172,6 +115,18 @@ $ agex compare abc123 def456 ghi789 --human
   3 tasks · 2 completed · 1 failed
 ```
 
+## Supported Agents
+
+`agex init` drops a skill file into your repo so your agent discovers agex automatically. No manual configuration needed — just start your agent and give it a task.
+
+| Agent | Skill file location | Auto-discovered |
+|-------|-------------------|-----------------|
+| Claude Code | `.claude/skills/agex/SKILL.md` | Yes |
+| Codex CLI | `.agents/skills/agex/SKILL.md` | Yes |
+| Copilot CLI | `.github/skills/agex/SKILL.md` | Yes |
+
+Any agent that can run shell commands works with agex via subprocess mode (`--cmd`). The skill files above teach agents the full agex workflow — when to use it, how to create tasks, verify, compare, and merge.
+
 ## When to Reach for agex
 
 - **You want to try multiple approaches and pick the best** — fan out 3 ideas, verify all, merge the winner
@@ -185,42 +140,6 @@ $ agex compare abc123 def456 ghi789 --human
 - **Trivial single-file edits** — isolation overhead isn't worth it, just let your agent edit directly
 - **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
 - **Non-git projects** — agex requires git for worktree isolation
-
-## Supported Agents
-
-`agex init` drops a skill file into your repo so your agent discovers agex automatically. No manual configuration needed — just start your agent and give it a task.
-
-| Agent | Skill file location | Auto-discovered |
-|-------|-------------------|-----------------|
-| Claude Code | `.claude/skills/agex/SKILL.md` | Yes |
-| Codex CLI | `.agents/skills/agex/SKILL.md` | Yes |
-| Copilot CLI | `.github/skills/agex/SKILL.md` | Yes |
-
-Any agent that can run shell commands works with agex via subprocess mode (`--cmd`). The skill files above teach agents the full agex workflow — when to use it, how to create tasks, verify, compare, and merge.
-
-<details>
-<summary>Optional: MCP server for native tool discovery</summary>
-
-If your agent or IDE supports Model Context Protocol, you can also expose agex as an MCP server. This is **not required** — skill files are the recommended path.
-
-```json
-{
-  "mcpServers": {
-    "agex": {
-      "command": "agex-mcp",
-      "args": []
-    }
-  }
-}
-```
-
-**Claude Code** — add to `.claude/settings.json` or `~/.claude/settings.json`
-
-**Cursor** — add to `.cursor/mcp.json`
-
-All 14 CLI commands are exposed as MCP tools.
-
-</details>
 
 ## Commands
 
@@ -297,39 +216,59 @@ If no `verify` commands are configured, agex auto-detects from your project:
 | `Cargo.toml` | `cargo test` |
 | `go.mod` | `go test ./...` |
 
-## Architecture
+<details>
+<summary>Subprocess mode (CI, scripting, multi-agent)</summary>
 
+You can also orchestrate agex directly. This is useful for CI pipelines, shell scripts, and dispatching multiple different agents on the same codebase.
+
+**Key flags:**
+- `--prompt "..."` — describes the task (used for tracking and comparison)
+- `--cmd "..."` — the command to run inside the isolated worktree (any CLI tool)
+- `--wait` — block until the command finishes (without it, the task runs in the background)
+
+```bash
+# Fan out 3 different agents on the same task
+agex run --prompt "JWT auth (Claude)" \
+  --cmd "claude -p 'refactor auth to use JWT'" --wait &
+agex run --prompt "JWT auth (Codex)" \
+  --cmd "codex -q 'refactor auth to use JWT'" --wait &
+agex run --prompt "JWT auth (Copilot)" \
+  --cmd "copilot-cli 'refactor auth to use JWT'" --wait &
+wait
+
+# Compare all three, merge the best
+agex compare $(agex list --json | jq -r '.[].id' | tr '\n' ' ')
+agex merge <best-id>
+agex clean
 ```
-CLI (commander)
- ├── TaskManager      — task state machine, JSON persistence
- ├── WorkspaceManager — git worktree lifecycle, provisioning
- ├── AgentRunner      — subprocess spawn (blocking + non-blocking)
- ├── Verifier         — run checks, collect pass/fail results
- └── Reviewer         — diff stats, commit log, merge
 
-MCP Server (stdio)
- └── wraps all 14 CLI commands as MCP tools
+**Each task gets its own environment variables** — `AGEX_TASK_ID`, `AGEX_WORKTREE`, and `AGEX_PORT` — so parallel processes can bind to different ports without conflicts.
+
+</details>
+
+<details>
+<summary>MCP server for native tool discovery</summary>
+
+If your agent or IDE supports Model Context Protocol, you can also expose agex as an MCP server. This is **not required** — skill files are the recommended path.
+
+```json
+{
+  "mcpServers": {
+    "agex": {
+      "command": "agex-mcp",
+      "args": []
+    }
+  }
+}
 ```
 
-### Task Lifecycle
+**Claude Code** — add to `.claude/settings.json` or `~/.claude/settings.json`
 
-```
-pending → provisioning → ready → running → verifying → completed → merged
-                           │                         → failed    → discarded
-                           ├──→ verifying (direct verify)
-                           └──→ merged / discarded
-```
+**Cursor** — add to `.cursor/mcp.json`
 
-## Exit Codes
+All 14 CLI commands are exposed as MCP tools.
 
-| Code | Meaning |
-|------|---------|
-| `0` | Success |
-| `1` | Agent command failed |
-| `2` | Verification failed |
-| `3` | Merge conflict |
-| `4` | Invalid arguments |
-| `5` | Workspace error |
+</details>
 
 ## Contributing
 
