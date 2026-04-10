@@ -51,9 +51,13 @@ export class Verifier {
       }
     }
 
-    return {
-      passed: checks.every((c) => c.passed),
-      checks,
-    };
+    const passed = checks.every((c) => c.passed);
+    const total = checks.length;
+    const failedCount = checks.filter((c) => !c.passed).length;
+    const summary = passed
+      ? `${total}/${total} checks passed`
+      : `${failedCount} of ${total} checks failed`;
+
+    return { passed, summary, checks };
   }
 }

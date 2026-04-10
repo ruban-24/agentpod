@@ -52,6 +52,7 @@ export interface VerificationCheck {
 
 export interface VerificationResult {
   passed: boolean;
+  summary: string;
   checks: VerificationCheck[];
 }
 

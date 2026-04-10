@@ -60,6 +60,19 @@ describe('Verifier', () => {
 
     expect(result.checks[0].cmd).toBe('echo hello');
   });
+
+  it('includes summary in result', async () => {
+    const result = await verifier.runChecks(repo.path, ['echo pass', 'echo pass']);
+
+    expect(result.summary).toBe('2/2 checks passed');
+  });
+
+  it('includes failure summary when checks fail', async () => {
+    const result = await verifier.runChecks(repo.path, ['echo pass', 'exit 1']);
+
+    expect(result.summary).toBe('1 of 2 checks failed');
+    expect(result.passed).toBe(false);
+  });
 });
 
 describe('Verifier with VerifyCommand objects', () => {
