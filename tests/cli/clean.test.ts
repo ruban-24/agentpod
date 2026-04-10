@@ -57,6 +57,25 @@ describe('cleanCommand', () => {
     expect(result).toBeNull();
   });
 
+  it('cleans up errored tasks', async () => {
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'will error' });
+    const tm = new TaskManager(repo.path);
+
+    // Force task to errored status
+    const taskData = await tm.getTask(task.id);
+    taskData!.status = 'errored' as any;
+    await tm.saveTask(taskData!);
+
+    const result = await cleanCommand(repo.path);
+    expect(result.removed).toContain(task.id);
+
+    // Task JSON should be gone
+    const after = await tm.getTask(task.id);
+    expect(after).toBeNull();
+  });
+
   it('auto-kills server before cleaning task', async () => {
     const { writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');

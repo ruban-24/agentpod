@@ -1,6 +1,8 @@
 import { TaskManager } from '../../core/task-manager.js';
 import { WorkspaceManager } from '../../core/workspace-manager.js';
 import { loadConfig } from '../../config/loader.js';
+import { AgexError } from '../../errors.js';
+import { EXIT_CODES } from '../../constants.js';
 import type { TaskRecord } from '../../types.js';
 
 export interface TaskCreateOptions {
@@ -20,32 +22,35 @@ export async function taskCreateCommand(
   const task = await tm.createTask({ prompt: options.prompt, cmd: options.cmd });
   await tm.updateStatus(task.id, 'provisioning');
 
-  // Create worktree
-  await wm.createWorktree(task.id, task.branch);
+  try {
+    // Create worktree
+    await wm.createWorktree(task.id, task.branch);
 
-  // Provision
-  await wm.provision(task.id, {
-    copy: config.copy,
-    symlink: config.symlink,
-  });
+    // Provision
+    await wm.provision(task.id, {
+      copy: config.copy,
+      symlink: config.symlink,
+    });
 
-  // Run setup hooks
-  if (config.setup && config.setup.length > 0) {
-    try {
+    // Run setup hooks
+    if (config.setup && config.setup.length > 0) {
       await wm.runSetupHooks(task.id, config.setup);
-    } catch (err: unknown) {
-      const stderr = (err as any)?.stderr || '';
-      const cmd = (err as any)?.command || '';
-      const message = cmd
-        ? `Setup hook failed: ${cmd}${stderr ? '\n' + stderr : ''}`
-        : String(err);
-      await tm.updateTask(task.id, { error: message });
-      await tm.updateStatus(task.id, 'errored');
-      throw new Error(message);
     }
-  }
 
-  // Mark ready
-  const readyTask = await tm.updateStatus(task.id, 'ready');
-  return readyTask;
+    // Mark ready
+    const readyTask = await tm.updateStatus(task.id, 'ready');
+    return readyTask;
+  } catch (err: unknown) {
+    // Rollback: clean up whatever was created
+    await wm.safeRemoveWorktree(task.id);
+    await wm.safeDeleteBranch(task.branch);
+    try { await tm.deleteTask(task.id); } catch { /* task may not exist yet */ }
+
+    // Re-throw with suggestion
+    const message = err instanceof Error ? err.message : String(err);
+    throw new AgexError(`Task provisioning failed: ${message}`, {
+      suggestion: "Check setup hooks in .agex/config.yml. Run 'agex init' to reconfigure",
+      exitCode: EXIT_CODES.WORKSPACE_ERROR,
+    });
+  }
 }

@@ -23,7 +23,8 @@ export async function cleanCommand(repoRoot: string): Promise<CleanResult> {
       task.status === 'completed' ||
       task.status === 'failed' ||
       task.status === 'discarded' ||
-      task.status === 'merged'
+      task.status === 'merged' ||
+      task.status === 'errored'
     ) {
       // Check for uncommitted changes before cleaning
       try {
