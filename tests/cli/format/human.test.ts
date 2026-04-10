@@ -30,11 +30,11 @@ function makeTask(overrides: Partial<TaskRecord> = {}): TaskRecord {
     prompt: 'Fix the login bug',
     status: 'completed',
     branch: 'agex/abc123',
-    worktree: '.agex/worktrees/abc123',
+    worktree: '.agex/tasks/abc123',
     created_at: '2026-04-09T00:00:00Z',
     env: {
       AGEX_TASK_ID: 'abc123',
-      AGEX_WORKTREE: '/tmp/test/.agex/worktrees/abc123',
+      AGEX_WORKTREE: '/tmp/test/.agex/tasks/abc123',
       AGEX_PORT: '3100',
     },
     ...overrides,
@@ -328,9 +328,9 @@ describe('v0.2.0 formatters', () => {
       prompt: 'test',
       status: 'running' as const,
       branch: 'agex/abc123',
-      worktree: '.agex/worktrees/abc123',
+      worktree: '.agex/tasks/abc123',
       created_at: new Date().toISOString(),
-      env: { AGEX_TASK_ID: 'abc123', AGEX_WORKTREE: '.agex/worktrees/abc123', AGEX_PORT: '3001' },
+      env: { AGEX_TASK_ID: 'abc123', AGEX_WORKTREE: '.agex/tasks/abc123', AGEX_PORT: '3001' },
     };
     const result = formatRespondHuman(task);
     expect(result).toContain('Answer saved');
@@ -343,9 +343,9 @@ describe('v0.2.0 formatters', () => {
       prompt: 'retry task',
       status: 'running' as const,
       branch: 'agex/def456',
-      worktree: '.agex/worktrees/def456',
+      worktree: '.agex/tasks/def456',
       created_at: new Date().toISOString(),
-      env: { AGEX_TASK_ID: 'def456', AGEX_WORKTREE: '.agex/worktrees/def456', AGEX_PORT: '3002' },
+      env: { AGEX_TASK_ID: 'def456', AGEX_WORKTREE: '.agex/tasks/def456', AGEX_PORT: '3002' },
       retriedFrom: 'abc123',
       retryDepth: 1,
     };

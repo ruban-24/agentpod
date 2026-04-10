@@ -56,7 +56,7 @@ describe('Full Workflow Integration', () => {
     expect(task.status).toBe('ready');
 
     // Step 3: Execute a command that makes changes
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'greeting.ts'), 'export function greet(name: string) { return `Hello, ${name}!`; }\n');
     execSync('git add . && git commit -m "add greeting"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -89,8 +89,8 @@ describe('Full Workflow Integration', () => {
     const task2 = await taskCreateCommand(repo.path, { prompt: 'approach 2' });
 
     // Make different changes in each
-    const wt1 = join(repo.path, '.agex', 'worktrees', task1.id);
-    const wt2 = join(repo.path, '.agex', 'worktrees', task2.id);
+    const wt1 = join(repo.path, '.agex', 'tasks', task1.id);
+    const wt2 = join(repo.path, '.agex', 'tasks', task2.id);
 
     await writeFile(join(wt1, 'solution.ts'), 'export const approach = "A";\n');
     execSync('git add . && git commit -m "approach A"', { cwd: wt1, stdio: 'ignore' });

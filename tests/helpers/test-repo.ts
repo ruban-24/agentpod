@@ -28,6 +28,6 @@ export async function createTestRepoWithAgex(): Promise<TestRepo> {
   const repo = await createTestRepo();
   const agexDir = join(repo.path, '.agex');
   await mkdir(join(agexDir, 'tasks'), { recursive: true });
-  await mkdir(join(agexDir, 'worktrees'), { recursive: true });
+  // worktrees now live inside .agex/tasks/ alongside JSON state files
   return repo;
 }

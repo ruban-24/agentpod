@@ -53,13 +53,13 @@ describe('discardCommand', () => {
     );
 
     // Worktree should still exist
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await acc(wtPath);
   });
 
   it('discards a task by removing worktree and branch', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'discard test' });
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
 
     const result = await discardCommand(repo.path, task.id);
 
@@ -72,7 +72,7 @@ describe('discardCommand', () => {
 
   it('warns about uncommitted changes when discarding', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'dirty discard test' });
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
 
     // Make uncommitted changes
     await writeFile(join(wtPath, 'dirty.ts'), 'export const dirty = true;\n');

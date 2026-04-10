@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { dump } from 'js-yaml';
-import { AGEX_DIR, TASKS_DIR, WORKTREES_DIR, CONFIG_FILE } from '../../constants.js';
+import { AGEX_DIR, TASKS_DIR, CONFIG_FILE } from '../../constants.js';
 import type { AgexConfig, RunConfig } from '../../types.js';
 import { type AgentId, writeSkillFiles } from '../skill-writer.js';
 
@@ -54,7 +54,6 @@ export async function initCommand(
 
   // Create directories
   await mkdir(join(agexDir, TASKS_DIR), { recursive: true });
-  await mkdir(join(agexDir, WORKTREES_DIR), { recursive: true });
 
   // Handle .gitignore
   const gitignorePath = join(repoRoot, '.gitignore');

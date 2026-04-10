@@ -49,7 +49,7 @@ describe('compareCommand', () => {
 
   it('includes duration and diff stats in comparison', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'enriched compare' });
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'file.ts'), 'export const x = 1;\n');
     execSync('git add . && git commit -m "add file"', { cwd: wtPath, stdio: 'ignore' });
 

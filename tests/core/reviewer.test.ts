@@ -41,7 +41,7 @@ describe('Reviewer', () => {
   describe('getDiff', () => {
     it('returns diff stats for changes on a branch', async () => {
       // Create a worktree with a change
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'diff01');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'diff01');
       execSync(`git worktree add -b agex/diff01 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -58,7 +58,7 @@ describe('Reviewer', () => {
     });
 
     it('returns zeros when branch has no changes', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'diff02');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'diff02');
       execSync(`git worktree add -b agex/diff02 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -74,7 +74,7 @@ describe('Reviewer', () => {
 
   describe('getDiffText', () => {
     it('returns the full diff text', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'diff03');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'diff03');
       execSync(`git worktree add -b agex/diff03 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -91,7 +91,7 @@ describe('Reviewer', () => {
 
   describe('getCommitLog', () => {
     it('returns commit log entries for a branch', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'log01');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'log01');
       execSync(`git worktree add -b agex/log01 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -110,7 +110,7 @@ describe('Reviewer', () => {
     });
 
     it('returns empty array for branch with no new commits', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'log02');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'log02');
       execSync(`git worktree add -b agex/log02 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -123,7 +123,7 @@ describe('Reviewer', () => {
 
   describe('getPerFileStats', () => {
     it('returns per-file change stats for a branch', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'stats01');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'stats01');
       execSync(`git worktree add -b agex/stats01 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -141,7 +141,7 @@ describe('Reviewer', () => {
     });
 
     it('returns empty array for branch with no changes', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'stats02');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'stats02');
       execSync(`git worktree add -b agex/stats02 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -154,7 +154,7 @@ describe('Reviewer', () => {
 
   describe('merge', () => {
     it('merges a branch into the current branch', async () => {
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'merge01');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'merge01');
       execSync(`git worktree add -b agex/merge01 "${wtPath}"`, {
         cwd: repo.path,
         stdio: 'ignore',
@@ -179,7 +179,7 @@ describe('Reviewer', () => {
 
       // Now create a branch from BEFORE that commit, make a conflicting change
       const parentSha = execSync('git rev-parse HEAD~1', { cwd: repo.path, encoding: 'utf-8' }).trim();
-      const wtPath = join(repo.path, '.agex', 'worktrees', 'merge02');
+      const wtPath = join(repo.path, '.agex', 'tasks', 'merge02');
       execSync(`git worktree add -b agex/merge02 "${wtPath}" ${parentSha}`, {
         cwd: repo.path,
         stdio: 'ignore',

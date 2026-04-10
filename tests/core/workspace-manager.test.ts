@@ -42,7 +42,7 @@ describe('WorkspaceManager', () => {
     it('creates a git worktree at the expected path', async () => {
       const taskId = 'abc123';
       const branch = 'agex/abc123';
-      const worktreePath = join(repo.path, '.agex', 'worktrees', taskId);
+      const worktreePath = join(repo.path, '.agex', 'tasks', taskId);
 
       await wm.createWorktree(taskId, branch);
 
@@ -71,7 +71,7 @@ describe('WorkspaceManager', () => {
       await wm.createWorktree(taskId, branch);
       await wm.removeWorktree(taskId, branch);
 
-      const worktreePath = join(repo.path, '.agex', 'worktrees', taskId);
+      const worktreePath = join(repo.path, '.agex', 'tasks', taskId);
       await expect(access(worktreePath)).rejects.toThrow();
     });
   });
@@ -87,7 +87,7 @@ describe('WorkspaceManager', () => {
 
       await wm.provision(taskId, { copy: ['.env'] });
 
-      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'tasks', taskId);
       const envContent = await readFile(join(wtPath, '.env'), 'utf-8');
       expect(envContent).toBe('SECRET=abc123\n');
     });
@@ -104,7 +104,7 @@ describe('WorkspaceManager', () => {
 
       await wm.provision(taskId, { symlink: ['node_modules'] });
 
-      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'tasks', taskId);
       const stat = await lstat(join(wtPath, 'node_modules'));
       expect(stat.isSymbolicLink()).toBe(true);
     });
@@ -126,7 +126,7 @@ describe('WorkspaceManager', () => {
 
       // Create worktree (creates branch), then remove worktree only (keep branch)
       await wm.createWorktree(taskId, branch);
-      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'tasks', taskId);
       execSync(`git worktree remove --force "${wtPath}"`, { cwd: repo.path, stdio: 'ignore' });
 
       // Reattach
@@ -149,7 +149,7 @@ describe('WorkspaceManager', () => {
       const branch = 'agex/setup1';
       await wm.createWorktree(taskId, branch);
 
-      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'tasks', taskId);
 
       await wm.runSetupHooks(taskId, ['touch setup-marker.txt']);
 
@@ -161,7 +161,7 @@ describe('WorkspaceManager', () => {
       const branch = 'agex/setup2';
       await wm.createWorktree(taskId, branch);
 
-      const wtPath = join(repo.path, '.agex', 'worktrees', taskId);
+      const wtPath = join(repo.path, '.agex', 'tasks', taskId);
 
       await wm.runSetupHooks(taskId, [
         'echo "step1" > order.txt',

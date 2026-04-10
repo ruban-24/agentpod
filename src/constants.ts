@@ -3,7 +3,7 @@ import { join } from 'node:path';
 export const AGEX_DIR = '.agex';
 export const CONFIG_FILE = 'config.yml';
 export const TASKS_DIR = 'tasks';
-export const WORKTREES_DIR = 'worktrees';
+export const WORKTREES_DIR = 'tasks';
 
 export function agexPath(repoRoot: string): string {
   return join(repoRoot, AGEX_DIR);

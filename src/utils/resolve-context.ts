@@ -9,7 +9,7 @@ export interface WorktreeContext {
 }
 
 /**
- * If cwd is inside a task worktree (.agex/worktrees/<taskId>),
+ * If cwd is inside a task worktree (.agex/tasks/<taskId>),
  * returns the main repo root and the task ID.
  * Returns null if cwd is not inside a worktree.
  */

@@ -25,7 +25,7 @@ describe('TaskManager', () => {
       expect(task.prompt).toBe('refactor auth');
       expect(task.status).toBe('pending');
       expect(task.branch).toBe(`agex/${task.id}`);
-      expect(task.worktree).toBe(`.agex/worktrees/${task.id}`);
+      expect(task.worktree).toBe(`.agex/tasks/${task.id}`);
       expect(task.created_at).toBeTruthy();
       expect(task.env.AGEX_TASK_ID).toBe(task.id);
       expect(task.env.AGEX_WORKTREE).toContain(task.id);

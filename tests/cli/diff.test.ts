@@ -40,7 +40,7 @@ describe('diffCommand', () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'diff test' });
 
     // Make a change in the worktree
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'newfile.ts'), 'export const x = 1;\n');
     execSync('git add . && git commit -m "add file"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -54,7 +54,7 @@ describe('diffCommand', () => {
 
   it('includes commit log in result', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'commits test' });
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'file.ts'), 'export const y = 1;\n');
     execSync('git add . && git commit -m "test commit"', { cwd: wtPath, stdio: 'ignore' });
 
@@ -66,7 +66,7 @@ describe('diffCommand', () => {
 
   it('includes per-file stats in result', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'files test' });
-    const wtPath = join(repo.path, '.agex', 'worktrees', task.id);
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'stats.ts'), 'export const z = 1;\n');
     execSync('git add . && git commit -m "add stats file"', { cwd: wtPath, stdio: 'ignore' });
 

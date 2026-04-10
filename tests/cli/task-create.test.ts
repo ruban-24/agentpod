@@ -42,7 +42,7 @@ describe('taskCreateCommand', () => {
     expect(result.id).toMatch(/^[a-z0-9]{6}$/);
     expect(result.status).toBe('ready');
     expect(result.branch).toContain('agex/');
-    expect(result.worktree).toContain('.agex/worktrees/');
+    expect(result.worktree).toContain('.agex/tasks/');
     expect(result.env.AGEX_TASK_ID).toBe(result.id);
   });
 
@@ -59,7 +59,7 @@ describe('taskCreateCommand', () => {
 
     const result = await taskCreateCommand(repo.path, { prompt: 'test' });
 
-    const envPath = join(repo.path, '.agex', 'worktrees', result.id, '.env');
+    const envPath = join(repo.path, '.agex', 'tasks', result.id, '.env');
     const { readFile } = await import('node:fs/promises');
     const content = await readFile(envPath, 'utf-8');
     expect(content).toBe('SECRET=test\n');

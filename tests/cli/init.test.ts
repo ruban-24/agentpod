@@ -15,12 +15,11 @@ describe('initCommand', () => {
     await repo.cleanup();
   });
 
-  it('creates .agex directory with tasks and worktrees subdirs', async () => {
+  it('creates .agex directory with tasks subdir', async () => {
     await initCommand(repo.path, {});
 
     await access(join(repo.path, '.agex'));
     await access(join(repo.path, '.agex', 'tasks'));
-    await access(join(repo.path, '.agex', 'worktrees'));
   });
 
   it('adds .agex/ to .gitignore', async () => {
