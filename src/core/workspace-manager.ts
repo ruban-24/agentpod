@@ -119,6 +119,12 @@ export class WorkspaceManager {
     } catch {
       // Worktree may not exist — that's fine
     }
+    try {
+      const git = simpleGit(this.repoRoot);
+      await git.raw(['worktree', 'prune']);
+    } catch {
+      // Prune failure is non-critical
+    }
   }
 
   async safeDeleteBranch(branch: string): Promise<void> {
