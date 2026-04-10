@@ -26,16 +26,19 @@ You have access to `agex`, a CLI tool for managing isolated git worktrees. Each 
 
 ```bash
 agex task create --prompt "Implement caching using Redis"
+agex task create --issue 45
+agex task create --issue owner/repo#45
+agex task create --issue 45 --prompt "Focus on the Redis approach"
 ```
 
-This returns JSON with `id` and `worktree` (the directory path).
+This returns JSON with `id`, `worktree`, and `absolute_worktree` (the full absolute path — use this to `cd` into the worktree). `--prompt` and `--issue` can be used together: the issue content provides context and the prompt adds additional instructions.
 
 ### Step 2: Work inside the worktree
 
-`cd` into the worktree path and do your work there — edit files, run commands, install packages. This is a full copy of the repo on its own git branch.
+`cd` into the `absolute_worktree` path from the JSON output and do your work there — edit files, run commands, install packages. This is a full copy of the repo on its own git branch.
 
 ```bash
-cd <worktree-path>
+cd <absolute_worktree>
 # Now edit files, run tests, etc. — all isolated from main
 ```
 
@@ -45,7 +48,7 @@ cd <worktree-path>
 agex verify <id>
 ```
 
-Runs the configured verification commands (tests, lint, build). Check the output — if anything fails, fix it in the worktree and re-verify.
+Runs the configured verification commands (tests, lint, build). Returns JSON with `passed: boolean` and `summary: string` at the top level. Exit code is 2 when checks fail (check `$?` or the `passed` field). If anything fails, fix it in the worktree and re-verify.
 
 ### Step 4: Review and merge
 
@@ -78,6 +81,16 @@ agex discard <loser-id>
 agex clean
 ```
 
+## Error Handling
+
+Error JSON now includes a `suggestion` field with recovery hints. For example:
+
+```json
+{"error": "Task not found: abc123", "suggestion": "Run 'agex list' to see available tasks"}
+```
+
+Check the `suggestion` field for actionable next steps when a command fails.
+
 ## When Things Fail
 
 ```bash
@@ -90,7 +103,7 @@ agex discard <id>        # Throw it away
 
 | Command | Purpose |
 |---------|---------|
-| `agex task create --prompt <text>` | Create isolated task — returns `id` and `worktree` path |
+| `agex task create --prompt <text> [--issue <ref>]` | Create isolated task — returns `id` and `absolute_worktree` path. `--prompt` and `--issue` can be used together (issue content + additional instructions). |
 | `agex task status <id>` | Get task details |
 | `agex list` | List all tasks |
 | `agex verify <id>` | Run verification checks (tests, lint, build) |
@@ -104,7 +117,8 @@ All commands output JSON — parse the output to get task IDs, worktree paths, a
 
 ## Key Details
 
-- `task create` returns `{ "id": "...", "worktree": "/path/to/worktree", ... }` — use the `worktree` path to `cd` into
+- `task create` returns `{ "id": "...", "worktree": "...", "absolute_worktree": "/full/path/to/worktree", ... }` — use `absolute_worktree` to `cd` into
+- `verify` returns `{ "passed": true/false, "summary": "3/3 checks passed", ... }` — check `passed` for quick pass/fail
 - Always `verify` before `merge`
 - Always `compare` when you have multiple tasks
 - Always `clean` after merging/discarding
