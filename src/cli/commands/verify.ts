@@ -3,7 +3,7 @@ import { TaskManager } from '../../core/task-manager.js';
 import { Verifier } from '../../core/verifier.js';
 import { loadConfig } from '../../config/loader.js';
 import { detectVerifyCommands } from '../../config/auto-detect.js';
-import type { VerificationCheck } from '../../types.js';
+import type { VerificationCheck, VerifyCommand } from '../../types.js';
 
 export interface VerifyResult {
   id: string;
@@ -24,7 +24,7 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
   }
 
   const wtPath = resolve(repoRoot, task.worktree);
-  const verifyCommands = config.verify || (await detectVerifyCommands(wtPath));
+  const verifyCommands: VerifyCommand[] = config.verify || (await detectVerifyCommands(wtPath));
 
   // Transition to verifying if the state machine allows it
   const canTransition = VERIFYABLE_STATUSES.includes(task.status);

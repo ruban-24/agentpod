@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Verifier } from '../../src/core/verifier.js';
 import { createTestRepo, type TestRepo } from '../helpers/test-repo.js';
+import type { VerifyCommand } from '../../src/types.js';
 
 describe('Verifier', () => {
   let repo: TestRepo;
@@ -58,5 +59,59 @@ describe('Verifier', () => {
     const result = await verifier.runChecks(repo.path, ['echo hello']);
 
     expect(result.checks[0].cmd).toBe('echo hello');
+  });
+});
+
+describe('Verifier with VerifyCommand objects', () => {
+  let repo: TestRepo;
+  let verifier: Verifier;
+
+  beforeEach(async () => {
+    repo = await createTestRepo();
+    verifier = new Verifier();
+  });
+
+  afterEach(async () => {
+    await repo.cleanup();
+  });
+
+  it('accepts VerifyCommand[] with string and object entries', async () => {
+    const commands: VerifyCommand[] = [
+      'echo ok',
+      { cmd: 'echo "src/a.ts(1,1): error TS123: bad"', parser: 'typescript' },
+    ];
+    const result = await verifier.runChecks(repo.path, commands);
+
+    expect(result.checks).toHaveLength(2);
+    expect(result.checks[0].cmd).toBe('echo ok');
+    expect(result.checks[1].cmd).toBe('echo "src/a.ts(1,1): error TS123: bad"');
+  });
+
+  it('populates parsed errors when parser is specified', async () => {
+    const commands: VerifyCommand[] = [
+      { cmd: 'echo "src/a.ts(1,1): error TS2345: bad type"', parser: 'typescript' },
+    ];
+    const result = await verifier.runChecks(repo.path, commands);
+
+    expect(result.checks[0].parsed).toBeDefined();
+    expect(result.checks[0].parsed!.length).toBeGreaterThanOrEqual(1);
+    expect(result.checks[0].parsed![0].rule).toBe('TS2345');
+  });
+
+  it('leaves parsed undefined when no parser specified', async () => {
+    const commands: VerifyCommand[] = ['echo ok'];
+    const result = await verifier.runChecks(repo.path, commands);
+
+    expect(result.checks[0].parsed).toBeUndefined();
+  });
+
+  it('gracefully handles unknown parser name', async () => {
+    const commands: VerifyCommand[] = [
+      { cmd: 'echo hello', parser: 'nonexistent' },
+    ];
+    const result = await verifier.runChecks(repo.path, commands);
+
+    expect(result.checks[0].parsed).toBeUndefined();
+    expect(result.checks[0].output).toContain('hello');
   });
 });
