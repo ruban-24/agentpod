@@ -75,6 +75,46 @@ describe('verifyCommand', () => {
     expect(updated!.status).toBe('completed');
   });
 
+  it('returns passed and summary in result', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+
+    await writeFile(
+      join(repo.path, '.agex', 'config.yml'),
+      'verify:\n  - echo "all good"\n  - echo "also good"\n'
+    );
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'pass/fail test' });
+    const result = await verifyCommand(repo.path, task.id);
+
+    expect(result.passed).toBe(true);
+    expect(result.summary).toBe('2/2 checks passed');
+  });
+
+  it('returns passed=false and failure summary when check fails', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+
+    await writeFile(
+      join(repo.path, '.agex', 'config.yml'),
+      'verify:\n  - echo pass\n  - exit 1\n'
+    );
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'fail test' });
+
+    // Force task to running so verify can transition
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+    const tm = new TaskManager(repo.path);
+    const taskData = await tm.getTask(task.id);
+    taskData!.status = 'running' as any;
+    await tm.saveTask(taskData!);
+
+    const result = await verifyCommand(repo.path, task.id);
+
+    expect(result.passed).toBe(false);
+    expect(result.summary).toBe('1 of 2 checks failed');
+  });
+
   it('updates verification data without changing status on re-verify of completed task', async () => {
     const { writeFile: wf } = await import('node:fs/promises');
     const { join: j } = await import('node:path');

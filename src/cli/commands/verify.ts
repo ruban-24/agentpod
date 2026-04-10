@@ -7,6 +7,8 @@ import type { VerificationCheck, VerifyCommand } from '../../types.js';
 
 export interface VerifyResult {
   id: string;
+  passed: boolean;
+  summary: string;
   checks: VerificationCheck[];
 }
 
@@ -42,5 +44,5 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
   }
   // Otherwise (re-verify of completed/failed), just update verification data
 
-  return { id: taskId, checks: result.checks };
+  return { id: taskId, passed: result.passed, summary: result.summary, checks: result.checks };
 }
