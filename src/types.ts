@@ -89,6 +89,12 @@ export interface TaskRecord {
   // Needs-input
   needsInput?: NeedsInputPayload;
   responses?: QAPair[];
+  // GitHub issue link
+  issue?: {
+    number: number;
+    url: string;
+    title: string;
+  };
 }
 
 export interface RunConfig {
