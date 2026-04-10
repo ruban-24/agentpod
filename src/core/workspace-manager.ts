@@ -61,8 +61,12 @@ export class WorkspaceManager {
           await mkdir(dirname(dest), { recursive: true });
           await symlink(src, dest);
         } catch (err: unknown) {
-          if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+          const code = (err as NodeJS.ErrnoException).code;
+          if (code === 'ENOENT') {
             continue; // Source doesn't exist, skip
+          }
+          if (code === 'EEXIST') {
+            continue; // Destination already exists (e.g. git checkout created it), skip
           }
           throw err;
         }
