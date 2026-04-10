@@ -48,13 +48,15 @@ export function getTools(): ToolDefinition[] {
       name: 'agex_task_create',
       description: 'Create a new task with an isolated git worktree workspace',
       inputSchema: {
-        prompt: z.string().describe('Description of the task'),
+        prompt: z.string().optional().describe('Description of the task (required unless --issue is provided)'),
         cmd: z.string().optional().describe('Optional command to execute later'),
+        issue: z.string().optional().describe('GitHub issue reference: number (45), URL, or owner/repo#45'),
       },
       handler: async (args) => {
         return await taskCreateCommand(getRepoRoot(), {
-          prompt: args.prompt as string,
+          prompt: args.prompt as string | undefined,
           cmd: args.cmd as string | undefined,
+          issue: args.issue as string | undefined,
         });
       },
     },
