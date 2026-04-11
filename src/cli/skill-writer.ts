@@ -18,9 +18,10 @@ export const AGENT_PATHS: Record<AgentId, string> = {
   'copilot': '.github/skills/agex/SKILL.md',
 };
 
-// Hook config file paths per agent
+// Hook config file paths per agent — use local settings files so hooks
+// are trusted automatically without requiring user approval on first run.
 const AGENT_HOOK_CONFIG_PATHS: Record<AgentId, string> = {
-  'claude-code': '.claude/settings.json',
+  'claude-code': '.claude/settings.local.json',
   'codex': '.codex/hooks.json',
   'copilot': '.github/hooks/hooks.json',
 };

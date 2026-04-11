@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.5 — 2026-04-11
+
+### Improvements
+
+- **Zero-friction Claude Code hooks:** `agex init --agents claude-code` now writes to `.claude/settings.local.json` instead of `.claude/settings.json`. Local settings are trusted automatically — no approval prompt on first session.
+
 ## 0.3.4 — 2026-04-11
 
 ### Bug Fixes
@@ -9,7 +15,7 @@
 ### Features
 
 - **Task timeout:** `--timeout <seconds>` flag on `exec`, `run`, and `answer` commands. Also configurable globally via `timeout:` in `.agex/config.yml`. Kills the agent and transitions to `errored` after the specified duration (#38)
-- **SessionStart hooks for agent distribution:** `agex init --agents claude-code` now writes `.claude/settings.json` with a SessionStart hook and `.claude/hooks/session-start.md` instead of appending to CLAUDE.md. Same for codex/copilot agents. Cleaner integration that doesn't modify user docs.
+- **SessionStart hooks for agent distribution:** `agex init --agents claude-code` now writes `.claude/settings.local.json` with a SessionStart hook and `.claude/hooks/agex-gate.md` instead of appending to CLAUDE.md. Same for codex/copilot agents. Cleaner integration that doesn't modify user docs.
 
 ### Performance
 

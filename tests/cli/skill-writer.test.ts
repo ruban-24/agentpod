@@ -78,12 +78,12 @@ describe('writeSkillFiles', () => {
     await repo.cleanup();
   });
 
-  it('writes skill file, hook file, and settings.json for claude-code', async () => {
+  it('writes skill file, hook file, and settings.local.json for claude-code', async () => {
     const written = await writeSkillFiles(repo.path, ['claude-code']);
 
     expect(written).toContain('.claude/skills/agex/SKILL.md');
     expect(written).toContain('.claude/hooks/agex-gate.md');
-    expect(written).toContain('.claude/settings.json');
+    expect(written).toContain('.claude/settings.local.json');
 
     const skill = await readFile(join(repo.path, '.claude/skills/agex/SKILL.md'), 'utf-8');
     expect(skill).toBe(SKILL_CONTENT);
@@ -91,7 +91,7 @@ describe('writeSkillFiles', () => {
     const hook = await readFile(join(repo.path, '.claude/hooks/agex-gate.md'), 'utf-8');
     expect(hook).toBe(HOOK_CONTENT);
 
-    const settings = JSON.parse(await readFile(join(repo.path, '.claude/settings.json'), 'utf-8'));
+    const settings = JSON.parse(await readFile(join(repo.path, '.claude/settings.local.json'), 'utf-8'));
     expect(settings.hooks.SessionStart).toHaveLength(1);
     expect(settings.hooks.SessionStart[0].hooks[0].type).toBe('command');
     expect(settings.hooks.SessionStart[0].hooks[0].command).toContain('agex-gate');
@@ -132,7 +132,7 @@ describe('writeSkillFiles', () => {
     expect(written).toContain('.claude/skills/agex/SKILL.md');
     expect(written).toContain('.agents/skills/agex/SKILL.md');
     expect(written).toContain('.github/skills/agex/SKILL.md');
-    expect(written).toContain('.claude/settings.json');
+    expect(written).toContain('.claude/settings.local.json');
     expect(written).toContain('.codex/hooks.json');
     expect(written).toContain('.github/hooks/hooks.json');
   });
@@ -154,15 +154,15 @@ describe('writeSkillFiles', () => {
     await writeSkillFiles(repo.path, ['claude-code']);
     await writeSkillFiles(repo.path, ['claude-code']);
 
-    const settings = JSON.parse(await readFile(join(repo.path, '.claude/settings.json'), 'utf-8'));
+    const settings = JSON.parse(await readFile(join(repo.path, '.claude/settings.local.json'), 'utf-8'));
     expect(settings.hooks.SessionStart).toHaveLength(1);
   });
 
-  it('merges into existing settings.json without overwriting other hooks', async () => {
+  it('merges into existing settings.local.json without overwriting other hooks', async () => {
     const { writeFile: wf } = await import('node:fs/promises');
     const { mkdir: mk } = await import('node:fs/promises');
     await mk(join(repo.path, '.claude'), { recursive: true });
-    await wf(join(repo.path, '.claude/settings.json'), JSON.stringify({
+    await wf(join(repo.path, '.claude/settings.local.json'), JSON.stringify({
       permissions: { allow: ['Bash(git:*)'] },
       hooks: {
         PreToolUse: [{ hooks: [{ type: 'command', command: 'echo pre' }] }],
@@ -171,7 +171,7 @@ describe('writeSkillFiles', () => {
 
     await writeSkillFiles(repo.path, ['claude-code']);
 
-    const settings = JSON.parse(await readFile(join(repo.path, '.claude/settings.json'), 'utf-8'));
+    const settings = JSON.parse(await readFile(join(repo.path, '.claude/settings.local.json'), 'utf-8'));
     // Existing hooks preserved
     expect(settings.permissions.allow).toContain('Bash(git:*)');
     expect(settings.hooks.PreToolUse).toHaveLength(1);
