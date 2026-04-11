@@ -1,126 +1,278 @@
 ---
 name: agex
 description: MUST invoke before implementing, building, fixing, or refactoring anything that touches more than one file. Default to using agex unless the change is a single-file trivial fix. Creates isolated worktrees — nothing touches main until verified and merged.
+compatibility: Requires git and Node.js >= 20. agex must be installed globally (npm i -g agex).
 ---
 
 # agex
 
-**All non-trivial work goes through agex.** If you are about to edit files directly on main and the change touches more than one file, stop — create an agex task first.
+## Overview
 
-You have access to `agex`, a CLI tool for managing isolated git worktrees. Each task gets its own branch and worktree directory. Nothing touches the main branch until you explicitly merge.
+agex is a CLI runtime for running parallel AI coding tasks in isolated git worktrees. Instead of implementing one approach and hoping it works, fan out multiple approaches in parallel, verify all of them, and merge the best one.
 
-**You are the agent.** Create tasks, `cd` into their worktree paths, do your work there (edit files, run commands), then verify and merge back.
+**Mental model:** docker-compose for AI coding tasks. Each task gets its own branch and worktree. Nothing touches your main branch until you explicitly merge.
 
 ## When to Use
 
-- The task has 2+ independent parts that touch different files — create a task per part
-- The change modifies more than one file — isolate it
-- The change is risky (refactor, migration, dependency change) — isolate it
-- You want to verify before merging (tests, lint, build)
+- Multiple viable approaches exist — explore them in parallel instead of picking one
+- Task decomposes into independent subtasks that don't block each other
+- Risky changes (refactors, migrations, experiments) need safe isolation
+- You want verification (tests, lint, build) to gate merges
+- You're in a git repository
 
-**Only skip agex for:** single-file trivial fixes (typos, config tweaks, one-line changes), or non-git projects.
+**When NOT to use:**
+- Trivial single-file edits where isolation adds no value
+- Tasks with strict sequential dependencies
+- Non-git projects
 
-## Workflow
-
-### Step 1: Create a task
+## Setup
 
 ```bash
+# Initialize (auto-detects verify commands from package.json, Makefile, Cargo.toml, etc.)
+agex init
+
+# Or specify verify commands explicitly
+agex init --verify "npm test" "npm run lint"
+```
+
+Optional `.agex/config.yml`:
+```yaml
+verify:
+  - cmd: "npm test"
+    parser: jest
+  - cmd: "tsc --noEmit"
+    parser: typescript
+  - "npm run lint"          # plain string, no parser
+copy:    [".env"]              # Files copied into each worktree
+symlink: ["node_modules"]      # Shared directories symlinked
+setup:   ["npm install"]       # Runs after workspace creation
+run:                           # Dev server for each worktree
+  cmd: "npm run dev"
+  port_env: PORT
+```
+
+## Core Workflows
+
+### 1. Fan Out Multiple Approaches
+
+Explore the solution space — try N different approaches and pick the winner.
+
+```bash
+# Create isolated tasks for each approach
 agex create --prompt "Implement caching using Redis"
-agex create --issue 45
-agex create --issue owner/repo#45
-agex create --issue 45 --prompt "Focus on the Redis approach"
-```
+agex create --prompt "Implement caching using in-memory LRU"
+agex create --prompt "Implement caching using SQLite"
 
-This returns JSON with `id`, `worktree`, and `absolute_worktree` (the full absolute path — use this to `cd` into the worktree). `--prompt` and `--issue` can be used together: the issue content provides context and the prompt adds additional instructions.
+# Execute an agent in each worktree
+agex exec <id1> --cmd "<your-agent> 'Implement Redis caching per the prompt'"
+agex exec <id2> --cmd "<your-agent> 'Implement LRU caching per the prompt'"
+agex exec <id3> --cmd "<your-agent> 'Implement SQLite caching per the prompt'"
 
-### Step 2: Work inside the worktree
+# Wait for all to finish, then compare
+agex compare <id1> <id2> <id3>
 
-`cd` into the `absolute_worktree` path from the JSON output and do your work there — edit files, run commands, install packages. This is a full copy of the repo on its own git branch.
-
-```bash
-cd <absolute_worktree>
-# Now edit files, run tests, etc. — all isolated from main
-```
-
-### Step 3: Verify
-
-```bash
-agex verify <id>
-```
-
-Runs the configured verification commands (tests, lint, build). Returns JSON with `passed: boolean` and `summary: string` at the top level. Exit code is 2 when checks fail (check `$?` or the `passed` field). If anything fails, fix it in the worktree and re-verify.
-
-### Step 4: Review and merge
-
-```bash
-agex review <id>         # See what changed
-agex accept <id>        # Merge into current branch
-agex clean             # Remove finished task worktrees
-```
-
-## Multiple Approaches
-
-When the user wants you to explore alternatives:
-
-```bash
-# Create one task per approach
-agex create --prompt "Approach A: use Redis"
-agex create --prompt "Approach B: use in-memory LRU"
-
-# Work on each — cd into each worktree and implement
-# Then verify both
-agex verify <id1>
-agex verify <id2>
-
-# Compare them
-agex compare <id1> <id2>
-
-# Present results to the user, merge the winner
-agex accept <winner-id>
-agex reject <loser-id>
+# Merge the best, discard the rest
+agex accept <best-id>
+agex reject <other-id>
+agex reject <other-id>
 agex clean
 ```
 
-## Error Handling
+### 2. Parallel Independent Subtasks
 
-Error JSON now includes a `suggestion` field with recovery hints. For example:
-
-```json
-{"error": "Task not found: abc123", "suggestion": "Run 'agex list' to see available tasks"}
-```
-
-Check the `suggestion` field for actionable next steps when a command fails.
-
-## When Things Fail
+Decompose a large task into pieces that don't depend on each other and run them simultaneously.
 
 ```bash
-agex review <id>           # See what you changed
-agex reject <id>        # Throw it away
-# Create a new task and try again with a different approach
+agex create --prompt "Add user authentication endpoints"
+agex create --prompt "Add email notification service"
+agex create --prompt "Add rate limiting middleware"
+
+# Execute all (non-blocking by default — returns immediately)
+agex exec <id1> --cmd "<your-agent> '...'"
+agex exec <id2> --cmd "<your-agent> '...'"
+agex exec <id3> --cmd "<your-agent> '...'"
+
+# Monitor progress
+agex summary
+
+# Verify each, then merge passing tasks sequentially
+agex verify <id1>
+agex accept <id1>
+agex verify <id2>
+agex accept <id2>
+agex verify <id3>
+agex accept <id3>
+agex clean
 ```
 
-## Command Reference
+### 3. Isolated Single Task
+
+Safely sandbox a risky change.
+
+```bash
+# Create + execute in one step (--wait blocks until done)
+agex run --prompt "Migrate database schema to v2" --cmd "<your-agent> '...'" --wait
+
+# Review and verify
+agex review <id>
+agex verify <id>
+
+# Merge if good, discard if not
+agex accept <id>    # or: agex reject <id>
+```
+
+### 4. Verify-Compare-Decide
+
+Never merge blind. Always verify. Always compare when multiple tasks exist.
+
+```bash
+# Verify all candidates
+agex verify <id1>
+agex verify <id2>
+
+# Compare: checks passed, diff size, files changed
+agex compare <id1> <id2>
+
+# Inspect the diffs if needed
+agex review <id1>
+agex review <id2>
+
+# Decide and act
+agex accept <winner>
+agex reject <loser>
+```
+
+### 5. Retry with Feedback
+
+Task failed verification? Retry with context instead of starting over.
+
+```bash
+# Task failed verification? Retry with context instead of starting over
+agex retry <id> --feedback "The auth test fails because login() returns undefined — check the session module"
+
+# Preview what the retry prompt will look like without creating a task
+agex retry <id> --feedback "..." --dry-run
+
+# Start fresh from main instead of building on the failed branch
+agex retry <id> --feedback "..." --from-scratch
+```
+
+### 6. Clean Up
+
+Prevent worktree and branch sprawl.
+
+```bash
+# Removes worktrees and state for all merged/discarded/completed/failed tasks
+agex clean
+```
+
+Run `clean` after every merge/discard cycle.
+
+### 7. Dev Server Per Task
+
+Start a dev server in each worktree to visually test approaches.
+
+```bash
+# Config already has run field — start servers
+agex start <id1>
+agex start <id2>
+
+# Check which URLs to test
+agex status <id1>   # shows port and url
+agex status <id2>
+
+# Test, compare, then stop servers
+agex stop <id1>
+agex stop <id2>
+```
+
+For multi-service apps (frontend + backend), create separate tasks and read each task's URL from `status`.
+
+### 8. When You're Stuck
+
+When you hit a decision that requires human input, signal it instead of guessing:
+
+1. Write a file in your worktree: `.agex/needs-input.json`
+```json
+{
+  "question": "Should the auth module use JWT or server-side sessions?",
+  "options": ["jwt", "sessions"],
+  "context": "JWT is stateless but can't be revoked. Sessions need Redis."
+}
+```
+2. Exit normally — agex will detect the file and pause the task
+3. The human responds with `agex answer <id> --text "jwt"`
+4. Your agent is re-invoked with the full Q&A context appended to the prompt
+
+**Do this when:**
+- There are multiple valid approaches and the choice depends on project constraints you don't know
+- You need credentials, API keys, or configuration values
+- The spec is ambiguous and guessing wrong would waste the entire task
+
+## Quick Reference
 
 | Command | Purpose |
 |---------|---------|
-| `agex create --prompt <text> [--issue <ref>]` | Create isolated task — returns `id` and `absolute_worktree` path. `--prompt` and `--issue` can be used together (issue content + additional instructions). |
+| `agex init [--verify <cmds...>]` | Initialize in current repo |
+| `agex create --prompt <text> [--issue <ref>]` | Create isolated task with its own worktree |
+| `agex exec <id> --cmd <cmd> [--wait]` | Run command in task worktree |
+| `agex start <id>` | Start dev server in task worktree |
+| `agex stop <id>` | Stop dev server in task worktree |
 | `agex status <id>` | Get task details |
+| `agex run --prompt <text> --cmd <cmd> [--wait]` | Create + execute shortcut |
 | `agex list` | List all tasks |
-| `agex verify <id>` | Run verification checks (tests, lint, build) |
+| `agex summary` | Status overview with counts |
+| `agex output <id>` | Show captured agent output |
+| `agex verify <id>` | Run verification checks |
 | `agex review <id>` | Show changes vs base branch |
 | `agex compare <id1> <id2> [...]` | Side-by-side task comparison |
 | `agex accept <id>` | Merge task branch into current branch |
 | `agex reject <id>` | Remove task worktree and branch |
 | `agex clean` | Clean up all finished tasks |
+| `agex retry <id> --feedback <text>` | Retry failed task with feedback |
+| `agex answer <id> --text <text>` | Answer a needs-input task question |
 
-All commands output JSON — parse the output to get task IDs, worktree paths, and status.
+All commands output JSON by default. Add `--human` for colored terminal output.
 
-## Key Details
+## Task Lifecycle
 
-- `create` returns `{ "id": "...", "worktree": "...", "absolute_worktree": "/full/path/to/worktree", ... }` — use `absolute_worktree` to `cd` into
-- `verify` returns `{ "passed": true/false, "summary": "3/3 checks passed", ... }` — check `passed` for quick pass/fail
-- Always `verify` before `accept`
-- Always `compare` when you have multiple tasks
-- Always `clean` after merging/discarding
-- Merge conflicts auto-abort and preserve the worktree so you can fix and retry
-- `cd` back to the original repo directory before running `accept` or other agex commands
+```
+pending -> provisioning -> ready -> running -> verifying -> completed -> merged
+                                            -> needs-input -> running (after answer)
+                                                           -> rejected
+                                               verifying -> failed    -> retried (after retry)
+                                                                      -> rejected
+                                                          -> errored  -> retried (after retry)
+                                                                      -> rejected
+```
+
+- `ready`: can execute, verify, accept, or reject
+- `completed`/`failed`: can accept or reject
+- `needs-input`: agent signaled it needs a human decision — answer to continue
+- `retried`: task was superseded by a retry — terminal
+- `merged`/`rejected`: terminal — task is done
+- Merge conflicts auto-abort and reattach the worktree so work can continue
+
+## Key Behaviors
+
+- **JSON-first**: All output is JSON by default — designed for agent consumption
+- **Auto-detection**: Verify commands detected from package.json, Makefile, pyproject.toml, Cargo.toml, go.mod
+- **Port isolation**: Each task gets `AGEX_PORT` env var to avoid port conflicts
+- **Env vars injected**: `AGEX_TASK_ID`, `AGEX_WORKTREE`, `AGEX_PORT`
+- **Merge strategy**: Fast-forward first, merge commit fallback. Conflicts abort cleanly.
+- **Exit codes**: 0=success, 1=agent failed, 2=verification failed, 3=merge conflict, 4=invalid args, 5=workspace error
+- **Verify vs direct test runs**: During development, run specific tests directly (`npm test -- --grep "my test"`) for fast feedback. Use `agex verify` as the final validation — it runs all configured checks and records results on the task. Don't run the full test suite manually when `agex verify` does it for you.
+
+## Common Mistakes
+
+| Mistake | Fix |
+|---------|-----|
+| Merging without verifying | Always `verify` before `accept` |
+| Force-merging failed tasks | Reject and retry with better prompts |
+| Creating dependent tasks in parallel | Only parallelize truly independent work |
+| Skipping `compare` with multiple tasks | Compare reveals the best approach — don't guess |
+| Forgetting to clean up | Run `agex clean` after merge/discard cycles |
+| Using `--human` in agent workflows | Default JSON output is designed for agents — use it |
+| Starting servers you don't need | Only `start` when you need to test the running app |
+| Rejecting and recreating instead of retrying | Use `agex retry --feedback` to build on previous work |
+| Erroring out when stuck on a decision | Write `.agex/needs-input.json` and exit — the human will respond |
