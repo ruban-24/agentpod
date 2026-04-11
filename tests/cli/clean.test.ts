@@ -76,6 +76,32 @@ describe('cleanCommand', () => {
     expect(after).toBeNull();
   });
 
+  it('cleans multiple completed tasks in parallel', async () => {
+    const { TaskManager } = await import('../../src/core/task-manager.js');
+    const tm = new TaskManager(repo.path);
+
+    // Create 5 tasks and force them to completed
+    const ids: string[] = [];
+    for (let i = 0; i < 5; i++) {
+      const task = await taskCreateCommand(repo.path, { prompt: `parallel clean ${i}` });
+      const taskData = await tm.getTask(task.id);
+      taskData!.status = 'completed' as any;
+      await tm.saveTask(taskData!);
+      ids.push(task.id);
+    }
+
+    const result = await cleanCommand(repo.path);
+    expect(result.removed).toHaveLength(5);
+    for (const id of ids) {
+      expect(result.removed).toContain(id);
+    }
+
+    // All task files should be gone
+    for (const id of ids) {
+      expect(await tm.getTask(id)).toBeNull();
+    }
+  });
+
   it('auto-kills server before cleaning task', async () => {
     const { writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');
