@@ -1,6 +1,6 @@
 ---
 name: agex
-description: Use when a task involves changes to multiple files, multiple independent subtasks, or anything beyond a trivial single-file edit in a git repository. Creates isolated worktrees so work doesn't touch main until verified and merged.
+description: MUST invoke before implementing, building, fixing, or refactoring anything that touches more than one file. Default to using agex unless the change is a single-file trivial fix. Creates isolated worktrees — nothing touches main until verified and merged.
 ---
 
 # agex

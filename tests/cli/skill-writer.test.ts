@@ -109,7 +109,7 @@ describe('writeSkillFiles', () => {
     expect(config.hooks.SessionStart[0].hooks[0].command).toContain('agex-gate');
   });
 
-  it('writes hook config for copilot with version and bash fields', async () => {
+  it('writes hook config for copilot with version, bash field, and jq wrapper', async () => {
     const written = await writeSkillFiles(repo.path, ['copilot']);
 
     expect(written).toContain('.github/skills/agex/SKILL.md');
@@ -120,6 +120,9 @@ describe('writeSkillFiles', () => {
     expect(config.version).toBe(1);
     expect(config.hooks.sessionStart).toHaveLength(1);
     expect(config.hooks.sessionStart[0].type).toBe('command');
+    // Copilot requires JSON with additionalContext — uses jq to wrap the file
+    expect(config.hooks.sessionStart[0].bash).toContain('jq');
+    expect(config.hooks.sessionStart[0].bash).toContain('additionalContext');
     expect(config.hooks.sessionStart[0].bash).toContain('agex-gate');
   });
 

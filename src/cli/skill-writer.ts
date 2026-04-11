@@ -48,7 +48,11 @@ Invoke the \`agex\` skill for full workflow and command reference.
  * Build the hook config JSON for a given agent, merging into existing config if present.
  */
 function buildHookConfig(agent: AgentId, hookFilePath: string, existing: Record<string, unknown> | null): Record<string, unknown> {
-  const hookCommand = `cat ${hookFilePath}`;
+  // Claude Code and Codex inject plain stdout as context.
+  // Copilot requires a JSON response with additionalContext field.
+  // Silent exit (exit 0, no output) when file is missing — safe if agex is uninstalled.
+  const plainCommand = `[ -f ${hookFilePath} ] && cat ${hookFilePath} || true`;
+  const jsonCommand = `[ -f ${hookFilePath} ] && jq -Rs '{additionalContext: .}' ${hookFilePath} || true`;
 
   switch (agent) {
     case 'claude-code': {
@@ -67,7 +71,7 @@ function buildHookConfig(agent: AgentId, hookFilePath: string, existing: Record<
         sessionStart.push({
           hooks: [{
             type: 'command',
-            command: hookCommand,
+            command: plainCommand,
             timeout: 5,
           }],
         });
@@ -91,7 +95,7 @@ function buildHookConfig(agent: AgentId, hookFilePath: string, existing: Record<
         sessionStart.push({
           hooks: [{
             type: 'command',
-            command: hookCommand,
+            command: plainCommand,
           }],
         });
       }
@@ -112,7 +116,7 @@ function buildHookConfig(agent: AgentId, hookFilePath: string, existing: Record<
       if (!hasAgexHook) {
         sessionStart.push({
           type: 'command',
-          bash: hookCommand,
+          bash: jsonCommand,
           timeoutSec: 5,
         });
       }

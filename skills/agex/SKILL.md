@@ -1,6 +1,6 @@
 ---
 name: agex
-description: Use when working in a git repository and needing to run coding tasks in parallel, try multiple approaches, isolate risky changes in worktrees, compare agent outputs, or safely experiment without affecting the main branch. Also use when orchestrating multiple coding agents simultaneously.
+description: MUST invoke before implementing, building, fixing, or refactoring anything that touches more than one file. Default to using agex unless the change is a single-file trivial fix. Creates isolated worktrees — nothing touches main until verified and merged.
 compatibility: Requires git and Node.js >= 20. agex must be installed globally (npm i -g agex).
 ---
 
