@@ -22,6 +22,7 @@ import { retryCommand } from './cli/commands/retry.js';
 import { answerCommand } from './cli/commands/answer.js';
 import { taskStartCommand } from './cli/commands/task-start.js';
 import { taskStopCommand } from './cli/commands/task-stop.js';
+import { cancelCommand } from './cli/commands/cancel.js';
 import { withAbsoluteWorktree, withAbsoluteWorktrees } from './cli/enrich.js';
 import { formatOutput, humanOutput } from './cli/output.js';
 import {
@@ -40,6 +41,7 @@ import {
   formatTaskExecHuman,
   formatTaskStartHuman,
   formatTaskStopHuman,
+  formatCancelHuman,
   formatErrorHuman,
   formatRetryHuman,
   formatRetryDryRunHuman,
@@ -243,6 +245,23 @@ program
       requireInit(root);
       const result = await taskStopCommand(root, id);
       console.log(opts.human ? humanOutput(formatTaskStopHuman(result)) : formatOutput(result, false));
+    } catch (err) {
+      handleError(err, EXIT_CODES.WORKSPACE_ERROR);
+    }
+  });
+
+program
+  .command('cancel [id]')
+  .description('Cancel a running or needs-input task (kills agent process)')
+  .option('-H, --human', 'Human-friendly output', false)
+  .action(async (id, opts) => {
+    try {
+      isHumanMode = opts.human;
+      const taskId = resolveTaskId(id);
+      const root = getRepoRoot();
+      requireInit(root);
+      const result = await cancelCommand(root, taskId);
+      console.log(opts.human ? humanOutput(formatCancelHuman(result)) : formatOutput(result, false));
     } catch (err) {
       handleError(err, EXIT_CODES.WORKSPACE_ERROR);
     }
