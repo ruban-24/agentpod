@@ -44,16 +44,32 @@ export async function acceptCommand(repoRoot: string, taskId: string): Promise<A
     autoCommitted = true;
   }
 
-  // Check for dirty working tree before merging (exclude .agex/ metadata)
-  const porcelain = execSync('git status --porcelain', { cwd: repoRoot, encoding: 'utf-8' }).trim();
-  const dirtyLines = porcelain
+  // Check for dirty working tree files that overlap with the task branch's changes
+  // Note: don't trim() the full output — leading spaces are part of porcelain status codes
+  const porcelain = execSync('git status --porcelain', { cwd: repoRoot, encoding: 'utf-8' });
+  const dirtyFiles = porcelain
     .split('\n')
-    .filter((line) => line.length > 0 && !line.slice(3).startsWith('.agex/'));
-  if (dirtyLines.length > 0) {
-    throw new AgexError('Working tree has uncommitted changes', {
-      suggestion: "Commit or stash your changes before merging. Run 'git status' to see what's dirty",
-      exitCode: EXIT_CODES.WORKSPACE_ERROR,
+    .filter((line) => line.length > 0 && !line.slice(3).startsWith('.agex/'))
+    .map((line) => line.slice(3).trim());
+
+  if (dirtyFiles.length > 0) {
+    // Get files changed on the task branch vs the merge base
+    const mergeBase = execSync(`git merge-base HEAD ${task.branch}`, { cwd: repoRoot, encoding: 'utf-8' }).trim();
+    const branchDiff = execSync(`git diff --name-only ${mergeBase}...${task.branch}`, { cwd: repoRoot, encoding: 'utf-8' }).trim();
+    const branchFiles = new Set(branchDiff.split('\n').filter(Boolean));
+
+    const overlapping = dirtyFiles.filter((f) => {
+      // Handle renames: porcelain shows "old -> new"
+      const parts = f.split(' -> ');
+      return parts.some((p) => branchFiles.has(p.trim()));
     });
+
+    if (overlapping.length > 0) {
+      throw new AgexError(`Working tree has uncommitted changes that conflict with task branch: ${overlapping.join(', ')}`, {
+        suggestion: 'Commit or stash the conflicting files before merging',
+        exitCode: EXIT_CODES.WORKSPACE_ERROR,
+      });
+    }
   }
 
   // Remove the worktree but keep the branch (git can't merge a checked-out branch)

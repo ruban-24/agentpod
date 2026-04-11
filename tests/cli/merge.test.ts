@@ -90,22 +90,59 @@ describe('acceptCommand', () => {
     expect(result.auto_committed).toBeUndefined();
   });
 
-  it('rejects merge when working tree is dirty', async () => {
+  it('rejects merge when working tree is dirty with overlapping files', async () => {
     const task = await taskCreateCommand(repo.path, { prompt: 'dirty merge test' });
 
-    // Make a commit in the worktree so there's something to merge
+    // Make a commit in the worktree that modifies a file
     const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'new-file.txt'), 'content');
     execSync('git add . && git commit -m "add file"', { cwd: wtPath, stdio: 'ignore' });
 
-    // Dirty the main working tree
-    await writeFile(join(repo.path, 'dirty.txt'), 'uncommitted');
+    // Dirty the same file on main (overlapping with task branch)
+    await writeFile(join(repo.path, 'new-file.txt'), 'uncommitted');
 
-    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('uncommitted changes');
+    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('conflict with task branch');
 
     // Clean up
     const { unlink } = await import('node:fs/promises');
-    await unlink(join(repo.path, 'dirty.txt'));
+    await unlink(join(repo.path, 'new-file.txt'));
+  });
+
+  it('allows accept when dirty files do not overlap with task branch changes', async () => {
+    const task = await taskCreateCommand(repo.path, { prompt: 'non-overlapping dirty test' });
+
+    // Make a change in the worktree (creates a new file on the task branch)
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'task-file.ts'), 'export const task = true;\n');
+    execSync('git add . && git commit -m "add task file"', { cwd: wtPath, stdio: 'ignore' });
+
+    // Create a dirty unrelated file on main
+    await writeFile(join(repo.path, 'unrelated-dirty.txt'), 'uncommitted');
+
+    const result = await acceptCommand(repo.path, task.id);
+
+    expect(result.merged).toBe(true);
+
+    // Clean up the dirty file
+    const { unlink } = await import('node:fs/promises');
+    await unlink(join(repo.path, 'unrelated-dirty.txt'));
+  });
+
+  it('blocks accept when dirty files overlap with task branch changes', async () => {
+    const task = await taskCreateCommand(repo.path, { prompt: 'overlapping dirty test' });
+
+    // Modify README.md in the worktree (it already exists from initial commit)
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'README.md'), '# Modified by task branch\n');
+    execSync('git add . && git commit -m "modify readme on task"', { cwd: wtPath, stdio: 'ignore' });
+
+    // Make README.md dirty on main (same file the task branch changed)
+    await writeFile(join(repo.path, 'README.md'), '# Dirty on main\n');
+
+    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('conflict with task branch');
+
+    // Clean up
+    execSync('git checkout -- README.md', { cwd: repo.path, stdio: 'ignore' });
   });
 
   it('restores worktree when merge fails due to conflict', async () => {
