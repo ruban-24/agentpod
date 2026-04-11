@@ -16,18 +16,18 @@ RST='\033[0m'  # reset
 args="$*"
 
 case "$args" in
-  *"create"*"JWT"*)
+  *"create"*"JWT"*|*"create"*"jwt"*)
     echo ""
     echo -e "${G}┃${RST} ${G}✓${RST} Created task ${BD}${B}a1b2c3${RST}"
-    echo -e "${G}┃${RST} Add JWT auth with refresh tokens"
+    echo -e "${G}┃${RST} JWT auth"
     echo -e "${G}┃${RST} ${D}branch: agex/a1b2c3${RST}"
     echo ""
     ;;
 
-  *"create"*"session"*)
+  *"create"*"session"*|*"create"*"Session"*)
     echo ""
     echo -e "${G}┃${RST} ${G}✓${RST} Created task ${BD}${B}d4e5f6${RST}"
-    echo -e "${G}┃${RST} Refactor session middleware to Redis"
+    echo -e "${G}┃${RST} Redis sessions"
     echo -e "${G}┃${RST} ${D}branch: agex/d4e5f6${RST}"
     echo ""
     ;;
@@ -35,19 +35,18 @@ case "$args" in
   *"create"*"token"*)
     echo ""
     echo -e "${G}┃${RST} ${G}✓${RST} Created task ${BD}${B}g7h8i9${RST}"
-    echo -e "${G}┃${RST} Fix token expiry race condition"
+    echo -e "${G}┃${RST} Fix token race"
     echo -e "${G}┃${RST} ${D}branch: agex/g7h8i9${RST}"
     echo ""
     ;;
 
   *"summary"*)
     echo ""
-    echo -e "${BD}agex · 3 tasks${RST}"
-    echo -e "3 tasks · ${G}1 completed${RST} · ${Y}1 running${RST} · ${R}1 failed${RST}"
+    echo -e "${BD}agex · 2 tasks${RST}"
+    echo -e "2 tasks · ${G}1 completed${RST} · ${Y}1 running${RST}"
     echo ""
-    echo -e "${G}┃${RST}  ${G}✓${RST}  ${B}a1b2c3${RST}  ${G}completed${RST}  ${D}12.4s${RST}  ${G}✓ 3/3${RST}  ${D}+47 -12 · 4 files${RST}   Add JWT auth with refresh to..."
-    echo -e "${Y}┃${RST}  ${Y}▶${RST}  ${B}d4e5f6${RST}  ${Y}running${RST}    ${D}8.1s${RST}                              Refactor session middleware..."
-    echo -e "${R}┃${RST}  ${R}✗${RST}  ${B}g7h8i9${RST}  ${R}failed${RST}     ${D}15.2s${RST}  ${R}✗ 1/3${RST}  ${D}+93 -41 · 14 files${RST}  Fix token expiry race condi..."
+    echo -e "${G}┃${RST} ${G}✓${RST} ${B}a1b2c3${RST}  ${G}completed${RST}  ${D}12.4s${RST}  ${G}3/3${RST}  ${D}+47 -12${RST}  JWT auth"
+    echo -e "${Y}┃${RST} ${Y}▶${RST} ${B}d4e5f6${RST}  ${Y}running${RST}    ${D} 8.1s${RST}               Redis sessions"
     echo ""
     ;;
 
@@ -63,14 +62,31 @@ case "$args" in
     echo ""
     ;;
 
+  *"review"*)
+    echo ""
+    echo -e "${B}a1b2c3${RST} · JWT auth · ${D}+47 -12 · 4 files${RST}"
+    echo ""
+    echo -e "${D}COMMITS${RST}"
+    echo -e "  ${D}a1b2c3d${RST}  refactor: extract auth middleware"
+    echo -e "  ${D}d4e5f6a${RST}  feat: add JWT token generation"
+    echo -e "  ${D}b7c8d9e${RST}  test: add auth middleware tests"
+    echo ""
+    echo -e "${D}FILES${RST}"
+    echo -e "  ${Y}M${RST} src/auth/middleware.ts  ${G}+18${RST} ${R}-4${RST}"
+    echo -e "  ${Y}M${RST} src/auth/token.ts       ${G}+12${RST} ${R}-2${RST}"
+    echo -e "  ${G}A${RST} src/auth/jwt.ts         ${G}+15${RST}"
+    echo -e "  ${Y}M${RST} tests/auth.test.ts       ${G}+2${RST} ${R}-6${RST}"
+    echo ""
+    ;;
+
   *"compare"*)
     echo ""
     echo -e "  ID       Status      Checks  Changes  Duration  Prompt"
-    echo -e "  ──────────────────────────────────────────────────────────────────────────"
-    echo -e "  ${B}a1b2c3${RST}   ${G}completed${RST}   ${G}✓ 3/3${RST}   ${D}+47 -12${RST}  ${D}12.4s${RST}     Add JWT auth with refresh tokens"
-    echo -e "  ${B}d4e5f6${RST}   ${G}completed${RST}   ${G}✓ 3/3${RST}   ${D}+31 -8${RST}   ${D} 9.2s${RST}     Refactor session middleware to Redis"
-    echo -e "  ${B}g7h8i9${RST}   ${R}failed${RST}      ${R}✗ 1/3${RST}   ${D}+93 -41${RST}  ${D}15.2s${RST}     Fix token expiry race condition"
-    echo -e "  ──────────────────────────────────────────────────────────────────────────"
+    echo -e "  ────────────────────────────────────────────────────────────"
+    echo -e "  ${B}a1b2c3${RST}   ${G}completed${RST}   ${G}3/3${RST}   ${D}+47 -12${RST}  ${D}12.4s${RST}     JWT auth"
+    echo -e "  ${B}d4e5f6${RST}   ${G}completed${RST}   ${G}3/3${RST}   ${D}+31 -8${RST}   ${D} 9.2s${RST}     Redis sessions"
+    echo -e "  ${B}g7h8i9${RST}   ${R}failed${RST}      ${R}1/3${RST}   ${D}+93 -41${RST}  ${D}15.2s${RST}     Fix token race"
+    echo -e "  ────────────────────────────────────────────────────────────"
     echo -e "  3 tasks · ${G}2 completed${RST} · ${R}1 failed${RST}"
     echo ""
     ;;

@@ -1,17 +1,17 @@
-# agex demo — recorded with VHS (https://github.com/charmbracelet/vhs)
+# "With agex" — parallel AI agent tasks, safely isolated
 # Run: vhs demo.tape
 
-Output docs/demo.gif
+Output docs/with-agex.gif
 
 Set FontSize 14
-Set Width 1000
-Set Height 600
+Set Width 640
+Set Height 440
 Set Theme "Catppuccin Mocha"
 Set Padding 20
-Set TypingSpeed 40ms
+Set TypingSpeed 35ms
 Set Shell "bash"
 
-# Silently set up PATH so fake agex is found, then clear screen
+# Set up fake agex, then clear screen
 Hide
 Type "export PATH='./demo:$PATH' && export PS1='$ '"
 Enter
@@ -22,35 +22,31 @@ Show
 
 Sleep 500ms
 
-# Beat 1-3: Fan out three parallel tasks
-Type "agex create --prompt 'Add JWT auth with refresh tokens'"
+# Beat 1-2: Fan out two parallel tasks
+Type "agex create --prompt 'JWT auth'"
 Enter
-Sleep 1.5s
+Sleep 1.2s
 
-Type "agex create --prompt 'Refactor session middleware to Redis'"
+Type "agex create --prompt 'Redis sessions'"
 Enter
-Sleep 1.5s
+Sleep 1.2s
 
-Type "agex create --prompt 'Fix token expiry race condition'"
-Enter
-Sleep 2s
-
-# Beat 4: Check in with summary
+# Beat 3: Check status
 Type "agex summary -H"
 Enter
-Sleep 3s
+Sleep 2.5s
 
-# Beat 5: Verify the winner
+# Beat 4: Verify the winner
 Type "agex verify a1b2c3 -H"
 Enter
 Sleep 2.5s
 
-# Beat 6: Compare all three
-Type "agex compare a1b2c3 d4e5f6 g7h8i9 -H"
+# Beat 5: Review changes
+Type "agex review a1b2c3 -H"
 Enter
 Sleep 3s
 
-# Beat 7: Merge the winner
+# Beat 6: Ship it
 Type "agex accept a1b2c3 -H"
 Enter
-Sleep 2s
+Sleep 2.5s

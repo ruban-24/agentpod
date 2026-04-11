@@ -1,0 +1,26 @@
+#!/bin/bash
+# Fake git for VHS "without agex" demo recording.
+# Produces realistic output for common worktree pain points.
+
+args="$*"
+
+case "$args" in
+  *"worktree add"*"jwt"*)
+    echo "Preparing worktree (new branch 'feat/jwt')"
+    echo "HEAD is now at a1b2c3d initial commit"
+    ;;
+  *"worktree add"*"session"*)
+    echo "fatal: 'feat/sessions' is already checked out at '/Users/dev/app/.wt/sessions'" >&2
+    exit 128
+    ;;
+  *"worktree remove"*"--force"*)
+    ;;
+  *"worktree remove"*)
+    echo "fatal: '.wt/jwt' contains modified or untracked files, use --force to remove" >&2
+    exit 128
+    ;;
+  *)
+    echo "fake-git: unhandled: $args" >&2
+    exit 1
+    ;;
+esac

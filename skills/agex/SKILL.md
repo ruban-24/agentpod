@@ -1,7 +1,7 @@
 ---
 name: agex
 description: MUST invoke before implementing, building, fixing, or refactoring anything that touches more than one file. Default to using agex unless the change is a single-file trivial fix. Creates isolated worktrees — nothing touches main until verified and merged.
-compatibility: Requires git and Node.js >= 20. agex must be installed globally (npm i -g agex).
+compatibility: Requires git and Node.js >= 20. agex must be installed globally (npm i -g @ruban24/agex).
 ---
 
 # agex

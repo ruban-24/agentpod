@@ -1,0 +1,39 @@
+#!/bin/bash
+# Fake npm for VHS "without agex" demo recording.
+# Shows realistic failures when working in a fresh git worktree.
+
+R='\033[31m'
+D='\033[2m'
+BD='\033[1m'
+RST='\033[0m'
+
+case "$*" in
+  *"test"*)
+    echo ""
+    echo -e "${D}> myapp@1.0.0 test${RST}"
+    echo -e "${D}> vitest run${RST}"
+    echo ""
+    echo -e " ${R}FAIL${RST}  src/auth/middleware.test.ts"
+    echo -e "   ${R}Error: Missing required env var DATABASE_URL${RST}"
+    echo ""
+    echo -e " ${R}Test Files  1 failed${RST} | 0 passed"
+    echo ""
+    exit 1
+    ;;
+  *"install"*)
+    echo "added 847 packages in 14s"
+    ;;
+  *"dev"*|*"start"*)
+    echo ""
+    echo -e "${D}> myapp@1.0.0 dev${RST}"
+    echo -e "${D}> next dev${RST}"
+    echo ""
+    echo -e "   ${R}Error: listen EADDRINUSE: address already in use :::3000${RST}"
+    echo -e "   ${D}Port 3000 is used by another worktree${RST}"
+    echo ""
+    exit 1
+    ;;
+  *)
+    exit 1
+    ;;
+esac

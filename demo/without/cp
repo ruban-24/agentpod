@@ -1,0 +1,3 @@
+#!/bin/bash
+# Fake cp for VHS "without agex" demo recording.
+# Silent success — just simulates copying .env into worktree.

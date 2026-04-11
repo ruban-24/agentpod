@@ -19,49 +19,54 @@
 </p>
 
 <p align="center">
-  <img src="./docs/demo.gif" alt="agex demo" width="800">
+  <img src="./docs/with-agex.gif" alt="agex demo" width="800">
 </p>
 
 ---
 
-## Get Started
-
-### Homebrew (macOS/Linux)
-
-```
-brew install ruban-24/tap/agex
-```
-
-### npm
+## Quick Start
 
 ```bash
-npm install -g @ruban24/agex
-```
+# Install
+brew install ruban-24/tap/agex   # or: npm i -g @ruban24/agex
 
-Then initialize in your project:
-
-```bash
+# Set up in your project
 cd your-project
 agex init
 ```
 
-Requires **Node.js >= 20** and **git**. `agex init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agex automatically. Then just tell your agent:
+`agex init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agex automatically. Then just tell your agent:
 
-> *"Use agex to try 3 different approaches to refactor the auth module, then compare and merge the best one."*
+> *"Use agex to try 2 different approaches to refactor the auth module, then verify both and merge the best one."*
+
+Or run tasks directly:
+
+```bash
+agex create --prompt "Add JWT auth with refresh tokens"
+agex create --prompt "Add session-based auth with Redis"
+
+# Check in whenever you want
+agex summary --human
+
+# Verify, review, and ship the winner
+agex verify <id> --human
+agex review <id> --human
+agex accept <id> --human
+```
+
+Requires **Node.js >= 20** and **git**.
 
 ## Why agex?
 
 AI coding agents are fast — but they work on your branch, one task at a time.
 
-**What if you could run 5 agents in parallel, each in an isolated workspace, and pick the best result?**
+**What if you could run multiple agents in parallel, each in an isolated workspace, and pick the best result?**
 
 ```
-1. You run    →  agex init             →  guided setup, drops agent skill files
+1. You run    →  agex init               →  guided setup, agent auto-discovers agex
 2. Agent works →  creates tasks in parallel  →  isolated worktrees, auto-verification
-3. You decide  →  agex summary --human   →  merge the winner, discard the rest
+3. You decide  →  agex summary --human     →  merge the winner, discard the rest
 ```
-
-That's the whole model. You run one command. Your agent does the rest. You check in when you want.
 
 **For you:** install, init, go back to what you were doing. Check in when you want with `agex summary --human`.
 
@@ -82,6 +87,30 @@ That's the whole model. You run one command. Your agent does the rest. You check
 - **Trivial single-file edits** — isolation overhead isn't worth it, just let your agent edit directly
 - **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
 - **Non-git projects** — agex requires git for worktree isolation
+
+## Why Not Plain Git Worktrees?
+
+Git worktrees are great. agex uses them under the hood. But managing parallel agent work with raw worktrees means:
+
+<table>
+<tr>
+<td align="center"><strong>Without agex</strong></td>
+<td align="center"><strong>With agex</strong></td>
+</tr>
+<tr>
+<td><img src="./docs/without-agex.gif" alt="Without agex — manual worktree management"></td>
+<td><img src="./docs/with-agex.gif" alt="With agex — parallel agent tasks"></td>
+</tr>
+</table>
+
+agex handles what raw worktrees don't:
+
+- **Environment setup** — copies `.env`, secrets, and untracked config files into each worktree
+- **Dependency management** — symlinks `node_modules` or runs setup commands automatically
+- **Port conflicts** — assigns unique `AGEX_PORT` per task so dev servers don't collide
+- **Automated verification** — runs your test/lint/build suite before you even look at the results
+- **Comparison** — side-by-side status, checks, and diff stats across all tasks
+- **Cleanup** — `agex reject` or `agex clean` removes worktrees and branches in one step
 
 ## What Does It Look Like?
 
@@ -132,7 +161,7 @@ FILES
 → Full review: git diff HEAD...agex/abc123
 ```
 
-**Compare and decide** (once all tasks finish):
+**Compare and decide:**
 ```
 $ agex compare abc123 def456 ghi789 --human
 
@@ -202,6 +231,9 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 
 ## Configuration
 
+<details>
+<summary>Configuration reference</summary>
+
 Create `.agex/config.yml` (or pass `--verify` to `init`):
 
 ```yaml
@@ -269,6 +301,8 @@ If no `verify` commands are configured, agex auto-detects from your project:
 | `project.yml` (XcodeGen) | `xcodegen generate`, `xcodebuild build` |
 | `*.xcodeproj` | `xcodebuild build` |
 | `.swiftlint.yml` | `swiftlint` |
+
+</details>
 
 <details>
 <summary>Subprocess mode (CI, scripting, multi-agent)</summary>
