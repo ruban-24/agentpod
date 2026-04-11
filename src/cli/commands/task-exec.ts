@@ -11,6 +11,7 @@ import type { TaskRecord, NeedsInputPayload } from '../../types.js';
 export interface TaskExecOptions {
   cmd: string;
   wait?: boolean;
+  timeout?: number;
 }
 
 export async function checkNeedsInput(wtPath: string): Promise<NeedsInputPayload | null> {
@@ -67,10 +68,18 @@ export async function taskExecCommand(
 
   await tm.updateStatus(taskId, 'running');
 
+  const timeoutMs = options.timeout ? options.timeout * 1000 : undefined;
+
   if (options.wait) {
     // Blocking execution
-    const result = await runner.run(taskId, options.cmd, wtPath, { ...task.env });
+    const result = await runner.run(taskId, options.cmd, wtPath, { ...task.env }, { timeout: timeoutMs });
     await tm.updateTask(taskId, { exit_code: result.exitCode, cmd: options.cmd });
+
+    // Check for timeout
+    if (result.timedOut) {
+      await tm.updateTask(taskId, { error: `Agent timed out after ${options.timeout}s` });
+      return await tm.updateStatus(taskId, 'errored');
+    }
 
     // Check for needs-input signal
     const needsInput = await checkNeedsInput(wtPath);
@@ -96,13 +105,20 @@ export async function taskExecCommand(
     return await tm.updateStatus(taskId, finalStatus);
   } else {
     // Non-blocking: spawn and return immediately
-    const handle = runner.spawn(taskId, options.cmd, wtPath, { ...task.env });
+    const handle = runner.spawn(taskId, options.cmd, wtPath, { ...task.env }, { timeout: timeoutMs });
     await tm.updateTask(taskId, { pid: handle.pid, cmd: options.cmd });
 
     // Register background completion handler
     handle.done.then(async (runResult) => {
       try {
         await tm.updateTask(taskId, { exit_code: runResult.exitCode });
+
+        // Check for timeout
+        if (runResult.timedOut) {
+          await tm.updateTask(taskId, { error: `Agent timed out after ${options.timeout}s` });
+          await tm.updateStatus(taskId, 'errored');
+          return; // skip verify
+        }
 
         const needsInput = await checkNeedsInput(wtPath);
         if (needsInput) {

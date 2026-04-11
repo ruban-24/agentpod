@@ -13,6 +13,7 @@ export interface AnswerOptions {
   text: string;
   cmd?: string;
   wait?: boolean;
+  timeout?: number;
 }
 
 function buildAnswerPrompt(task: TaskRecord, answer: string): string {
@@ -87,13 +88,20 @@ export async function answerCommand(
   const verifier = new Verifier();
   const config = await loadConfig(repoRoot);
   const wtPath = resolve(repoRoot, task.worktree);
+  const timeoutMs = options.timeout ? options.timeout * 1000 : undefined;
 
   if (options.wait) {
     const runResult = await runner.run(taskId, cmd, wtPath, {
       ...task.env,
       AGEX_PROMPT: enhancedPrompt,
-    });
+    }, { timeout: timeoutMs });
     await tm.updateTask(taskId, { exit_code: runResult.exitCode, cmd });
+
+    // Check for timeout
+    if (runResult.timedOut) {
+      await tm.updateTask(taskId, { error: `Agent timed out after ${options.timeout}s` });
+      return await tm.updateStatus(taskId, 'errored');
+    }
 
     // Check needs-input again (agent might ask another question)
     const needsInput = await checkNeedsInput(wtPath);
@@ -118,12 +126,19 @@ export async function answerCommand(
     const handle = runner.spawn(taskId, cmd, wtPath, {
       ...task.env,
       AGEX_PROMPT: enhancedPrompt,
-    });
+    }, { timeout: timeoutMs });
     await tm.updateTask(taskId, { pid: handle.pid, cmd });
 
     handle.done.then(async (runResult) => {
       try {
         await tm.updateTask(taskId, { exit_code: runResult.exitCode });
+
+        // Check for timeout
+        if (runResult.timedOut) {
+          await tm.updateTask(taskId, { error: `Agent timed out after ${options.timeout}s` });
+          await tm.updateStatus(taskId, 'errored');
+          return;
+        }
 
         const needsInput = await checkNeedsInput(wtPath);
         if (needsInput) {

@@ -86,4 +86,33 @@ describe('AgentRunner', () => {
       expect(result.exitCode).toBe(42);
     });
   });
+
+  describe('timeout', () => {
+    it('kills the process and returns exit code 1 when blocking run exceeds timeout', async () => {
+      const start = Date.now();
+      const result = await runner.run('timeout01', 'sleep 60', repo.path, {}, { timeout: 2000 });
+      const elapsed = Date.now() - start;
+
+      expect(result.timedOut).toBe(true);
+      expect(result.exitCode).not.toBe(0);
+      expect(elapsed).toBeLessThan(10000);
+    }, 15000);
+
+    it('does not kill the process when blocking run completes within timeout', async () => {
+      const result = await runner.run('timeout02', 'echo hello', repo.path, {}, { timeout: 30000 });
+
+      expect(result.exitCode).toBe(0);
+      expect(result.timedOut).toBe(false);
+    });
+
+    it('kills the process and resolves done when spawned process exceeds timeout', async () => {
+      const start = Date.now();
+      const handle = runner.spawn('timeout03', 'sleep 60', repo.path, {}, { timeout: 2000 });
+      const result = await handle.done;
+      const elapsed = Date.now() - start;
+
+      expect(result.timedOut).toBe(true);
+      expect(elapsed).toBeLessThan(10000);
+    }, 15000);
+  });
 });
