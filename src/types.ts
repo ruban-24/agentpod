@@ -108,4 +108,5 @@ export interface AgexConfig {
   symlink?: string[];
   setup?: string[];
   run?: RunConfig;
+  timeout?: number;
 }

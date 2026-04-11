@@ -6,6 +6,7 @@ export interface RunOptions {
   prompt: string;
   cmd: string;
   wait?: boolean;
+  timeout?: number;
 }
 
 export async function runCommand(
@@ -22,5 +23,6 @@ export async function runCommand(
   return await taskExecCommand(repoRoot, task.id, {
     cmd: options.cmd,
     wait: options.wait,
+    timeout: options.timeout,
   });
 }

@@ -70,11 +70,15 @@ export function getTools(): ToolDefinition[] {
         id: z.string().describe('Task ID'),
         cmd: z.string().describe('Command to run'),
         wait: z.boolean().default(true).describe('Wait for completion'),
+        timeout: z.number().optional().describe('Kill agent after N seconds'),
       },
       handler: async (args) => {
+        const { loadConfig } = await import('../config/loader.js');
+        const config = await loadConfig(getRepoRoot());
         const result = await taskExecCommand(getRepoRoot(), args.id as string, {
           cmd: args.cmd as string,
           wait: (args.wait as boolean) ?? true,
+          timeout: (args.timeout as number | undefined) ?? config.timeout,
         });
         return withAbsoluteWorktree(result, getRepoRoot());
       },
@@ -126,12 +130,16 @@ export function getTools(): ToolDefinition[] {
         prompt: z.string().describe('Description of the task'),
         cmd: z.string().describe('Command to run'),
         wait: z.boolean().default(true).describe('Wait for completion'),
+        timeout: z.number().optional().describe('Kill agent after N seconds'),
       },
       handler: async (args) => {
+        const { loadConfig } = await import('../config/loader.js');
+        const config = await loadConfig(getRepoRoot());
         const result = await runCommand(getRepoRoot(), {
           prompt: args.prompt as string,
           cmd: args.cmd as string,
           wait: (args.wait as boolean) ?? true,
+          timeout: (args.timeout as number | undefined) ?? config.timeout,
         });
         return withAbsoluteWorktree(result, getRepoRoot());
       },
@@ -250,12 +258,15 @@ export function getTools(): ToolDefinition[] {
         text: z.string().describe('Your answer to the task question'),
         cmd: z.string().optional().describe('Agent command to re-run'),
         wait: z.boolean().optional().describe('Wait for agent to complete'),
+        timeout: z.number().optional().describe('Kill agent after N seconds'),
       },
       handler: async (args) => {
+        const config = await (await import('../config/loader.js')).loadConfig(getRepoRoot());
         const result = await answerCommand(getRepoRoot(), args.taskId as string, {
           text: args.text as string,
           cmd: args.cmd as string | undefined,
           wait: args.wait as boolean | undefined,
+          timeout: (args.timeout as number | undefined) ?? config.timeout,
         });
         return withAbsoluteWorktree(result, getRepoRoot());
       },

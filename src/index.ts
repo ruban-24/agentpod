@@ -201,15 +201,19 @@ program
   .description('Execute a command inside a task worktree')
   .requiredOption('--cmd <cmd>', 'Command to run')
   .option('--wait', 'Wait for completion', false)
+  .option('--timeout <seconds>', 'Kill agent after N seconds', parseInt)
   .option('-H, --human', 'Human-friendly output', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
       requireInit(root);
+      const { loadConfig } = await import('./config/loader.js');
+      const config = await loadConfig(root);
       const result = await taskExecCommand(root, id, {
         cmd: opts.cmd,
         wait: opts.wait,
+        timeout: opts.timeout ?? config.timeout,
       });
       const enriched = withAbsoluteWorktree(result, root);
       console.log(opts.human ? humanOutput(formatTaskExecHuman(enriched)) : formatOutput(enriched, false));
@@ -273,16 +277,20 @@ program
   .requiredOption('--prompt <prompt>', 'Description of the task')
   .requiredOption('--cmd <cmd>', 'Command to run')
   .option('--wait', 'Wait for completion', false)
+  .option('--timeout <seconds>', 'Kill agent after N seconds', parseInt)
   .option('-H, --human', 'Human-friendly output', false)
   .action(async (opts) => {
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
       requireInit(root);
+      const { loadConfig } = await import('./config/loader.js');
+      const config = await loadConfig(root);
       const result = await runCommand(root, {
         prompt: opts.prompt,
         cmd: opts.cmd,
         wait: opts.wait,
+        timeout: opts.timeout ?? config.timeout,
       });
       const enriched = withAbsoluteWorktree(result, root);
       console.log(opts.human ? humanOutput(formatRunHuman(enriched)) : formatOutput(enriched, false));
@@ -487,17 +495,21 @@ program
   .requiredOption('--text <text>', 'Your answer to the task question')
   .option('--cmd <command>', 'Agent command to re-run')
   .option('--wait', 'Wait for agent to complete', false)
+  .option('--timeout <seconds>', 'Kill agent after N seconds', parseInt)
   .option('-H, --human', 'Human-friendly output', false)
   .action(async (taskId, opts) => {
     try {
       isHumanMode = opts.human;
       const repoRoot = getRepoRoot();
       requireInit(repoRoot);
+      const { loadConfig } = await import('./config/loader.js');
+      const config = await loadConfig(repoRoot);
       const id = resolveTaskId(taskId);
       const result = await answerCommand(repoRoot, id, {
         text: opts.text,
         cmd: opts.cmd,
         wait: opts.wait,
+        timeout: opts.timeout ?? config.timeout,
       });
       const enriched = withAbsoluteWorktree(result, repoRoot);
       console.log(opts.human ? humanOutput(formatAnswerHuman(enriched)) : formatOutput(enriched, false));
