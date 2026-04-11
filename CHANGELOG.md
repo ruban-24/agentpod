@@ -1,6 +1,10 @@
 # Changelog
 
-## 0.3.6 — 2026-04-11
+## 0.3.5 — 2026-04-12
+
+### Bug Fixes
+
+- **Verify recovery from stuck state:** Re-running `agex verify` on a task interrupted mid-verification (stuck at `verifying`) now correctly transitions to `completed` or `failed`. Previously the task was permanently stuck with no recovery path.
 
 ### Performance
 
@@ -14,8 +18,6 @@
 - **Config resolve-once:** `run` command was reading config 3 times (index.ts → task-create → task-exec). Config is now resolved once and passed through the call chain.
 - **Accept: async + deduplicated git:** Replaced 3 blocking `execSync` calls with async `simple-git`. Removed redundant `git status --porcelain` (already done in `commitAll`) and explicit `merge-base` (three-dot diff is implicit). Total git spawns reduced from ~12 to ~6.
 - **Cached simpleGit instances:** `Reviewer` and `WorkspaceManager` now cache their `simpleGit` instance at class level instead of creating 15+ instances across the codebase.
-
-## 0.3.5 — 2026-04-11
 
 ### Improvements
 
