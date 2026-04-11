@@ -1,10 +1,13 @@
 <p align="center">
   <h1 align="center">agex</h1>
   <p align="center">
-    <strong><ins>ag</ins>ent <ins>ex</ins>ecution, parallelized.</strong>
+    <strong>Run multiple AI coding agents in parallel — safely.</strong>
   </p>
   <p align="center">
-    Run N agents in parallel. Each gets its own branch. Nothing touches main until you say so.
+    Each agent gets its own git branch and worktree. Nothing touches main until you say so.
+  </p>
+  <p align="center">
+    For Claude Code, Codex CLI, Copilot CLI, and any agent that runs shell commands.
   </p>
   <p align="center">
     <a href="https://github.com/ruban-24/agex/actions"><img src="https://github.com/ruban-24/agex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -62,9 +65,23 @@ That's the whole model. You run one command. Your agent does the rest. You check
 
 **For you:** install, init, go back to what you were doing. Check in when you want with `agex summary --human`.
 
-**For your agent:** 18 commands covering the full lifecycle — create, execute, verify, compare, accept, reject. JSON output by default. Agent skill files for auto-discovery.
+**For your agent:** commands for every step — create, verify, compare, accept, reject. JSON output by default. Agent skill files for auto-discovery.
 
 **No cloud. No accounts. No team buy-in needed.** Everything lives in `.agex/` (gitignored) and optional skill files (committed).
+
+## When to Reach for agex
+
+- **You want to try multiple approaches and pick the best** — fan out 3 ideas, verify all, merge the winner
+- **You have independent subtasks that can run in parallel** — auth, notifications, and rate limiting don't block each other
+- **You want to experiment without risking your branch** — every task is an isolated worktree, reject costs nothing
+- **You're orchestrating multiple agents on the same codebase** — Claude Code dispatches work to Codex, Aider, or any CLI tool
+- **You want automated verification before merging agent output** — tests, lint, and build run automatically
+
+### When NOT to reach for agex
+
+- **Trivial single-file edits** — isolation overhead isn't worth it, just let your agent edit directly
+- **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
+- **Non-git projects** — agex requires git for worktree isolation
 
 ## What Does It Look Like?
 
@@ -139,20 +156,6 @@ $ agex compare abc123 def456 ghi789 --human
 | Copilot CLI | `.github/skills/agex/SKILL.md` | Yes |
 
 Any agent that can run shell commands works with agex via subprocess mode (`--cmd`). The skill files above teach agents the full agex workflow — when to use it, how to create tasks, verify, compare, and merge.
-
-## When to Reach for agex
-
-- **You want to try multiple approaches and pick the best** — fan out 3 ideas, verify all, merge the winner
-- **You have independent subtasks that can run in parallel** — auth, notifications, and rate limiting don't block each other
-- **You want to experiment without risking your branch** — every task is an isolated worktree, discard costs nothing
-- **You're orchestrating multiple agents on the same codebase** — Claude Code dispatches work to Codex, Aider, or any CLI tool
-- **You want automated verification before merging agent output** — tests, lint, and build run automatically
-
-### When NOT to reach for agex
-
-- **Trivial single-file edits** — isolation overhead isn't worth it, just let your agent edit directly
-- **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
-- **Non-git projects** — agex requires git for worktree isolation
 
 ## Commands
 
@@ -310,7 +313,7 @@ If your agent or IDE supports Model Context Protocol, you can also expose agex a
 
 **Cursor** — add to `.cursor/mcp.json`
 
-All 18 CLI commands are exposed as MCP tools.
+All CLI commands are exposed as MCP tools.
 
 </details>
 
