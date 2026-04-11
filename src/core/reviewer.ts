@@ -57,12 +57,7 @@ export class Reviewer {
     const files = this.parsePerFileStats(numstat, nameStatus);
     const commits = this.parseCommitLog(logOutput);
 
-    return {
-      stats,
-      commits,
-      files,
-      ...(diffText !== undefined ? { diff: diffText } : {}),
-    };
+    return { stats, commits, files, diff: diffText };
   }
 
   async getDiff(branch: string): Promise<DiffStats> {

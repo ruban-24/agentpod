@@ -60,12 +60,9 @@ export class TaskManager {
   private async readTaskFromDisk(id: string): Promise<TaskRecord | null> {
     try {
       const content = await readFile(taskFilePath(this.repoRoot, id), 'utf-8');
-      const task = JSON.parse(content) as TaskRecord;
-      this.writeCache.set(id, task);
-      return task;
+      return JSON.parse(content) as TaskRecord;
     } catch (err: unknown) {
       if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
-        this.writeCache.delete(id);
         return null;
       }
       throw err;

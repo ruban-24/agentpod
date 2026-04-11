@@ -37,11 +37,7 @@ export async function acceptCommand(repoRoot: string, taskId: string): Promise<A
   const wtPath = worktreePath(repoRoot, taskId);
 
   // Auto-commit any uncommitted changes using the task prompt
-  let autoCommitted = false;
-  const commitSha = await wm.commitAll(taskId, task.prompt);
-  if (commitSha) {
-    autoCommitted = true;
-  }
+  const autoCommitted = Boolean(await wm.commitAll(taskId, task.prompt));
 
   // Check for dirty working tree files that overlap with the task branch's changes
   const porcelain = (await git.raw(['status', '--porcelain'])).toString();
@@ -89,7 +85,14 @@ export async function acceptCommand(repoRoot: string, taskId: string): Promise<A
     } catch {}
 
     await tm.updateStatus(taskId, 'merged');
-    return { id: taskId, merged: true, strategy: result.strategy, commit: result.commit, targetBranch, ...(autoCommitted ? { auto_committed: true } : {}) };
+    return {
+      id: taskId,
+      merged: true,
+      strategy: result.strategy,
+      commit: result.commit,
+      targetBranch,
+      auto_committed: autoCommitted || undefined,
+    };
   } else {
     // Restore worktree on failure so the task can continue working
     await wm.reattachWorktree(taskId, task.branch);
