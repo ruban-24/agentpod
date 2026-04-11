@@ -229,6 +229,16 @@ describe('TaskManager', () => {
       expect(updated.status).toBe('retried');
     });
 
+    it('transitions needs-input to errored', async () => {
+      const task = await tm.createTask({ prompt: 'test' });
+      await tm.updateStatus(task.id, 'provisioning');
+      await tm.updateStatus(task.id, 'ready');
+      await tm.updateStatus(task.id, 'running');
+      await tm.updateStatus(task.id, 'needs-input');
+      const updated = await tm.updateStatus(task.id, 'errored');
+      expect(updated.status).toBe('errored');
+    });
+
     it('rejects transition from completed to needs-input', async () => {
       const task = await tm.createTask({ prompt: 'test' });
       await tm.updateStatus(task.id, 'provisioning');

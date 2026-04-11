@@ -93,7 +93,7 @@ export class TaskManager {
     completed: ['merged', 'discarded', 'retried'],
     failed: ['merged', 'discarded', 'retried'],
     errored: ['discarded', 'retried'],
-    'needs-input': ['running', 'discarded'],
+    'needs-input': ['running', 'errored', 'discarded'],
     merged: [],
     discarded: [],
     retried: [],
