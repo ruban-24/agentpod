@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PassThrough } from 'node:stream';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { interactiveInit } from '../../src/cli/commands/init-interactive.js';
 import type { PromptIO } from '../../src/cli/interactive.js';
@@ -19,6 +19,11 @@ function createMockIO(): PromptIO & { input: PassThrough; output: PassThrough; g
 const YES = '\r';           // enter on first option (Yes)
 const NO = '\x1b[B\r';     // arrow down to No + enter
 const EDIT = '\x1b[B\x1b[B\r'; // arrow down 2x to Edit + enter
+
+// Key sequences for tri-choice
+const TRI_AUTO = '\r';              // first option: Auto-configure
+const TRI_CUSTOMIZE = '\x1b[B\r';  // second option: Customize
+const TRI_SKIP = '\x1b[B\x1b[B\r'; // third option: Skip
 
 describe('interactiveInit', () => {
   let repo: TestRepo;
@@ -43,12 +48,14 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize" (second option: down + enter)
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: confirm verify commands (Yes)
-    setTimeout(() => io.input.write(YES), 50);
-    // Prompt 2: confirm provisioning (Yes)
     setTimeout(() => io.input.write(YES), 100);
+    // Prompt 2: confirm provisioning (Yes)
+    setTimeout(() => io.input.write(YES), 150);
     // Prompt 3: multi-select agents — space to toggle first (claude-code), enter to confirm
-    setTimeout(() => io.input.write(' \r'), 150);
+    setTimeout(() => io.input.write(' \r'), 200);
 
     const result = await promise;
 
@@ -74,10 +81,12 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: editList for verify (no auto-detection), enter custom commands
-    setTimeout(() => io.input.write('npm test, npm run lint\n'), 50);
+    setTimeout(() => io.input.write('npm test, npm run lint\n'), 100);
     // Prompt 2: multi-select agents — just enter (select none)
-    setTimeout(() => io.input.write('\r'), 100);
+    setTimeout(() => io.input.write('\r'), 150);
 
     const result = await promise;
 
@@ -99,10 +108,12 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: reject verify commands (No)
-    setTimeout(() => io.input.write(NO), 50);
+    setTimeout(() => io.input.write(NO), 100);
     // Prompt 2: multi-select agents — enter (select none)
-    setTimeout(() => io.input.write('\r'), 100);
+    setTimeout(() => io.input.write('\r'), 150);
 
     const result = await promise;
 
@@ -120,12 +131,14 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: choose Edit for verify commands
-    setTimeout(() => io.input.write(EDIT), 50);
+    setTimeout(() => io.input.write(EDIT), 100);
     // Prompt 2: editList — provide new commands
-    setTimeout(() => io.input.write('npm test, npm run build\n'), 100);
+    setTimeout(() => io.input.write('npm test, npm run build\n'), 150);
     // Prompt 3: multi-select agents — enter (select none)
-    setTimeout(() => io.input.write('\r'), 150);
+    setTimeout(() => io.input.write('\r'), 200);
 
     const result = await promise;
 
@@ -138,15 +151,17 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: editList for verify (empty project)
-    setTimeout(() => io.input.write('\n'), 50);
+    setTimeout(() => io.input.write('\n'), 100);
     // Prompt 2: multi-select — select first (claude-code), arrow down, select second (codex), enter
     setTimeout(() => {
       io.input.write(' ');        // toggle claude-code
       io.input.write('\x1b[B');   // arrow down
       io.input.write(' ');        // toggle codex
       io.input.write('\r');       // confirm
-    }, 100);
+    }, 150);
 
     const result = await promise;
 
@@ -163,12 +178,14 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: accept verify (Yes)
-    setTimeout(() => io.input.write(YES), 50);
+    setTimeout(() => io.input.write(YES), 100);
     // Prompt 2: reject provisioning (No)
-    setTimeout(() => io.input.write(NO), 100);
+    setTimeout(() => io.input.write(NO), 150);
     // Prompt 3: multi-select agents — enter (select none)
-    setTimeout(() => io.input.write('\r'), 150);
+    setTimeout(() => io.input.write('\r'), 200);
 
     const result = await promise;
 
@@ -182,9 +199,11 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Empty project: editList for verify, then agent select
-    setTimeout(() => io.input.write('\n'), 50);
-    setTimeout(() => io.input.write('\r'), 100);
+    setTimeout(() => io.input.write('\n'), 100);
+    setTimeout(() => io.input.write('\r'), 150);
 
     await promise;
 
@@ -201,12 +220,14 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: confirm verify — no verify detected (no test/lint scripts), editList
-    setTimeout(() => io.input.write('\n'), 50);
+    setTimeout(() => io.input.write('\n'), 100);
     // Prompt 2: confirm run config (Yes)
-    setTimeout(() => io.input.write(YES), 100);
+    setTimeout(() => io.input.write(YES), 150);
     // Prompt 3: multi-select agents — enter (select none)
-    setTimeout(() => io.input.write('\r'), 150);
+    setTimeout(() => io.input.write('\r'), 200);
 
     const result = await promise;
 
@@ -228,12 +249,14 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: editList for verify (no test/lint scripts)
-    setTimeout(() => io.input.write('\n'), 50);
+    setTimeout(() => io.input.write('\n'), 100);
     // Prompt 2: reject run config (No)
-    setTimeout(() => io.input.write(NO), 100);
+    setTimeout(() => io.input.write(NO), 150);
     // Prompt 3: multi-select agents — enter (select none)
-    setTimeout(() => io.input.write('\r'), 150);
+    setTimeout(() => io.input.write('\r'), 200);
 
     const result = await promise;
 
@@ -246,8 +269,10 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
-    setTimeout(() => io.input.write('\n'), 50);
-    setTimeout(() => io.input.write('\r'), 100);
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
+    setTimeout(() => io.input.write('\n'), 100);
+    setTimeout(() => io.input.write('\r'), 150);
 
     await promise;
 
@@ -264,20 +289,97 @@ describe('interactiveInit', () => {
 
     const promise = interactiveInit(repo.path, io);
 
+    // Prompt 0: tri-choice — "Customize"
+    setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: editList for verify (no test/lint scripts)
-    setTimeout(() => io.input.write('\n'), 50);
+    setTimeout(() => io.input.write('\n'), 100);
     // Prompt 2: Edit run config
-    setTimeout(() => io.input.write(EDIT), 100);
+    setTimeout(() => io.input.write(EDIT), 150);
     // Prompt 3: edit cmd — change it
-    setTimeout(() => io.input.write('yarn dev\n'), 150);
+    setTimeout(() => io.input.write('yarn dev\n'), 200);
     // Prompt 4: edit port_env — keep default (blank enter)
-    setTimeout(() => io.input.write('\n'), 200);
+    setTimeout(() => io.input.write('\n'), 250);
     // Prompt 5: multi-select agents — enter (select none)
-    setTimeout(() => io.input.write('\r'), 250);
+    setTimeout(() => io.input.write('\r'), 300);
 
     const result = await promise;
 
     expect(result.created).toBe(true);
     expect(result.run).toEqual({ cmd: 'yarn dev', port_env: 'PORT' });
+  });
+
+  // New tests for monorepo, auto-configure, and skip paths
+
+  it('detects monorepo and prints guidance instead of auto-detection prompts', async () => {
+    await writeFile(join(repo.path, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n');
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Only prompt is agent selection
+    setTimeout(() => io.input.write('\r'), 50);
+    const result = await promise;
+    expect(result.created).toBe(true);
+    expect(result.verify).toEqual([]);
+    const output = stripAnsi(io.getOutput());
+    expect(output).toContain('Detected monorepo: pnpm workspace');
+    expect(output).toContain('Monorepos need manual configuration');
+    expect(output).not.toContain('Verify commands');
+  });
+
+  it('monorepo path creates template config.yml', async () => {
+    await writeFile(join(repo.path, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n');
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    setTimeout(() => io.input.write('\r'), 50);
+    const result = await promise;
+    expect(result.files).toContain('.agex/config.yml');
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
+    expect(config).toContain('# verify:');
+  });
+
+  it('auto-configure accepts all defaults without further prompts', async () => {
+    await writeFile(join(repo.path, 'package.json'), JSON.stringify({
+      scripts: { test: 'vitest', lint: 'eslint .' },
+      dependencies: { foo: '1.0.0' },
+    }));
+    await mkdir(join(repo.path, 'node_modules'), { recursive: true });
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Auto-configure is first option (enter)
+    setTimeout(() => io.input.write('\r'), 50);
+    // Agent selection (none)
+    setTimeout(() => io.input.write('\r'), 100);
+    const result = await promise;
+    expect(result.verify).toEqual(['npm test', 'npm run lint']);
+    expect(result.files).toContain('.agex/config.yml');
+  });
+
+  it('auto-configure drops symlink when setup is present', async () => {
+    await writeFile(join(repo.path, 'package.json'), JSON.stringify({
+      dependencies: { foo: '1.0.0' },
+    }));
+    await mkdir(join(repo.path, 'node_modules'), { recursive: true });
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    setTimeout(() => io.input.write('\r'), 50);
+    setTimeout(() => io.input.write('\r'), 100);
+    const result = await promise;
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
+    expect(config).toContain('npm install');
+    expect(config).not.toContain('symlink');
+  });
+
+  it('skip creates workspace only with no config', async () => {
+    await writeFile(join(repo.path, 'package.json'), JSON.stringify({
+      scripts: { test: 'vitest' },
+    }));
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Skip is third option (down, down, enter)
+    setTimeout(() => io.input.write('\x1b[B\x1b[B\r'), 50);
+    // Agent selection (none)
+    setTimeout(() => io.input.write('\r'), 100);
+    const result = await promise;
+    expect(result.verify).toEqual([]);
+    expect(result.files).not.toContain('.agex/config.yml');
   });
 });

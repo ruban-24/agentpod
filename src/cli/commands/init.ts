@@ -45,6 +45,25 @@ export interface InitResult {
   agents: AgentId[];
 }
 
+export const TEMPLATE_CONFIG = `# Commands to verify task results (uncomment and edit)
+# verify:
+#   - npm test
+#   - npm run lint
+
+# Files to copy into each worktree (e.g., secrets not in git)
+# copy:
+#   - .env
+
+# Commands to run after workspace creation
+# setup:
+#   - npm install
+
+# Dev server started per-task so agents can test against it
+# run:
+#   cmd: npm run dev
+#   port_env: PORT
+`;
+
 export async function initCommand(
   repoRoot: string,
   options: InitOptions
