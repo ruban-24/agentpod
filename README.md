@@ -180,7 +180,11 @@ $ agex compare abc123 def456 ghi789 --human
 
 ## Supported Agents
 
-`agex init` drops a skill file into your repo so your agent discovers agex automatically. No manual configuration needed — just start your agent and give it a task.
+`agex init` drops a skill file into your repo so your agent discovers agex automatically. Or install just the skill file with [`npx skills`](https://github.com/vercel-labs/skills):
+
+```bash
+npx skills add ruban-24/agex
+```
 
 | Agent | Skill file location | Auto-discovered |
 |-------|-------------------|-----------------|
