@@ -1,6 +1,5 @@
 import { Command } from 'commander';
-import { accessSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { execSync } from 'node:child_process';
 import type { AgentId } from './cli/skill-writer.js';
 import { withAbsoluteWorktree, withAbsoluteWorktrees } from './cli/enrich.js';
@@ -8,6 +7,7 @@ import { formatOutput, humanOutput } from './cli/output.js';
 import { EXIT_CODES } from './constants.js';
 import { AgexError } from './errors.js';
 import { resolveWorktreeContext } from './utils/resolve-context.js';
+import { ensureWorkspace } from './cli/ensure-workspace.js';
 
 declare const AGEX_VERSION: string;
 
@@ -48,17 +48,6 @@ function resolveTaskId(explicitId?: string): string {
   const ctx = resolveWorktreeContext();
   if (ctx) return ctx.taskId;
   throw new Error('No task ID provided and cwd is not inside a task worktree');
-}
-
-function requireInit(repoRoot: string): void {
-  try {
-    accessSync(join(repoRoot, '.agex'));
-  } catch {
-    throw new AgexError('agex not initialized', {
-      suggestion: "Run 'agex init' to initialize this repository",
-      exitCode: EXIT_CODES.WORKSPACE_ERROR,
-    });
-  }
 }
 
 async function handleError(err: unknown, exitCode: number = EXIT_CODES.INVALID_ARGS): Promise<never> {
@@ -132,7 +121,7 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
+      const { firstRun, monorepo } = await ensureWorkspace(root);
       const { taskCreateCommand } = await import('./cli/commands/task-create.js');
       const result = await taskCreateCommand(root, {
         prompt: opts.prompt,
@@ -145,6 +134,12 @@ program
         console.log(humanOutput(fmt.formatTaskCreateHuman(enriched)));
       } else {
         console.log(formatOutput(enriched, false));
+      }
+      if (firstRun) {
+        if (opts.human) {
+          const fmt = await getHumanFmt();
+          console.log(humanOutput(fmt.formatFirstRunHuman(monorepo)));
+        }
       }
     } catch (err) {
       await handleError(err, EXIT_CODES.WORKSPACE_ERROR);
@@ -160,7 +155,6 @@ program
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
-      requireInit(root);
       const { taskStatusCommand } = await import('./cli/commands/task-status.js');
       const { outputCommand } = await import('./cli/commands/output.js');
       const result = await taskStatusCommand(root, taskId);
@@ -189,7 +183,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { loadConfig } = await import('./config/loader.js');
       const config = await loadConfig(root);
       const { taskExecCommand } = await import('./cli/commands/task-exec.js');
@@ -218,7 +211,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { taskStartCommand } = await import('./cli/commands/task-start.js');
       const result = await taskStartCommand(root, id);
       if (opts.human) {
@@ -240,7 +232,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { taskStopCommand } = await import('./cli/commands/task-stop.js');
       const result = await taskStopCommand(root, id);
       if (opts.human) {
@@ -263,7 +254,6 @@ program
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
-      requireInit(root);
       const { cancelCommand } = await import('./cli/commands/cancel.js');
       const result = await cancelCommand(root, taskId);
       if (opts.human) {
@@ -289,7 +279,7 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
+      const { firstRun, monorepo } = await ensureWorkspace(root);
       const { loadConfig } = await import('./config/loader.js');
       const config = await loadConfig(root);
       const { runCommand } = await import('./cli/commands/run.js');
@@ -306,6 +296,12 @@ program
       } else {
         console.log(formatOutput(enriched, false));
       }
+      if (firstRun) {
+        if (opts.human) {
+          const fmt = await getHumanFmt();
+          console.log(humanOutput(fmt.formatFirstRunHuman(monorepo)));
+        }
+      }
     } catch (err) {
       await handleError(err, EXIT_CODES.AGENT_FAILED);
     }
@@ -319,7 +315,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { listCommand } = await import('./cli/commands/list.js');
       const result = await listCommand(root);
       const enriched = withAbsoluteWorktrees(result, root);
@@ -340,7 +335,6 @@ program
   .action(async (id) => {
     try {
       const root = getRepoRoot();
-      requireInit(root);
       const { outputCommand } = await import('./cli/commands/output.js');
       const log = await outputCommand(root, id);
       console.log(log);
@@ -357,7 +351,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { summaryCommand } = await import('./cli/commands/summary.js');
       const result = await summaryCommand(root);
       if (opts.human) {
@@ -380,7 +373,6 @@ program
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
-      requireInit(root);
       const { verifyCommand } = await import('./cli/commands/verify.js');
       const result = await verifyCommand(root, taskId);
       if (opts.human) {
@@ -406,7 +398,6 @@ program
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
-      requireInit(root);
       const { reviewCommand } = await import('./cli/commands/review.js');
       const result = await reviewCommand(root, taskId, { includePatch: !opts.human });
       if (opts.human) {
@@ -428,7 +419,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { compareCommand } = await import('./cli/commands/compare.js');
       const result = await compareCommand(root, ids);
       if (opts.human) {
@@ -451,7 +441,6 @@ program
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
-      requireInit(root);
       const { acceptCommand } = await import('./cli/commands/accept.js');
       const result = await acceptCommand(root, taskId);
       if (!result.merged) {
@@ -480,7 +469,6 @@ program
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
-      requireInit(root);
       const { rejectCommand } = await import('./cli/commands/reject.js');
       const result = await rejectCommand(root, taskId);
       const enriched = withAbsoluteWorktree(result, root);
@@ -503,7 +491,6 @@ program
     try {
       isHumanMode = opts.human;
       const root = getRepoRoot();
-      requireInit(root);
       const { cleanCommand } = await import('./cli/commands/clean.js');
       const result = await cleanCommand(root);
       if (opts.human) {
@@ -530,7 +517,6 @@ program
     try {
       isHumanMode = opts.human;
       const repoRoot = getRepoRoot();
-      requireInit(repoRoot);
       const id = resolveTaskId(taskId);
       const { retryCommand } = await import('./cli/commands/retry.js');
       const result = await retryCommand(repoRoot, id, {
@@ -573,7 +559,6 @@ program
     try {
       isHumanMode = opts.human;
       const repoRoot = getRepoRoot();
-      requireInit(repoRoot);
       const { loadConfig } = await import('./config/loader.js');
       const config = await loadConfig(repoRoot);
       const id = resolveTaskId(taskId);

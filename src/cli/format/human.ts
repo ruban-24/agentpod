@@ -369,6 +369,31 @@ export function formatInitHuman(data: {
   return lines.join('\n');
 }
 
+export function formatFirstRunHuman(monorepo: { type: string; label: string } | null): string {
+  const lines = [
+    card('blue', [
+      `${blue('\u2139')} First run — created .agex/ workspace`,
+      '',
+      `Run ${bold('agex init')} to configure verification and agent hooks.`,
+    ]),
+  ];
+
+  if (monorepo) {
+    lines.push('');
+    lines.push(card('yellow', [
+      `${yellow('\u26a0')} Detected ${bold(monorepo.label)}`,
+      '',
+      'Monorepos need manual configuration. Run agex init or edit .agex/config.yml:',
+      `  ${dim('verify:')}   test/lint/build commands scoped to your package(s)`,
+      `  ${dim('copy:')}     files like .env that aren\'t in git`,
+      `  ${dim('setup:')}    install commands for worktree provisioning`,
+      'Avoid symlinking node_modules in monorepos with hoisted dependencies.',
+    ]));
+  }
+
+  return lines.join('\n');
+}
+
 export function formatTaskCreateHuman(task: TaskRecord): string {
   const lines: string[] = [];
   const cardLines = [
