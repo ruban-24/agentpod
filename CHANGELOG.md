@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.4.0 — 2026-04-12
+
+### Features
+
+- **Init-optional onboarding:** `agex create` now works in any git repo without prior `agex init`. The workspace is bootstrapped automatically on first use.
+- **Monorepo detection:** `agex init` detects pnpm, npm/yarn, Lerna, Nx, Turborepo, Cargo, and Go workspaces — prints setup guidance instead of running broken auto-detection.
+- **Three-path init flow:** Interactive init now offers Auto-configure (accept defaults), Customize (step through settings), or Skip (workspace only). Monorepos get a dedicated guidance path with a template config.
+- **First-run monorepo warning:** `agex create` and `agex run` warn monorepo users on first use with setup guidance, in both human and JSON output.
+
+### Improvements
+
+- **Empty verify handling:** When no verify commands are configured, all verification paths (`verify`, `exec`, `answer`) now return a clear "No verify commands configured. Verification passed (0 checks)." message instead of the ambiguous "0/0 checks passed".
+- **Safe auto-configure provisioning:** Auto-configure mode drops `symlink` when `setup` is present to prevent shared mutation across parallel worktrees.
+- **Graceful degradation:** All commands work without `agex init` — `list` shows "No tasks", `output` gives a clear error for missing tasks, no more "agex not initialized" hard errors.
+
+### Bug Fixes
+
+- **Stale task recovery (#37):** Tasks with dead agent PIDs are auto-recovered to `errored` status when read by `getTask()` or `listTasks()`.
+- **Input validation before bootstrap:** `agex create` without `--prompt` or `--issue` now fails before creating `.agex/` directory.
+
 ## 0.3.7 — 2026-04-12
 
 ### Bug Fixes

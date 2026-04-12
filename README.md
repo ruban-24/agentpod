@@ -30,21 +30,25 @@
 # Install
 brew install ruban-24/tap/agex   # or: npm i -g @ruban24/agex
 
-# Set up in your project
+# Start using it immediately — no setup required
 cd your-project
-agex init
+agex create --prompt "Add JWT auth with refresh tokens"
+agex create --prompt "Add session-based auth with Redis"
 ```
 
-`agex init` auto-detects your project, asks a few questions, and drops a skill file so your agent discovers agex automatically. Then just tell your agent:
+That's it. `agex create` works in any git repo — no `agex init` needed. It bootstraps the workspace automatically on first use.
+
+Want verification, agent hooks, or provisioning? Run `agex init` to configure them:
+
+```bash
+agex init   # auto-detects project, sets up verify commands and agent skill files
+```
+
+Then just tell your agent:
 
 > *"Use agex to try 2 different approaches to refactor the auth module, then verify both and merge the best one."*
 
-Or run tasks directly:
-
 ```bash
-agex create --prompt "Add JWT auth with refresh tokens"
-agex create --prompt "Add session-based auth with Redis"
-
 # Check in whenever you want
 agex summary --human
 
@@ -63,12 +67,12 @@ AI coding agents are fast — but they work on your branch, one task at a time.
 **What if you could run multiple agents in parallel, each in an isolated workspace, and pick the best result?**
 
 ```
-1. You run    →  agex init               →  guided setup, agent auto-discovers agex
+1. You run    →  agex create              →  works instantly in any git repo
 2. Agent works →  creates tasks in parallel  →  isolated worktrees, auto-verification
 3. You decide  →  agex summary --human     →  merge the winner, discard the rest
 ```
 
-**For you:** install, init, go back to what you were doing. Check in when you want with `agex summary --human`.
+**For you:** install, start creating tasks. Optionally run `agex init` to configure verification and agent hooks. Check in when you want with `agex summary --human`.
 
 **For your agent:** commands for every step — create, verify, compare, accept, reject. JSON output by default. Agent skill files for auto-discovery.
 
@@ -194,7 +198,7 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 
 | Command | Description |
 |---------|-------------|
-| `agex init` | Initialize agex (interactive guided setup) |
+| `agex init` | Configure agex (optional — `create` works without it) |
 | `agex create --prompt "..." [--issue <ref>]` | Create an isolated workspace (from prompt, GitHub issue, or both) |
 | `agex exec <id> --cmd "..." [--wait]` | Run a command in a task's worktree |
 | `agex run --prompt "..." --cmd "..." [--wait]` | Shortcut for create + exec |
@@ -259,7 +263,9 @@ setup:
 
 ### Monorepos
 
-agex works in monorepos but doesn't auto-detect workspace layouts yet. You'll need to manually configure `.agex/config.yml` to list per-package files:
+agex detects monorepos automatically (pnpm, npm/yarn workspaces, Lerna, Nx, Turborepo, Cargo workspaces, Go workspaces). When detected, `agex init` prints setup guidance and creates a template `.agex/config.yml` for you to customize instead of running auto-detection that doesn't understand workspace layouts.
+
+If you skip `agex init` and go straight to `agex create`, you'll get a warning on first run with the same guidance.
 
 ```yaml
 # Example: pnpm monorepo with packages/api and packages/web
@@ -283,7 +289,6 @@ verify:
 
 - **Don't symlink `node_modules`** in monorepos. Use `setup: pnpm install` (or `yarn install`) instead — it regenerates dependencies correctly per the workspace layout.
 - **List each `.env` explicitly.** Auto-detection only finds the root `.env`, not ones nested in packages.
-- **Auto-detection only checks the repo root** for `package.json`, lock files, etc. It won't detect your package manager from `pnpm-workspace.yaml` or the `workspaces` field — set `setup` manually.
 - **Worktrees are full repo checkouts.** Each task gets the entire monorepo, not a single package. This is fine — your agent can be told to work on a specific package via the task prompt.
 
 ### Auto-Detection
