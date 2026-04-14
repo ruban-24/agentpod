@@ -131,6 +131,29 @@ describe('initCommand', () => {
     // config.yml should not exist
     await expect(access(join(repo.path, '.agex', 'config.yml'))).rejects.toThrow();
   });
+
+  it('writes review field to config.yml', async () => {
+    await initCommand(repo.path, { verify: ['npm test'], review: 'manual' });
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
+    expect(config).toContain('review: manual');
+    expect(config).toContain('# Review mode');
+  });
+
+  it('writes review: auto to config.yml', async () => {
+    await initCommand(repo.path, { verify: ['npm test'], review: 'auto' });
+    const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
+    expect(config).toContain('review: auto');
+  });
+
+  it('returns review in result', async () => {
+    const result = await initCommand(repo.path, { verify: ['npm test'], review: 'manual' });
+    expect(result.review).toBe('manual');
+  });
+
+  it('returns undefined review when not provided', async () => {
+    const result = await initCommand(repo.path, { verify: ['npm test'] });
+    expect(result.review).toBeUndefined();
+  });
 });
 
 describe('dumpConfigWithComments', () => {
@@ -179,5 +202,16 @@ describe('dumpConfigWithComments', () => {
     expect(yaml).toContain('# Dev server started per-task so agents can test against it');
     expect(yaml).toContain('npm run dev');
     expect(yaml).toContain('PORT');
+  });
+
+  it('includes review field with comment', () => {
+    const yaml = dumpConfigWithComments({ verify: ['npm test'], review: 'manual' });
+    expect(yaml).toContain('# Review mode: auto (agent merges on verify pass) or manual (agent asks before merging)');
+    expect(yaml).toContain('review: manual');
+  });
+
+  it('omits review when undefined', () => {
+    const yaml = dumpConfigWithComments({ verify: ['npm test'] });
+    expect(yaml).not.toContain('review');
   });
 });

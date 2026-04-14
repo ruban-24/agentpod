@@ -6,6 +6,7 @@ import type { AgexConfig, RunConfig } from '../../types.js';
 import { type AgentId, writeSkillFiles } from '../skill-writer.js';
 
 const SECTION_COMMENTS: Record<string, string> = {
+  review: '# Review mode: auto (agent merges on verify pass) or manual (agent asks before merging)',
   verify: '# Commands to verify task results',
   copy: '# Files to copy into each worktree (e.g., secrets not in git)',
   symlink: '# Directories to symlink into worktrees (shared, not copied)',
@@ -16,7 +17,7 @@ const SECTION_COMMENTS: Record<string, string> = {
 export function dumpConfigWithComments(config: AgexConfig): string {
   const sections: string[] = [];
 
-  for (const key of ['verify', 'copy', 'symlink', 'setup', 'run'] as const) {
+  for (const key of ['review', 'verify', 'copy', 'symlink', 'setup', 'run'] as const) {
     const value = config[key];
     if (value === undefined) continue;
 
@@ -29,6 +30,7 @@ export function dumpConfigWithComments(config: AgexConfig): string {
 }
 
 export interface InitOptions {
+  review?: 'auto' | 'manual';
   verify?: string[];
   copy?: string[];
   symlink?: string[];
@@ -40,12 +42,16 @@ export interface InitOptions {
 export interface InitResult {
   created: boolean;
   files: string[];
+  review?: 'auto' | 'manual';
   verify: string[];
   run?: RunConfig;
   agents: AgentId[];
 }
 
-export const TEMPLATE_CONFIG = `# Commands to verify task results (uncomment and edit)
+export const TEMPLATE_CONFIG = `# Review mode: auto (agent merges on verify pass) or manual (agent asks before merging)
+# review: manual
+
+# Commands to verify task results (uncomment and edit)
 # verify:
 #   - npm test
 #   - npm run lint
@@ -89,11 +95,12 @@ export async function initCommand(
   }
 
   // Write config.yml with all config fields (verify + provisioning)
-  const hasConfig = options.verify?.length || options.copy?.length ||
+  const hasConfig = options.review || options.verify?.length || options.copy?.length ||
     options.symlink?.length || options.setup?.length || options.run;
 
   if (hasConfig) {
     const config: AgexConfig = {};
+    if (options.review) config.review = options.review;
     if (options.verify?.length) config.verify = options.verify;
     if (options.copy?.length) config.copy = options.copy;
     if (options.symlink?.length) config.symlink = options.symlink;
@@ -113,6 +120,7 @@ export async function initCommand(
   return {
     created: true,
     files,
+    review: options.review,
     verify: options.verify ?? [],
     run: options.run,
     agents,
