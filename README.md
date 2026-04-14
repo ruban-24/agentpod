@@ -40,10 +40,6 @@ That's agex. Parallel AI agents, isolated branches, nothing touches main until y
 
 Works with **Claude Code**, **Codex CLI**, **Copilot CLI**, and any agent that runs shell commands.
 
-<p align="center">
-  <img src="./docs/with-agex.gif" alt="agex demo" width="800">
-</p>
-
 ---
 
 ## Quick Start
@@ -91,59 +87,11 @@ AI coding agents are fast — but they work on your branch, one task at a time. 
 
 agex gives each agent its own git worktree and branch. They work simultaneously, can't interfere with each other, and nothing merges until you verify and approve.
 
-**For you:** `brew install` and start creating tasks. Check in whenever you want with `agex summary --human`. No setup required — `agex create` bootstraps automatically in any git repo.
-
-**For your agent:** JSON-first commands for every step — create, verify, compare, accept, reject. Drop in a skill file with `agex init` and your agent discovers the workflow automatically.
-
 **No cloud. No accounts. No team buy-in needed.** Install it, use it. Everything lives locally.
 
-## Who Is This For?
+### What about plain git worktrees?
 
-You already use an AI coding agent (Claude Code, Codex, Copilot) and you've hit one of these walls:
-
-- **"I have 4 features to ship and my agent does them one at a time"** — fan them all out in parallel
-- **"I want to try 3 approaches and pick the best"** — verify all three, merge the winner, reject the rest
-- **"My agent broke main again"** — every task is an isolated worktree, nothing merges until tests pass
-- **"I want Claude Code to dispatch subtasks to Codex or Aider"** — multi-agent orchestration on one codebase
-
-### When NOT to reach for agex
-
-- **Trivial single-file edits** — just let your agent edit directly
-- **Strictly sequential tasks** — if step 2 depends on step 1, parallelism can't help
-- **Non-git projects** — agex requires git for worktree isolation
-
-## A Real Workflow
-
-Monday morning. You have auth, notifications, and rate limiting to ship this week.
-
-**Without agex:** you tell your agent to do auth. Wait 10 minutes. Then notifications. Wait 8 minutes. Then rate limiting. Three serial sessions, constant context switching, half your morning gone.
-
-**With agex:**
-
-```bash
-# 9:00 — fan out all three
-agex create --prompt "Refactor auth module to JWT with refresh tokens"
-agex create --prompt "Add push notification service with Firebase"
-agex create --prompt "Add Redis-backed API rate limiting"
-
-# 9:02 — go review PRs, write docs, do anything else
-
-# 9:15 — check in
-agex summary --human
-# All three finished. Two passed verification, one failed lint.
-
-agex accept a1b2c3    # merge auth
-agex accept d4e5f6    # merge notifications
-agex retry g7h8i9 --feedback "Fix the ESLint errors in rateLimiter.ts"
-
-# 9:20 — three features shipped, one retrying. You haven't written a line of code.
-```
-
-This is how the author uses agex daily. Not for demos — for real work.
-
-## Why Not Plain Git Worktrees?
-
-Git worktrees are great. agex uses them under the hood. But managing parallel agent work with raw worktrees means:
+agex uses worktrees under the hood, but handles what raw worktrees don't — environment setup (`.env`, secrets), dependency management (`node_modules` symlinking), port isolation, automated verification, side-by-side comparison, and cleanup.
 
 <table>
 <tr>
@@ -156,76 +104,15 @@ Git worktrees are great. agex uses them under the hood. But managing parallel ag
 </tr>
 </table>
 
-agex handles what raw worktrees don't:
+## Who Is This For?
 
-- **Environment setup** — copies `.env`, secrets, and untracked config files into each worktree
-- **Dependency management** — symlinks `node_modules` or runs setup commands automatically
-- **Port conflicts** — assigns unique `AGEX_PORT` per task so dev servers don't collide
-- **Automated verification** — runs your test/lint/build suite before you even look at the results
-- **Comparison** — side-by-side status, checks, and diff stats across all tasks
-- **Cleanup** — `agex reject` or `agex clean` removes worktrees and branches in one step
+You already use an AI coding agent and you've hit one of these walls:
 
-## What Does It Look Like?
+- **"I have 4 features to ship and my agent does them one at a time"** — fan them all out in parallel
+- **"My agent broke main again"** — every task is isolated, nothing merges until tests pass
+- **"I want to try 3 approaches and pick the best"** — verify all three, merge the winner
 
-Add `--human` to any command for colored terminal output:
-
-**Check on all tasks:**
-```
-$ agex summary --human
-
-agex · 3 tasks
-3 tasks · 1 completed · 1 running · 1 failed
-
-┃ ✓  abc123  completed   12.4s  3/3  +47 -12 · 4 files   JWT approach
-┃ ▶  def456  running      8.1s                             Sessions approach
-┃ ✗  ghi789  failed      15.2s  1/3  +93 -41 · 14 files   OAuth approach
-```
-
-**Verify a task's results:**
-```
-$ agex verify abc123 --human
-
-abc123 · verification
-
-✓ npm test          (4.2s)
-✓ npm run lint      (2.1s)
-✓ npm run build     (6.1s)
-
-All 3 checks passed (12.4s total)
-```
-
-**Review changes:**
-```
-$ agex review abc123 --human
-
-abc123 · JWT approach · +47 -12 across 4 files · 3 commits
-
-COMMITS
-  a1b2c3d  refactor: extract auth middleware
-  d4e5f6a  feat: add JWT token generation
-  b7c8d9e  test: add auth middleware tests
-
-FILES
-  M src/auth/middleware.ts    +18 -4
-  M src/auth/token.ts         +12 -2
-  A src/auth/jwt.ts           +15 -0
-  M tests/auth.test.ts         +2 -6
-
-→ Full review: git diff HEAD...agex/abc123
-```
-
-**Compare and decide:**
-```
-$ agex compare abc123 def456 ghi789 --human
-
-  ID       Status      Checks  Changes  Duration  Prompt
-  ──────────────────────────────────────────────────────────
-  abc123   completed   3/3     +47 -12  12.4s     JWT approach
-  def456   completed   3/3     +31 -8    9.2s     Sessions approach
-  ghi789   failed      1/3     +93 -41  15.2s     OAuth approach
-  ──────────────────────────────────────────────────────────
-  3 tasks · 2 completed · 1 failed
-```
+Not for trivial single-file edits, strictly sequential tasks, or non-git projects.
 
 ## Supported Agents
 
@@ -241,11 +128,12 @@ npx skills add ruban-24/agex --skill agex
 | Codex CLI | `.agents/skills/agex/SKILL.md` | Yes |
 | Copilot CLI | `.github/skills/agex/SKILL.md` | Yes |
 
-Any agent that can run shell commands works with agex via subprocess mode (`--cmd`). The skill files above teach agents the full agex workflow — when to use it, how to create tasks, verify, compare, and merge.
+Any agent that can run shell commands works with agex via subprocess mode (`--cmd`).
 
-## Commands
+<details>
+<summary><strong>Commands</strong></summary>
 
-All commands output JSON by default — designed for agent consumption. Add `--human` for colored terminal output when you're checking in.
+All commands output JSON by default — designed for agent consumption. Add `--human` for colored terminal output.
 
 ### Task Lifecycle
 
@@ -280,20 +168,23 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 
 | Command | Description |
 |---------|-------------|
-| `agex accept <id>` | Merge task branch into current branch |
+| `agex accept <id> [--reviewed]` | Merge task branch (`--reviewed` required in manual review mode) |
 | `agex reject <id>` | Remove task worktree and branch |
 | `agex retry <id> --feedback "..."` | Retry a failed task with feedback |
 | `agex answer <id> --text "..."` | Answer a question from a needs-input task |
 | `agex clean` | Clean up all finished tasks |
 
-## Configuration
+</details>
 
 <details>
-<summary>Configuration reference</summary>
+<summary><strong>Configuration</strong></summary>
 
 Create `.agex/config.yml` (or pass `--verify` to `init`):
 
 ```yaml
+# Review mode: auto (agent merges on verify pass) or manual (agent asks before merging)
+review: manual
+
 # Commands to verify task results
 verify:
   - "npm test"
@@ -316,21 +207,19 @@ setup:
 
 ### Monorepos
 
-agex detects monorepos automatically (pnpm, npm/yarn workspaces, Lerna, Nx, Turborepo, Cargo workspaces, Go workspaces). When detected, `agex init` prints setup guidance and creates a template `.agex/config.yml` for you to customize instead of running auto-detection that doesn't understand workspace layouts.
-
-If you skip `agex init` and go straight to `agex create`, you'll get a warning on first run with the same guidance.
+agex detects monorepos automatically (pnpm, npm/yarn workspaces, Lerna, Nx, Turborepo, Cargo workspaces, Go workspaces). When detected, `agex init` prints setup guidance and creates a template config.
 
 ```yaml
-# Example: pnpm monorepo with packages/api and packages/web
+# Example: pnpm monorepo
 copy:
   - .env
   - packages/api/.env
   - packages/web/.env
 
-symlink: []  # avoid symlinking node_modules in monorepos — hoisting makes it fragile
+symlink: []  # avoid symlinking node_modules in monorepos
 
 setup:
-  - pnpm install  # regenerates all node_modules correctly in the worktree
+  - pnpm install
 
 verify:
   - pnpm run lint
@@ -338,11 +227,7 @@ verify:
   - pnpm run build
 ```
 
-**What to know:**
-
-- **Don't symlink `node_modules`** in monorepos. Use `setup: pnpm install` (or `yarn install`) instead — it regenerates dependencies correctly per the workspace layout.
-- **List each `.env` explicitly.** Auto-detection only finds the root `.env`, not ones nested in packages.
-- **Worktrees are full repo checkouts.** Each task gets the entire monorepo, not a single package. This is fine — your agent can be told to work on a specific package via the task prompt.
+**Tips:** Don't symlink `node_modules` in monorepos — use `setup: pnpm install` instead. List each `.env` explicitly since auto-detection only finds the root one.
 
 ### Auto-Detection
 
@@ -363,14 +248,9 @@ If no `verify` commands are configured, agex auto-detects from your project:
 </details>
 
 <details>
-<summary>Subprocess mode (CI, scripting, multi-agent)</summary>
+<summary><strong>Subprocess mode (CI, scripting, multi-agent)</strong></summary>
 
-You can also orchestrate agex directly. This is useful for CI pipelines, shell scripts, and dispatching multiple different agents on the same codebase.
-
-**Key flags:**
-- `--prompt "..."` — describes the task (used for tracking and comparison)
-- `--cmd "..."` — the command to run inside the isolated worktree (any CLI tool)
-- `--wait` — block until the command finishes (without it, the task runs in the background)
+Orchestrate agex directly — useful for CI pipelines, shell scripts, and dispatching multiple different agents on the same codebase.
 
 ```bash
 # Fan out 3 different agents on the same task
@@ -384,18 +264,18 @@ wait
 
 # Compare all three, accept the best
 agex compare $(agex list --json | jq -r '.[].id' | tr '\n' ' ')
-agex accept <best-id>
+agex accept <best-id> --reviewed
 agex clean
 ```
 
-**Each task gets its own environment variables** — `AGEX_TASK_ID`, `AGEX_WORKTREE`, and `AGEX_PORT` — so parallel processes can bind to different ports without conflicts.
+Each task gets its own environment variables — `AGEX_TASK_ID`, `AGEX_WORKTREE`, and `AGEX_PORT` — so parallel processes can bind to different ports without conflicts.
 
 </details>
 
 <details>
-<summary>MCP server for native tool discovery</summary>
+<summary><strong>MCP server</strong></summary>
 
-If your agent or IDE supports Model Context Protocol, you can also expose agex as an MCP server. This is **not required** — skill files are the recommended path.
+If your agent or IDE supports Model Context Protocol, you can expose agex as an MCP server. This is **not required** — skill files are the recommended path.
 
 ```json
 {
@@ -411,8 +291,6 @@ If your agent or IDE supports Model Context Protocol, you can also expose agex a
 **Claude Code** — add to `.claude/settings.json` or `~/.claude/settings.json`
 
 **Cursor** — add to `.cursor/mcp.json`
-
-All CLI commands are exposed as MCP tools.
 
 </details>
 
