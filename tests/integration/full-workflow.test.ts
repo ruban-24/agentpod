@@ -71,7 +71,7 @@ describe('Full Workflow Integration', () => {
     expect(diffResult.files_changed).toBe(1);
 
     // Step 6: Merge
-    const mergeResult = await acceptCommand(repo.path, task.id);
+    const mergeResult = await acceptCommand(repo.path, task.id, { reviewed: true });
     expect(mergeResult.merged).toBe(true);
 
     // Verify file is on main branch
@@ -115,7 +115,7 @@ describe('Full Workflow Integration', () => {
 
     // Discard one, merge the other
     await rejectCommand(repo.path, task2.id);
-    const merged = await acceptCommand(repo.path, task1.id);
+    const merged = await acceptCommand(repo.path, task1.id, { reviewed: true });
     expect(merged.merged).toBe(true);
   });
 
