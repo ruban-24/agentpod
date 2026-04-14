@@ -54,8 +54,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write(YES), 100);
     // Prompt 2: confirm provisioning (Yes)
     setTimeout(() => io.input.write(YES), 150);
-    // Prompt 3: multi-select agents — space to toggle first (claude-code), enter to confirm
-    setTimeout(() => io.input.write(' \r'), 200);
+    // Prompt 3: review mode — accept default (manual)
+    setTimeout(() => io.input.write('\r'), 200);
+    // Prompt 4: multi-select agents — space to toggle first (claude-code), enter to confirm
+    setTimeout(() => io.input.write(' \r'), 250);
 
     const result = await promise;
 
@@ -85,8 +87,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: editList for verify (no auto-detection), enter custom commands
     setTimeout(() => io.input.write('npm test, npm run lint\n'), 100);
-    // Prompt 2: multi-select agents — just enter (select none)
+    // Prompt 2: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 150);
+    // Prompt 3: multi-select agents — just enter (select none)
+    setTimeout(() => io.input.write('\r'), 200);
 
     const result = await promise;
 
@@ -112,8 +116,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: reject verify commands (No)
     setTimeout(() => io.input.write(NO), 100);
-    // Prompt 2: multi-select agents — enter (select none)
+    // Prompt 2: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 150);
+    // Prompt 3: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 200);
 
     const result = await promise;
 
@@ -137,8 +143,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write(EDIT), 100);
     // Prompt 2: editList — provide new commands
     setTimeout(() => io.input.write('npm test, npm run build\n'), 150);
-    // Prompt 3: multi-select agents — enter (select none)
+    // Prompt 3: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 200);
+    // Prompt 4: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 250);
 
     const result = await promise;
 
@@ -155,13 +163,15 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     // Prompt 1: editList for verify (empty project)
     setTimeout(() => io.input.write('\n'), 100);
-    // Prompt 2: multi-select — select first (claude-code), arrow down, select second (codex), enter
+    // Prompt 2: review mode — accept default (manual)
+    setTimeout(() => io.input.write('\r'), 150);
+    // Prompt 3: multi-select — select first (claude-code), arrow down, select second (codex), enter
     setTimeout(() => {
       io.input.write(' ');        // toggle claude-code
       io.input.write('\x1b[B');   // arrow down
       io.input.write(' ');        // toggle codex
       io.input.write('\r');       // confirm
-    }, 150);
+    }, 200);
 
     const result = await promise;
 
@@ -184,8 +194,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write(YES), 100);
     // Prompt 2: reject provisioning (No)
     setTimeout(() => io.input.write(NO), 150);
-    // Prompt 3: multi-select agents — enter (select none)
+    // Prompt 3: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 200);
+    // Prompt 4: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 250);
 
     const result = await promise;
 
@@ -201,9 +213,11 @@ describe('interactiveInit', () => {
 
     // Prompt 0: tri-choice — "Customize"
     setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
-    // Empty project: editList for verify, then agent select
+    // Empty project: editList for verify, then review, then agent select
     setTimeout(() => io.input.write('\n'), 100);
+    // Prompt 2: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 150);
+    setTimeout(() => io.input.write('\r'), 200);
 
     await promise;
 
@@ -226,8 +240,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write('\n'), 100);
     // Prompt 2: confirm run config (Yes)
     setTimeout(() => io.input.write(YES), 150);
-    // Prompt 3: multi-select agents — enter (select none)
+    // Prompt 3: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 200);
+    // Prompt 4: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 250);
 
     const result = await promise;
 
@@ -255,8 +271,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write('\n'), 100);
     // Prompt 2: reject run config (No)
     setTimeout(() => io.input.write(NO), 150);
-    // Prompt 3: multi-select agents — enter (select none)
+    // Prompt 3: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 200);
+    // Prompt 4: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 250);
 
     const result = await promise;
 
@@ -272,7 +290,9 @@ describe('interactiveInit', () => {
     // Prompt 0: tri-choice — "Customize"
     setTimeout(() => io.input.write(TRI_CUSTOMIZE), 50);
     setTimeout(() => io.input.write('\n'), 100);
+    // Prompt 2: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 150);
+    setTimeout(() => io.input.write('\r'), 200);
 
     await promise;
 
@@ -299,8 +319,10 @@ describe('interactiveInit', () => {
     setTimeout(() => io.input.write('yarn dev\n'), 200);
     // Prompt 4: edit port_env — keep default (blank enter)
     setTimeout(() => io.input.write('\n'), 250);
-    // Prompt 5: multi-select agents — enter (select none)
+    // Prompt 5: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 300);
+    // Prompt 6: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 350);
 
     const result = await promise;
 
@@ -314,8 +336,10 @@ describe('interactiveInit', () => {
     await writeFile(join(repo.path, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n');
     const io = createMockIO();
     const promise = interactiveInit(repo.path, io);
-    // Only prompt is agent selection
+    // Prompt 0: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 50);
+    // Prompt 1: agent selection
+    setTimeout(() => io.input.write('\r'), 100);
     const result = await promise;
     expect(result.created).toBe(true);
     expect(result.verify).toEqual([]);
@@ -329,7 +353,10 @@ describe('interactiveInit', () => {
     await writeFile(join(repo.path, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n');
     const io = createMockIO();
     const promise = interactiveInit(repo.path, io);
+    // Prompt 0: review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 50);
+    // Prompt 1: agent selection
+    setTimeout(() => io.input.write('\r'), 100);
     const result = await promise;
     expect(result.files).toContain('.agex/config.yml');
     const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
@@ -346,8 +373,10 @@ describe('interactiveInit', () => {
     const promise = interactiveInit(repo.path, io);
     // Auto-configure is first option (enter)
     setTimeout(() => io.input.write('\r'), 50);
-    // Agent selection (none)
+    // Review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 100);
+    // Agent selection (none)
+    setTimeout(() => io.input.write('\r'), 150);
     const result = await promise;
     expect(result.verify).toEqual(['npm test', 'npm run lint']);
     expect(result.files).toContain('.agex/config.yml');
@@ -361,7 +390,9 @@ describe('interactiveInit', () => {
     const io = createMockIO();
     const promise = interactiveInit(repo.path, io);
     setTimeout(() => io.input.write('\r'), 50);
+    // Review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 100);
+    setTimeout(() => io.input.write('\r'), 150);
     const result = await promise;
     const config = await readFile(join(repo.path, '.agex', 'config.yml'), 'utf-8');
     expect(config).toContain('npm install');
@@ -376,10 +407,72 @@ describe('interactiveInit', () => {
     const promise = interactiveInit(repo.path, io);
     // Skip is third option (down, down, enter)
     setTimeout(() => io.input.write('\x1b[B\x1b[B\r'), 50);
-    // Agent selection (none)
+    // Review mode — accept default (manual)
     setTimeout(() => io.input.write('\r'), 100);
+    // Agent selection (none)
+    setTimeout(() => io.input.write('\r'), 150);
     const result = await promise;
     expect(result.verify).toEqual([]);
-    expect(result.files).not.toContain('.agex/config.yml');
+    // review is 'manual' so config.yml WILL be created
+    expect(result.review).toBe('manual');
+  });
+
+  // New tests for review mode
+
+  it('prompts for review mode and defaults to manual', async () => {
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Prompt 0: tri-choice — "Skip"
+    setTimeout(() => io.input.write(TRI_SKIP), 50);
+    // Prompt 1: review mode — accept default (manual, first option)
+    setTimeout(() => io.input.write('\r'), 100);
+    // Prompt 2: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 150);
+    const result = await promise;
+    expect(result.review).toBe('manual');
+    const output = stripAnsi(io.getOutput());
+    expect(output).toContain('Review mode');
+  });
+
+  it('selects auto review mode', async () => {
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Prompt 0: tri-choice — "Skip"
+    setTimeout(() => io.input.write(TRI_SKIP), 50);
+    // Prompt 1: review mode — arrow down to auto (second option), enter
+    setTimeout(() => io.input.write('\x1b[B\r'), 100);
+    // Prompt 2: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 150);
+    const result = await promise;
+    expect(result.review).toBe('auto');
+  });
+
+  it('auto-configure path still prompts for review mode', async () => {
+    await writeFile(join(repo.path, 'package.json'), JSON.stringify({
+      scripts: { test: 'vitest' },
+    }));
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Prompt 0: tri-choice — "Auto-configure"
+    setTimeout(() => io.input.write(TRI_AUTO), 50);
+    // Prompt 1: review mode — accept default (manual)
+    setTimeout(() => io.input.write('\r'), 100);
+    // Prompt 2: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 150);
+    const result = await promise;
+    expect(result.review).toBe('manual');
+    expect(result.verify).toEqual(['npm test']);
+  });
+
+  it('monorepo path prompts for review mode', async () => {
+    await writeFile(join(repo.path, 'pnpm-workspace.yaml'), 'packages:\n  - packages/*\n');
+    const io = createMockIO();
+    const promise = interactiveInit(repo.path, io);
+    // Prompt 0: review mode — accept default (manual)
+    setTimeout(() => io.input.write('\r'), 50);
+    // Prompt 1: multi-select agents — enter (select none)
+    setTimeout(() => io.input.write('\r'), 100);
+    const result = await promise;
+    expect(result.review).toBe('manual');
   });
 });

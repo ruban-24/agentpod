@@ -76,6 +76,19 @@ export async function interactiveInit(
     // 'skip' → everything stays empty
   }
 
+  // Review mode (all paths — this is a project-level setting)
+  write(`\n  ${bold('Review mode')}\n`);
+  write(`  ${dim('Controls whether agents pause for your review before merging')}\n`);
+
+  const review = await singleSelect<'manual' | 'auto'>(
+    bold('How should agents handle merging?'),
+    [
+      { label: 'manual — agent pauses before merging, shows you the results first (recommended)', value: 'manual' },
+      { label: 'auto — agent merges automatically when verification passes', value: 'auto' },
+    ],
+    io,
+  );
+
   // Agent selection (both paths)
   write(`\n  ${bold('Which agents do you use?')}\n`);
   write(`  ${dim('Agent-specific skills and session hooks will be configured')}\n`);
@@ -95,12 +108,19 @@ export async function interactiveInit(
     setup,
     run,
     agents: agents.length > 0 ? agents : undefined,
+    review,
   });
 
-  // Monorepo: write template config if initCommand didn't create one
-  if (isMonorepo && !result.files.includes('.agex/config.yml')) {
-    await writeFile(join(repoRoot, AGEX_DIR, CONFIG_FILE), TEMPLATE_CONFIG);
-    result.files.push('.agex/config.yml');
+  // Monorepo: overwrite config with full template (commented-out sections guide the user)
+  if (isMonorepo) {
+    const monorepoConfig = TEMPLATE_CONFIG.replace(
+      '# review: manual',
+      `review: ${review}`,
+    );
+    await writeFile(join(repoRoot, AGEX_DIR, CONFIG_FILE), monorepoConfig);
+    if (!result.files.includes('.agex/config.yml')) {
+      result.files.push('.agex/config.yml');
+    }
   }
 
   // Override verify in result to always reflect what user chose (including empty)
@@ -108,6 +128,7 @@ export async function interactiveInit(
     ...result,
     verify,
     agents,
+    review,
   };
 }
 
