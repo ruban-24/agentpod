@@ -115,6 +115,26 @@ describe('verifyCommand', () => {
     expect(result.summary).toBe('1 of 2 checks failed');
   });
 
+  it('includes review_mode in result', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'review: manual\nverify:\n  - echo ok\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'review mode test' });
+    const result = await verifyCommand(repo.path, task.id);
+    expect(result.review_mode).toBe('manual');
+  });
+
+  it('defaults review_mode to manual when not configured', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'verify:\n  - echo ok\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'default review test' });
+    const result = await verifyCommand(repo.path, task.id);
+    expect(result.review_mode).toBe('manual');
+  });
+
   it('updates verification data without changing status on re-verify of completed task', async () => {
     const { writeFile: wf } = await import('node:fs/promises');
     const { join: j } = await import('node:path');

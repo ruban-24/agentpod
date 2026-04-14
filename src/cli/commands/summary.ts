@@ -1,5 +1,6 @@
 import { TaskManager } from '../../core/task-manager.js';
 import { ServerManager } from '../../core/server-manager.js';
+import { loadConfig } from '../../config/loader.js';
 import type { TaskRecord } from '../../types.js';
 
 export interface SummaryTask extends TaskRecord {
@@ -21,11 +22,13 @@ export interface SummaryResult {
   merged: number;
   discarded: number;
   tasks: SummaryTask[];
+  review_mode: 'auto' | 'manual';
 }
 
 export async function summaryCommand(repoRoot: string): Promise<SummaryResult> {
   const tm = new TaskManager(repoRoot);
   const sm = new ServerManager(repoRoot);
+  const config = await loadConfig(repoRoot);
   const rawTasks = await tm.listTasks();
 
   const tasks: SummaryTask[] = rawTasks.map((task) => {
@@ -53,5 +56,6 @@ export async function summaryCommand(repoRoot: string): Promise<SummaryResult> {
     merged: count('merged'),
     discarded: count('discarded'),
     tasks,
+    review_mode: config.review ?? 'manual',
   };
 }

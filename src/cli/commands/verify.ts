@@ -11,6 +11,7 @@ export interface VerifyResult {
   passed: boolean;
   summary: string;
   checks: VerificationCheck[];
+  review_mode: 'auto' | 'manual';
 }
 
 // Statuses that can transition to 'verifying' (includes 'verifying' to recover from interrupted runs)
@@ -47,5 +48,5 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
   }
   // Otherwise (re-verify of completed/failed), just update verification data
 
-  return { id: taskId, passed: result.passed, summary: result.summary, checks: result.checks };
+  return { id: taskId, passed: result.passed, summary: result.summary, checks: result.checks, review_mode: config.review ?? 'manual' };
 }

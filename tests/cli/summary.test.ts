@@ -52,6 +52,20 @@ describe('summaryCommand', () => {
     expect(result.failed).toBe(0);
   });
 
+  it('includes review_mode in result', async () => {
+    const { writeFile } = await import('node:fs/promises');
+    const { join } = await import('node:path');
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'review: auto\n');
+
+    const result = await summaryCommand(repo.path);
+    expect(result.review_mode).toBe('auto');
+  });
+
+  it('defaults review_mode to manual when not configured', async () => {
+    const result = await summaryCommand(repo.path);
+    expect(result.review_mode).toBe('manual');
+  });
+
   it('includes all status count fields', async () => {
     const result = await summaryCommand(repo.path);
 
