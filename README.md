@@ -1,13 +1,10 @@
 <p align="center">
   <h1 align="center">agex</h1>
   <p align="center">
-    <strong>Run multiple AI coding agents in parallel — safely.</strong>
+    <strong>Stop waiting for your AI agent to finish. Run them all at once.</strong>
   </p>
   <p align="center">
     Each agent gets its own git branch and worktree. Nothing touches main until you say so.
-  </p>
-  <p align="center">
-    For Claude Code, Codex CLI, Copilot CLI, and any agent that runs shell commands.
   </p>
   <p align="center">
     <a href="https://github.com/ruban-24/agex/actions"><img src="https://github.com/ruban-24/agex/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -17,6 +14,31 @@
     <a href="https://github.com/ruban-24/agex"><img src="https://img.shields.io/badge/TypeScript-blue?logo=typescript&logoColor=white" alt="TypeScript"></a>
   </p>
 </p>
+
+You ask Claude Code to refactor auth. It works for 10 minutes. You wait. Then you ask it to add notifications. It works for 8 minutes. You wait. Then rate limiting. More waiting.
+
+**What if all three ran at the same time — each on its own branch — and you just picked the results?**
+
+```
+$ agex create --prompt "Refactor auth to JWT"
+$ agex create --prompt "Add push notifications"
+$ agex create --prompt "Add API rate limiting"
+
+# Go get coffee. Come back to:
+$ agex summary --human
+
+  agex · 3 tasks · 3 completed
+
+  ┃ ✓  a1b2c3  completed  12.4s  3/3  +47 -12  JWT auth
+  ┃ ✓  d4e5f6  completed   9.2s  3/3  +31 -8   Push notifications
+  ┃ ✓  g7h8i9  completed  15.1s  3/3  +62 -19  Rate limiting
+
+$ agex accept a1b2c3 d4e5f6 g7h8i9   # merge all three
+```
+
+That's agex. Parallel AI agents, isolated branches, nothing touches main until you say so.
+
+Works with **Claude Code**, **Codex CLI**, **Copilot CLI**, and any agent that runs shell commands.
 
 <p align="center">
   <img src="./docs/with-agex.gif" alt="agex demo" width="800">
@@ -63,35 +85,61 @@ Requires **Node.js >= 20** and **git**.
 
 ## Why agex?
 
-AI coding agents are fast — but they work on your branch, one task at a time.
+AI coding agents are fast — but they work on your branch, one task at a time. You're serializing work that could be parallel.
 
-**What if you could run multiple agents in parallel, each in an isolated workspace, and pick the best result?**
+**The real cost isn't the agent's time. It's yours — sitting idle while it finishes.**
 
-```
-1. You run    →  agex create              →  works instantly in any git repo
-2. Agent works →  creates tasks in parallel  →  isolated worktrees, auto-verification
-3. You decide  →  agex summary --human     →  merge the winner, discard the rest
-```
+agex gives each agent its own git worktree and branch. They work simultaneously, can't interfere with each other, and nothing merges until you verify and approve.
 
-**For you:** install, start creating tasks. Optionally run `agex init` to configure verification and agent hooks. Check in when you want with `agex summary --human`.
+**For you:** `brew install` and start creating tasks. Check in whenever you want with `agex summary --human`. No setup required — `agex create` bootstraps automatically in any git repo.
 
-**For your agent:** commands for every step — create, verify, compare, accept, reject. JSON output by default. Agent skill files for auto-discovery.
+**For your agent:** JSON-first commands for every step — create, verify, compare, accept, reject. Drop in a skill file with `agex init` and your agent discovers the workflow automatically.
 
-**No cloud. No accounts. No team buy-in needed.** Everything lives in `.agex/` (gitignored) and optional skill files (committed).
+**No cloud. No accounts. No team buy-in needed.** Install it, use it. Everything lives locally.
 
-## When to Reach for agex
+## Who Is This For?
 
-- **You want to try multiple approaches and pick the best** — fan out 3 ideas, verify all, merge the winner
-- **You have independent subtasks that can run in parallel** — auth, notifications, and rate limiting don't block each other
-- **You want to experiment without risking your branch** — every task is an isolated worktree, reject costs nothing
-- **You're orchestrating multiple agents on the same codebase** — Claude Code dispatches work to Codex, Aider, or any CLI tool
-- **You want automated verification before merging agent output** — tests, lint, and build run automatically
+You already use an AI coding agent (Claude Code, Codex, Copilot) and you've hit one of these walls:
+
+- **"I have 4 features to ship and my agent does them one at a time"** — fan them all out in parallel
+- **"I want to try 3 approaches and pick the best"** — verify all three, merge the winner, reject the rest
+- **"My agent broke main again"** — every task is an isolated worktree, nothing merges until tests pass
+- **"I want Claude Code to dispatch subtasks to Codex or Aider"** — multi-agent orchestration on one codebase
 
 ### When NOT to reach for agex
 
-- **Trivial single-file edits** — isolation overhead isn't worth it, just let your agent edit directly
-- **Strictly sequential tasks** — if step 2 depends on step 1's output, parallelism can't help
+- **Trivial single-file edits** — just let your agent edit directly
+- **Strictly sequential tasks** — if step 2 depends on step 1, parallelism can't help
 - **Non-git projects** — agex requires git for worktree isolation
+
+## A Real Workflow
+
+Monday morning. You have auth, notifications, and rate limiting to ship this week.
+
+**Without agex:** you tell your agent to do auth. Wait 10 minutes. Then notifications. Wait 8 minutes. Then rate limiting. Three serial sessions, constant context switching, half your morning gone.
+
+**With agex:**
+
+```bash
+# 9:00 — fan out all three
+agex create --prompt "Refactor auth module to JWT with refresh tokens"
+agex create --prompt "Add push notification service with Firebase"
+agex create --prompt "Add Redis-backed API rate limiting"
+
+# 9:02 — go review PRs, write docs, do anything else
+
+# 9:15 — check in
+agex summary --human
+# All three finished. Two passed verification, one failed lint.
+
+agex accept a1b2c3    # merge auth
+agex accept d4e5f6    # merge notifications
+agex retry g7h8i9 --feedback "Fix the ESLint errors in rateLimiter.ts"
+
+# 9:20 — three features shipped, one retrying. You haven't written a line of code.
+```
+
+This is how the author uses agex daily. Not for demos — for real work.
 
 ## Why Not Plain Git Worktrees?
 
@@ -371,6 +419,10 @@ All CLI commands are exposed as MCP tools.
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and guidelines.
+
+---
+
+If agex saves you time, [star the repo](https://github.com/ruban-24/agex) — it helps others find it.
 
 ## License
 
