@@ -447,13 +447,14 @@ program
   .command('accept [id]')
   .description('Merge a task branch into the current branch (infers ID from cwd if inside a worktree)')
   .option('-H, --human', 'Human-friendly output', false)
+  .option('--reviewed', 'Confirm human has reviewed (required in manual review mode)', false)
   .action(async (id, opts) => {
     try {
       isHumanMode = opts.human;
       const taskId = resolveTaskId(id);
       const root = getRepoRoot();
       const { acceptCommand } = await import('./cli/commands/accept.js');
-      const result = await acceptCommand(root, taskId);
+      const result = await acceptCommand(root, taskId, { reviewed: opts.reviewed, human: opts.human });
       if (!result.merged) {
         throw new AgexError('Merge conflict', {
           suggestion: `Run 'agex review ${taskId}' to see changes, or 'agex reject ${taskId}' to abandon`,

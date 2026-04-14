@@ -44,7 +44,7 @@ describe('acceptCommand', () => {
     await writeFile(join(wtPath, 'merged.ts'), 'export const merged = true;\n');
     execSync('git add . && git commit -m "add merged file"', { cwd: wtPath, stdio: 'ignore' });
 
-    const result = await acceptCommand(repo.path, task.id);
+    const result = await acceptCommand(repo.path, task.id, { reviewed: true });
 
     expect(result.id).toBe(task.id);
     expect(result.merged).toBe(true);
@@ -63,7 +63,7 @@ describe('acceptCommand', () => {
     const wtPath = join(repo.path, '.agex', 'tasks', task.id);
     await writeFile(join(wtPath, 'uncommitted.ts'), 'export const uncommitted = true;\n');
 
-    const result = await acceptCommand(repo.path, task.id);
+    const result = await acceptCommand(repo.path, task.id, { reviewed: true });
 
     expect(result.id).toBe(task.id);
     expect(result.merged).toBe(true);
@@ -84,7 +84,7 @@ describe('acceptCommand', () => {
     await writeFile(join(wtPath, 'committed.ts'), 'export const committed = true;\n');
     execSync('git add . && git commit -m "manual commit"', { cwd: wtPath, stdio: 'ignore' });
 
-    const result = await acceptCommand(repo.path, task.id);
+    const result = await acceptCommand(repo.path, task.id, { reviewed: true });
 
     expect(result.merged).toBe(true);
     expect(result.auto_committed).toBeUndefined();
@@ -101,7 +101,7 @@ describe('acceptCommand', () => {
     // Dirty the same file on main (overlapping with task branch)
     await writeFile(join(repo.path, 'new-file.txt'), 'uncommitted');
 
-    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('conflict with task branch');
+    await expect(acceptCommand(repo.path, task.id, { reviewed: true })).rejects.toThrow('conflict with task branch');
 
     // Clean up
     const { unlink } = await import('node:fs/promises');
@@ -119,7 +119,7 @@ describe('acceptCommand', () => {
     // Create a dirty unrelated file on main
     await writeFile(join(repo.path, 'unrelated-dirty.txt'), 'uncommitted');
 
-    const result = await acceptCommand(repo.path, task.id);
+    const result = await acceptCommand(repo.path, task.id, { reviewed: true });
 
     expect(result.merged).toBe(true);
 
@@ -139,10 +139,68 @@ describe('acceptCommand', () => {
     // Make README.md dirty on main (same file the task branch changed)
     await writeFile(join(repo.path, 'README.md'), '# Dirty on main\n');
 
-    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('conflict with task branch');
+    await expect(acceptCommand(repo.path, task.id, { reviewed: true })).rejects.toThrow('conflict with task branch');
 
     // Clean up
     execSync('git checkout -- README.md', { cwd: repo.path, stdio: 'ignore' });
+  });
+
+  it('blocks accept when review mode is manual and no flags passed', async () => {
+    // Write manual review config
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'review: manual\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'manual gate test' });
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'gated.ts'), 'export const gated = true;\n');
+    execSync('git add . && git commit -m "add gated file"', { cwd: wtPath, stdio: 'ignore' });
+
+    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('human approval required');
+  });
+
+  it('allows accept in manual mode with --reviewed flag', async () => {
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'review: manual\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'reviewed test' });
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'reviewed.ts'), 'export const reviewed = true;\n');
+    execSync('git add . && git commit -m "add reviewed file"', { cwd: wtPath, stdio: 'ignore' });
+
+    const result = await acceptCommand(repo.path, task.id, { reviewed: true });
+    expect(result.merged).toBe(true);
+  });
+
+  it('allows accept in manual mode with --human flag', async () => {
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'review: manual\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'human test' });
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'human.ts'), 'export const human = true;\n');
+    execSync('git add . && git commit -m "add human file"', { cwd: wtPath, stdio: 'ignore' });
+
+    const result = await acceptCommand(repo.path, task.id, { human: true });
+    expect(result.merged).toBe(true);
+  });
+
+  it('allows accept without flags when review mode is auto', async () => {
+    await writeFile(join(repo.path, '.agex', 'config.yml'), 'review: auto\n');
+
+    const task = await taskCreateCommand(repo.path, { prompt: 'auto mode test' });
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'auto.ts'), 'export const auto = true;\n');
+    execSync('git add . && git commit -m "add auto file"', { cwd: wtPath, stdio: 'ignore' });
+
+    const result = await acceptCommand(repo.path, task.id);
+    expect(result.merged).toBe(true);
+  });
+
+  it('defaults to manual mode when no config exists', async () => {
+    // No config.yml at all — should default to manual and block
+    const task = await taskCreateCommand(repo.path, { prompt: 'no config test' });
+    const wtPath = join(repo.path, '.agex', 'tasks', task.id);
+    await writeFile(join(wtPath, 'noconfig.ts'), 'export const noconfig = true;\n');
+    execSync('git add . && git commit -m "add noconfig file"', { cwd: wtPath, stdio: 'ignore' });
+
+    await expect(acceptCommand(repo.path, task.id)).rejects.toThrow('human approval required');
   });
 
   it('restores worktree when merge fails due to conflict', async () => {
@@ -157,7 +215,7 @@ describe('acceptCommand', () => {
     await writeFile(join(repo.path, 'README.md'), '# Modified on main\n');
     execSync('git add . && git commit -m "main modifies readme"', { cwd: repo.path, stdio: 'ignore' });
 
-    const result = await acceptCommand(repo.path, task.id);
+    const result = await acceptCommand(repo.path, task.id, { reviewed: true });
 
     expect(result.merged).toBe(false);
     // Worktree should be restored

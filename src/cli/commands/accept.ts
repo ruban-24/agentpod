@@ -4,6 +4,12 @@ import { Reviewer } from '../../core/reviewer.js';
 import { WorkspaceManager } from '../../core/workspace-manager.js';
 import { worktreePath, EXIT_CODES } from '../../constants.js';
 import { AgexError } from '../../errors.js';
+import { loadConfig } from '../../config/loader.js';
+
+export interface AcceptOptions {
+  reviewed?: boolean;
+  human?: boolean;
+}
 
 export interface AcceptResult {
   id: string;
@@ -14,7 +20,7 @@ export interface AcceptResult {
   auto_committed?: boolean;
 }
 
-export async function acceptCommand(repoRoot: string, taskId: string): Promise<AcceptResult> {
+export async function acceptCommand(repoRoot: string, taskId: string, options?: AcceptOptions): Promise<AcceptResult> {
   const tm = new TaskManager(repoRoot);
   const reviewer = new Reviewer(repoRoot);
   const wm = new WorkspaceManager(repoRoot);
@@ -31,6 +37,16 @@ export async function acceptCommand(repoRoot: string, taskId: string): Promise<A
   if (!mergeableStatuses.includes(task.status)) {
     throw new AgexError(`Cannot merge task in '${task.status}' status (must be: ${mergeableStatuses.join(', ')})`, {
       suggestion: `Run 'agex status ${taskId}' for details`,
+    });
+  }
+
+  // Review gate: in manual mode, require explicit --reviewed or --human flag
+  const config = await loadConfig(repoRoot);
+  const reviewMode = config.review ?? 'manual';
+  if (reviewMode === 'manual' && !options?.reviewed && !options?.human) {
+    throw new AgexError('Review mode is manual — human approval required before merging', {
+      suggestion: `Review first:\n  agex summary --human\n  agex review ${taskId} --human\nThen accept:\n  agex accept ${taskId} --reviewed`,
+      exitCode: EXIT_CODES.INVALID_ARGS,
     });
   }
 
