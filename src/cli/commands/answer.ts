@@ -5,7 +5,7 @@ import { Verifier } from '../../core/verifier.js';
 import { ActivityLogger } from '../../core/activity-logger.js';
 import { loadConfig } from '../../config/loader.js';
 import { detectVerifyCommands } from '../../config/auto-detect.js';
-import { checkNeedsInput } from './task-exec.js';
+import { checkNeedsInput, finalizeTranscript } from './task-exec.js';
 import { Reviewer } from '../../core/reviewer.js';
 import { AgexError } from '../../errors.js';
 import type { TaskRecord, QAPair, AgexConfig } from '../../types.js';
@@ -107,6 +107,7 @@ export async function answerCommand(
       AGEX_PROMPT: enhancedPrompt,
     }, { timeout: timeoutMs });
     await tm.updateTask(taskId, { exit_code: runResult.exitCode, cmd });
+    await finalizeTranscript(taskId, wtPath, activity, tm);
 
     // Check for timeout
     if (runResult.timedOut) {
@@ -144,6 +145,7 @@ export async function answerCommand(
     handle.done.then(async (runResult) => {
       try {
         await tm.updateTask(taskId, { exit_code: runResult.exitCode });
+        await finalizeTranscript(taskId, wtPath, activity, tm);
 
         // Check for timeout
         if (runResult.timedOut) {

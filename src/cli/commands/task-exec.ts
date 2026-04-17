@@ -24,7 +24,7 @@ export interface TaskExecOptions {
  * when active. Transcript is the fallback for those AND always the source of token totals
  * (hooks don't carry token data). Best-effort — errors are swallowed.
  */
-async function finalizeTranscript(
+export async function finalizeTranscript(
   taskId: string,
   wtPath: string,
   activity: ActivityLogger,

@@ -24,7 +24,7 @@ export async function taskStatusCommand(
     });
   }
 
-  const task = await sm.clearStaleServer(taskId);
+  let task = await sm.clearStaleServer(taskId);
 
   // Lazy aggregation of activity data
   try {
@@ -33,12 +33,16 @@ export async function taskStatusCommand(
       if (!task.token_usage) {
         const summary = await activity.aggregate(taskId);
         if (summary) {
-          await tm.updateTask(taskId, {
+          const aggregatedFields = {
             ...(summary.token_usage && { token_usage: summary.token_usage }),
             ...(summary.model && { model: summary.model }),
-            ...(summary.turn_count && { turn_count: summary.turn_count }),
+            ...(summary.turn_count != null && { turn_count: summary.turn_count }),
             ...(summary.files_modified && { files_modified: summary.files_modified }),
+          };
+          await tm.updateTask(taskId, {
+            ...aggregatedFields,
           });
+          task = { ...task, ...aggregatedFields };
         }
       }
     }
