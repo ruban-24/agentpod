@@ -100,6 +100,12 @@ export async function taskExecCommand(
         // When hooks WERE active: skip all transcript behavioral events (tool.call, turn.end,
         // subagent.*, session.start are already captured by hooks). Only write token summary.
 
+        // Emit a synthetic session.start with the model regardless of hook activity —
+        // hooks never emit session.start, so the --human header's model line depends on this.
+        if (transcript.model) {
+          await activity.append(taskId, 'session.start', { model: transcript.model });
+        }
+
         // Always write session.end with token usage — hooks don't provide token data
         await activity.append(taskId, 'session.end', {
           tokens: transcript.token_usage,
@@ -146,10 +152,12 @@ export async function taskExecCommand(
     const diff_stats = await reviewer.getDiff(task.branch);
     await tm.updateTask(taskId, { diff_stats });
 
-    // Final status
+    // Final status — updateStatus sets finished_at and duration_s, so use the returned task
+    // when emitting task.finished (otherwise duration_s would be undefined).
     const finalStatus = verification.passed ? 'completed' : 'failed';
-    try { await activity.append(taskId, 'task.finished', { exit_code: result.exitCode, duration_s: task.duration_s, diff_stats }); } catch { /* best-effort */ }
-    return await tm.updateStatus(taskId, finalStatus);
+    const finalTask = await tm.updateStatus(taskId, finalStatus);
+    try { await activity.append(taskId, 'task.finished', { exit_code: result.exitCode, duration_s: finalTask.duration_s, diff_stats }); } catch { /* best-effort */ }
+    return finalTask;
   } else {
     // Non-blocking: spawn and return immediately
     const handle = runner.spawn(taskId, options.cmd, wtPath, { ...task.env }, { timeout: timeoutMs });
@@ -180,6 +188,12 @@ export async function taskExecCommand(
             }
             // When hooks WERE active: skip all transcript behavioral events (tool.call, turn.end,
             // subagent.*, session.start are already captured by hooks). Only write token summary.
+
+            // Emit a synthetic session.start with the model regardless of hook activity —
+            // hooks never emit session.start, so the --human header's model line depends on this.
+            if (transcript.model) {
+              await activity.append(taskId, 'session.start', { model: transcript.model });
+            }
 
             // Always write session.end with token usage — hooks don't provide token data
             await activity.append(taskId, 'session.end', {
@@ -226,10 +240,11 @@ export async function taskExecCommand(
         const diff_stats = await rev.getDiff(task.branch);
         await tm.updateTask(taskId, { diff_stats });
 
+        // updateStatus computes duration_s when transitioning to completed/failed/errored,
+        // so emit task.finished AFTER the status change using the returned fresh task.
         const finalStatus = verification.passed ? 'completed' : 'failed';
-        const updatedTask = await tm.getTask(taskId);
-        try { await activity.append(taskId, 'task.finished', { exit_code: runResult.exitCode, duration_s: updatedTask?.duration_s, diff_stats }); } catch { /* best-effort */ }
-        await tm.updateStatus(taskId, finalStatus);
+        const finalTask = await tm.updateStatus(taskId, finalStatus);
+        try { await activity.append(taskId, 'task.finished', { exit_code: runResult.exitCode, duration_s: finalTask.duration_s, diff_stats }); } catch { /* best-effort */ }
       } catch (err) {
         try {
           await tm.updateTask(taskId, { error: err instanceof Error ? err.message : String(err) });

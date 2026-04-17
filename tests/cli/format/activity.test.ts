@@ -132,4 +132,28 @@ describe('formatActivityHuman', () => {
     expect(output).toContain('exit_code: 0');
     expect(output).toContain('45');
   });
+
+  // Regression: model in --human header must appear even when hooks were active
+  // and all session.start-bearing events came via a synthetic append (not from the
+  // transcript replay). See PR #45 review finding.
+  it('renders model in header when a synthetic session.start event is present', () => {
+    const result = makeResult([
+      { event: 'task.created', data: { prompt: 'Fix bug', branch: 'agex/abc123' } },
+      // Simulate hook-driven tool calls (as happens when hooks were active)
+      { event: 'tool.call', data: { tool: 'Read', file_path: 'src/main.ts' } },
+      { event: 'turn.end', data: {} },
+      // Synthetic session.start appended AFTER hook events, carrying the model
+      { event: 'session.start', data: { model: 'claude-opus-4-7' } },
+      {
+        event: 'session.end',
+        data: {
+          tokens: { input_tokens: 10, output_tokens: 5 },
+          api_calls: 1,
+          turns: 1,
+        },
+      },
+    ]);
+    const output = stripAnsi(formatActivityHuman(result));
+    expect(output).toMatch(/model:\s+claude-opus-4-7/);
+  });
 });

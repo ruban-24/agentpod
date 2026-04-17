@@ -113,8 +113,11 @@ async function pathExists(p: string): Promise<boolean> {
 
 beforeAll(() => {
   if (!existsSync(CLI)) {
-    // Build dist once before running the suite
-    execSync(`node ${BUILD_SCRIPT}`, { cwd: PROJECT_ROOT, stdio: 'ignore' });
+    // Build dist once before running the suite (avoid shell interpolation)
+    const buildRes = spawnSync('node', [BUILD_SCRIPT], { cwd: PROJECT_ROOT, stdio: 'ignore' });
+    if (buildRes.status !== 0) {
+      throw new Error(`dist build failed with status ${buildRes.status}`);
+    }
   }
 }, 60_000);
 
@@ -178,11 +181,11 @@ describe('Task Activity Logs (integration)', () => {
       const finished = events.find(e => e.event === 'task.finished');
       expect(finished).toBeDefined();
       expect(finished!.data!.exit_code).toBe(0);
-      // duration_s may be undefined if computed after status update, but the key
-      // should exist or the value should be a number >= 0 when present.
-      if (finished!.data!.duration_s !== undefined) {
-        expect(typeof finished!.data!.duration_s).toBe('number');
-      }
+      // Regression (PR #45): task.finished must have a real numeric duration_s.
+      // Previously this was emitted BEFORE updateStatus computed duration_s,
+      // so the field was always undefined.
+      expect(typeof finished!.data!.duration_s).toBe('number');
+      expect(finished!.data!.duration_s as number).toBeGreaterThanOrEqual(0);
     });
 
     it('6. verify emits task.verify with passed, summary, checks', async () => {

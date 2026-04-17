@@ -16,7 +16,7 @@ export interface HookEventData {
 
 // --- Routing ---
 
-const WORKTREE_RE = /\/.agex\/tasks\/([^/]+)/;
+const WORKTREE_RE = /\/\.agex\/tasks\/([^/]+)/;
 
 export function routeHookEvent(cwd: string): HookRoute | null {
   const match = WORKTREE_RE.exec(cwd);
