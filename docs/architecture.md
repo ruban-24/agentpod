@@ -34,6 +34,8 @@ pending → provisioning → ready → running → verifying → completed → m
 
 ## Activity Log
 
+Activity is one of five read-only views on a task. `status` is a state snapshot; `list` and `summary` are cross-task views; `output` is the raw stdout/stderr stream the agent printed; `activity` is a structured event timeline of what the agent *did* — tool calls, subagents, verification, tokens.
+
 Each task has an append-only JSONL event log at `.agex/tasks/<id>.activity.jsonl`. Events are one JSON object per line, ordered by timestamp. `agex activity <id>` reads, merges, and renders the stream.
 
 **Dual capture.** Events come from two sources:
@@ -50,7 +52,7 @@ Each task has an append-only JSONL event log at `.agex/tasks/<id>.activity.jsonl
 
 **Lifecycle events** (`task.created`, `task.provisioned`, `task.exec.started`, `task.finished`, `task.verify`, `task.status_change`, `task.needs_input`, `task.answer`) are written by the CLI itself — they don't depend on hooks and work identically across all supported agents.
 
-**Lazy aggregation.** The log isn't rolled up into a summary table; `agex activity` merges the JSONL, dedupes, and formats on demand. Storage cost is ~1 KB per tool call.
+**Lazy aggregation.** The log isn't rolled up into a summary table; `agex activity` merges the JSONL, dedupes, and formats on demand. Storage cost is ~1 KB per tool call. On the first `agex status` or `agex activity` call after a run, aggregates (`token_usage`, `model`, `turn_count`, `files_modified`) are derived from the log and written back into the task record so subsequent `status` reads are cheap.
 
 **Known limitations.**
 

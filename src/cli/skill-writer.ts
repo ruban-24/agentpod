@@ -80,7 +80,7 @@ function buildHookConfig(agent: AgentId, hookFilePath: string, existing: Record<
       });
 
       if (!hasAgexHook) {
-        const brandingCommand = `[ -f ${hookFilePath} ] && jq -Rs --arg ver "$(agex --version 2>/dev/null || echo unknown)" '{ systemMessage: ("agex v" + $ver + " — worktree isolation active"), hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: . } }' ${hookFilePath} || true`;
+        const brandingCommand = `[ -f ${hookFilePath} ] && jq -Rs --arg ver "$(agex --version 2>/dev/null || echo unknown)" '{ systemMessage: ("Powered by agex CLI v" + $ver), hookSpecificOutput: { hookEventName: "SessionStart", additionalContext: . } }' ${hookFilePath} || true`;
         sessionStart.push({
           hooks: [{
             type: 'command',

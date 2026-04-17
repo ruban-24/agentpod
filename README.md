@@ -151,11 +151,13 @@ All commands output JSON by default — designed for agent consumption. Add `--h
 
 ### Monitoring
 
+`output` is the raw text stream the agent printed; `activity` is a structured event timeline (tool calls, subagents, tokens). Use `output` to read what the agent said, `activity` to inspect what it did. `status` exposes aggregated token/turn/file counts from the activity log.
+
 | Command | Description |
 |---------|-------------|
-| `agex status <id>` | Get detailed task info |
+| `agex status <id>` | Detailed status for one task (state, server, token/turn aggregates) |
 | `agex list` | List all tasks |
-| `agex output <id>` | Show captured agent output |
+| `agex output <id>` | Show captured agent output (raw text) |
 | `agex summary` | Status breakdown of all tasks |
 | `agex activity <id> [--human]` | Per-turn timeline of tool calls, subagents, verification, tokens (Claude Code) |
 

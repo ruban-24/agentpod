@@ -230,27 +230,46 @@ When you hit a decision that requires human input, signal it instead of guessing
 
 ## Quick Reference
 
+### Lifecycle
+
 | Command | Purpose |
 |---------|---------|
 | `agex init [--verify <cmds...>]` | Initialize in current repo |
 | `agex create --prompt <text> [--issue <ref>]` | Create isolated task with its own worktree |
+| `agex run --prompt <text> --cmd <cmd> [--wait]` | Create + execute shortcut |
 | `agex exec <id> --cmd <cmd> [--wait]` | Run command in task worktree |
 | `agex start <id>` | Start dev server in task worktree |
 | `agex stop <id>` | Stop dev server in task worktree |
-| `agex status <id>` | Get task details |
-| `agex run --prompt <text> --cmd <cmd> [--wait]` | Create + execute shortcut |
+
+### Monitoring
+
+`output` is the raw text stream the agent printed; `activity` is a structured event timeline (tool calls, subagents, tokens). Use `output` to read what the agent said, `activity` to inspect what it did.
+
+| Command | Purpose |
+|---------|---------|
+| `agex status <id>` | Detailed status for one task (state, server, token/turn aggregates) |
 | `agex list` | List all tasks |
 | `agex summary` | Status overview with counts |
-| `agex output <id>` | Show captured agent output |
+| `agex output <id>` | Show captured agent output (raw text) |
 | `agex activity <id> [--human]` | Per-turn timeline of tool calls, subagents, verify, tokens (Claude Code only) |
+
+### Review
+
+| Command | Purpose |
+|---------|---------|
 | `agex verify <id>` | Run verification checks |
 | `agex review <id>` | Show changes vs base branch |
 | `agex compare <id1> <id2> [...]` | Side-by-side task comparison |
+
+### Resolution
+
+| Command | Purpose |
+|---------|---------|
 | `agex accept <id> [--reviewed]` | Merge task branch into current branch (`--reviewed` required in manual mode) |
 | `agex reject <id>` | Remove task worktree and branch |
-| `agex clean` | Clean up all finished tasks |
 | `agex retry <id> --feedback <text>` | Retry failed task with feedback |
 | `agex answer <id> --text <text>` | Answer a needs-input task question |
+| `agex clean` | Clean up all finished tasks |
 
 All commands output JSON by default. Add `--human` for colored terminal output.
 
