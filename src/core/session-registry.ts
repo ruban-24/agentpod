@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, renameSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, renameSync, mkdirSync, unlinkSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { sessionRegistryPath } from '../constants.js';
@@ -79,4 +79,32 @@ export function loadSessionRegistry(repoRoot: string): SessionRegistry {
       }
     },
   };
+}
+
+export function pruneSessionRegistry(repoRoot: string, liveTaskIds: Set<string>): void {
+  const path = sessionRegistryPath(repoRoot);
+  const existing = readRegistry(path);
+  const kept: RegistryShape = {};
+  let changed = false;
+  for (const [sessionId, entry] of Object.entries(existing)) {
+    if (liveTaskIds.has(entry.taskId)) {
+      kept[sessionId] = entry;
+    } else {
+      changed = true;
+    }
+  }
+  if (!changed) return;
+  if (Object.keys(kept).length === 0) {
+    try {
+      unlinkSync(path);
+    } catch {
+      // best-effort
+    }
+    return;
+  }
+  try {
+    writeRegistry(path, kept);
+  } catch {
+    // best-effort
+  }
 }

@@ -104,3 +104,36 @@ describe('SessionRegistry', () => {
     expect(warnings.length).toBe(1);
   });
 });
+
+describe('pruneSessionRegistry', () => {
+  let repo: string;
+
+  beforeEach(async () => {
+    repo = await mkdtemp(join(tmpdir(), 'agex-session-prune-'));
+    await mkdir(join(repo, '.agex'), { recursive: true });
+  });
+
+  afterEach(async () => {
+    await rm(repo, { recursive: true, force: true });
+  });
+
+  it('removes entries whose taskId is not in the live set', async () => {
+    const { pruneSessionRegistry, loadSessionRegistry } = await import('../../src/core/session-registry.js');
+    await writeFile(
+      join(repo, '.agex', 'sessions.json'),
+      JSON.stringify({
+        's-live': { taskId: 'alive', repoRoot: repo },
+        's-dead': { taskId: 'gone', repoRoot: repo },
+      }),
+    );
+    pruneSessionRegistry(repo, new Set(['alive']));
+    const reg = loadSessionRegistry(repo);
+    expect(reg.lookup('s-live')).toEqual({ taskId: 'alive', repoRoot: repo });
+    expect(reg.lookup('s-dead')).toBeNull();
+  });
+
+  it('is a no-op when the registry file does not exist', async () => {
+    const { pruneSessionRegistry } = await import('../../src/core/session-registry.js');
+    expect(() => pruneSessionRegistry(repo, new Set(['anything']))).not.toThrow();
+  });
+});
