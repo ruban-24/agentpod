@@ -111,6 +111,21 @@ describe('routeHookEvent', () => {
     expect(routeHookEvent({ cwd: '/tmp', tool_input: { file_path: metaFile } })).toBeNull();
     expect(routeHookEvent({ cwd: '/tmp', tool_input: { path: activityFile } })).toBeNull();
   });
+
+  // 7. Corrupt registry file → treated as empty; tier 2 still resolves and overwrites.
+  it('tolerates a corrupt registry file and falls through to tier 2', async () => {
+    const { writeFile, readFile } = await import('node:fs/promises');
+    const { __resetWarningsForTests } = await import('../../src/core/session-registry.js');
+    __resetWarningsForTests();
+
+    await writeFile(join(repo, '.agex', 'sessions.json'), 'not json {{{');
+    const cwd = join(repo, '.agex', 'tasks', 'abc123');
+    const result = routeHookEvent({ cwd, session_id: 'S-CORRUPT' });
+    expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
+    // Tier 2 overwrites the corrupt file with a valid object that includes our entry.
+    const raw = await readFile(join(repo, '.agex', 'sessions.json'), 'utf-8');
+    expect(JSON.parse(raw)).toEqual({ 'S-CORRUPT': { taskId: 'abc123', repoRoot: repo } });
+  });
 });
 
 describe('extractHookData', () => {
