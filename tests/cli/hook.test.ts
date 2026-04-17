@@ -60,23 +60,9 @@ describe('routeHookEvent', () => {
     expect(result).toBeNull();
   });
 
-  // --- Baseline (replacing the old cwd-only tests) ---
-  it('returns the route when cwd is inside a worktree', () => {
-    const cwd = join(repo, '.agex', 'tasks', 'abc123', 'src');
-    const result = routeHookEvent({ cwd });
-    expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
-  });
-
-  it('returns the route when cwd is exactly the worktree root', () => {
-    const cwd = join(repo, '.agex', 'tasks', 'abc123');
-    const result = routeHookEvent({ cwd });
-    expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
-  });
-
   // --- Spec tests ---
 
-  // 3. Tier 3 (tool_input path) is used when cwd is outside any worktree.
-  it('uses tier 3 (tool_input.file_path) when cwd is outside any worktree', () => {
+  it('uses tool_input.file_path when AGEX_TASK_ID is not set', () => {
     const filePath = join(repo, '.agex', 'tasks', 'abc123', 'foo.ts');
     const result = routeHookEvent({
       cwd: repo,
@@ -86,8 +72,7 @@ describe('routeHookEvent', () => {
     expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
   });
 
-  // 4. Tier 3 is a pure function — no side-effects on disk.
-  it('does not write any side-effect files when only tier 3 matches', async () => {
+  it('does not write any side-effect files when resolving via tool_input path', async () => {
     const { access } = await import('node:fs/promises');
     const filePath = join(repo, '.agex', 'tasks', 'abc123', 'foo.ts');
     routeHookEvent({
@@ -98,18 +83,16 @@ describe('routeHookEvent', () => {
     await expect(access(join(repo, '.agex', 'sessions.json'))).rejects.toMatchObject({ code: 'ENOENT' });
   });
 
-  // 5. All tiers miss → null.
-  it('returns null when all three tiers miss', () => {
+  it('returns null when tier 1 misses and tool_input has no worktree path', () => {
     const result = routeHookEvent({
       cwd: repo,
-      session_id: 'S-ROOT',
       tool_input: { url: 'https://example.com' },
     });
     expect(result).toBeNull();
   });
 
-  // 6. Tier 3 matches file_path, path, and notebook_path.
-  it('tier 3 matches file_path, path, and notebook_path keys', () => {
+  // The tool_input path tier matches file_path, path, and notebook_path.
+  it('tool_input path tier matches file_path, path, and notebook_path keys', () => {
     const filePath = join(repo, '.agex', 'tasks', 'abc123', 'foo.ts');
     const pathField = join(repo, '.agex', 'tasks', 'abc123', 'bar.ts');
     const notebookPath = join(repo, '.agex', 'tasks', 'abc123', 'nb.ipynb');
@@ -127,6 +110,20 @@ describe('routeHookEvent', () => {
     const activityFile = join(repo, '.agex', 'tasks', 'abc123.activity.jsonl');
     expect(routeHookEvent({ cwd: '/tmp', tool_input: { file_path: metaFile } })).toBeNull();
     expect(routeHookEvent({ cwd: '/tmp', tool_input: { path: activityFile } })).toBeNull();
+  });
+
+  it('does NOT route events whose cwd drifted into a worktree when AGEX_TASK_ID is unset', () => {
+    // This is the specific bug that killed the tier-2 cwd routing: a coordinator
+    // session's cwd tracking can drift into a worktree (e.g. after agex run), and
+    // without AGEX_TASK_ID we must not attribute its events to the task.
+    const driftedCwd = join(repo, '.agex', 'tasks', 'abc123');
+    // No tool_input path inside the worktree. Primary-checkout path only.
+    const primaryPath = join(repo, 'src', 'index.ts');
+    const result = routeHookEvent({
+      cwd: driftedCwd,
+      tool_input: { file_path: primaryPath },
+    });
+    expect(result).toBeNull();
   });
 });
 

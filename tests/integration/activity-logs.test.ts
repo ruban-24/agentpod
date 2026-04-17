@@ -21,16 +21,17 @@ interface AgexResult {
   stderr: string;
 }
 
-function agex(cwd: string, args: string[], stdin?: string): AgexResult {
+function agex(cwd: string, args: string[], stdin?: string, extraEnv?: Record<string, string>): AgexResult {
   // Strip AGEX_TASK_ID / AGEX_WORKTREE from the inherited env so tier 1
   // routing doesn't short-circuit to an ambient task when tests themselves
-  // run inside an agex worktree.
+  // run inside an agex worktree. Tests that need tier-1 routing pass the
+  // vars via extraEnv to re-enable it deterministically.
   const { AGEX_TASK_ID: _a, AGEX_WORKTREE: _b, ...env } = process.env;
   const res = spawnSync('node', [CLI, ...args], {
     cwd,
     input: stdin,
     encoding: 'utf-8',
-    env: { ...env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    env: { ...env, NO_COLOR: '1', FORCE_COLOR: '0', ...(extraEnv ?? {}) },
   });
   return { status: res.status, stdout: res.stdout || '', stderr: res.stderr || '' };
 }
@@ -279,7 +280,7 @@ describe('Task Activity Logs (integration)', () => {
       await mkdir(join(repo, '.agex', 'tasks', id), { recursive: true });
     }
 
-    it('12. post-tool with cwd inside worktree appends tool.call (reads tool_name)', async () => {
+    it('12. post-tool with AGEX_TASK_ID env appends tool.call (reads tool_name)', async () => {
       await initAgex(repo);
       const id = 'abc123';
       await setupWorktreeDir(id);
@@ -289,7 +290,11 @@ describe('Task Activity Logs (integration)', () => {
         tool_input: { file_path: 'x.ts' },
         tool_use_id: 'tu1',
       });
-      const res = agex(repo, ['hook', 'post-tool'], payload);
+      const workerEnv = {
+        AGEX_TASK_ID: id,
+        AGEX_WORKTREE: join(repo, '.agex', 'tasks', id),
+      };
+      const res = agex(repo, ['hook', 'post-tool'], payload, workerEnv);
       expect(res.status).toBe(0);
       const events = await readActivity(repo, id);
       expect(events).toHaveLength(1);
@@ -321,7 +326,11 @@ describe('Task Activity Logs (integration)', () => {
         error: 'not found',
         is_interrupt: false,
       });
-      const res = agex(repo, ['hook', 'post-tool-failure'], payload);
+      const workerEnv = {
+        AGEX_TASK_ID: id,
+        AGEX_WORKTREE: join(repo, '.agex', 'tasks', id),
+      };
+      const res = agex(repo, ['hook', 'post-tool-failure'], payload, workerEnv);
       expect(res.status).toBe(0);
       const events = await readActivity(repo, id);
       expect(events).toHaveLength(1);
@@ -335,7 +344,11 @@ describe('Task Activity Logs (integration)', () => {
       const id = 'abc123';
       await setupWorktreeDir(id);
       const payload = JSON.stringify({ cwd: join(repo, '.agex', 'tasks', id) });
-      const res = agex(repo, ['hook', 'turn-end'], payload);
+      const workerEnv = {
+        AGEX_TASK_ID: id,
+        AGEX_WORKTREE: join(repo, '.agex', 'tasks', id),
+      };
+      const res = agex(repo, ['hook', 'turn-end'], payload, workerEnv);
       expect(res.status).toBe(0);
       const events = await readActivity(repo, id);
       expect(events.some(e => e.event === 'turn.end')).toBe(true);
@@ -346,7 +359,11 @@ describe('Task Activity Logs (integration)', () => {
       const id = 'abc123';
       await setupWorktreeDir(id);
       const payload = JSON.stringify({ cwd: join(repo, '.agex', 'tasks', id) });
-      const res = agex(repo, ['hook', 'session-end'], payload);
+      const workerEnv = {
+        AGEX_TASK_ID: id,
+        AGEX_WORKTREE: join(repo, '.agex', 'tasks', id),
+      };
+      const res = agex(repo, ['hook', 'session-end'], payload, workerEnv);
       expect(res.status).toBe(0);
       const events = await readActivity(repo, id);
       expect(events.some(e => e.event === 'session.end')).toBe(true);
@@ -357,7 +374,11 @@ describe('Task Activity Logs (integration)', () => {
       const id = 'abc123';
       await setupWorktreeDir(id);
       const payload = JSON.stringify({ cwd: join(repo, '.agex', 'tasks', id, 'src') });
-      const res = agex(repo, ['hook', 'cwd-changed'], payload);
+      const workerEnv = {
+        AGEX_TASK_ID: id,
+        AGEX_WORKTREE: join(repo, '.agex', 'tasks', id),
+      };
+      const res = agex(repo, ['hook', 'cwd-changed'], payload, workerEnv);
       expect(res.status).toBe(0);
       const events = await readActivity(repo, id);
       const evt = events.find(e => e.event === 'cwd.changed');

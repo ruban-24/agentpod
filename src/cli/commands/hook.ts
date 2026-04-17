@@ -37,17 +37,8 @@ export function routeHookEvent(payload: HookPayload): HookRoute | null {
     }
   }
 
-  const cwd = payload.cwd ?? '';
-
-  // Tier 2: cwd regex match.
-  const cwdMatch = WORKTREE_RE.exec(cwd);
-  if (cwdMatch) {
-    const taskId = cwdMatch[1];
-    const repoRoot = cwd.slice(0, cwdMatch.index);
-    return { repoRoot, taskId };
-  }
-
-  // Tier 3: tool_input path regex.
+  // Tier 2: tool_input path regex. Catches non-agex sessions that edit
+  // worktree files by absolute path (e.g. a root-cwd Claude session).
   const input = (payload.tool_input ?? {}) as Record<string, unknown>;
   const candidatePaths = [input.file_path, input.path, input.notebook_path]
     .filter((p): p is string => typeof p === 'string');

@@ -38,13 +38,12 @@ Each task has an append-only JSONL event log at `.agex/tasks/<id>.activity.jsonl
 
 **Dual capture.** Events come from two sources:
 
-1. **Hook events** (real-time, Claude Code only) — `agex init` registers `PostToolUse`, `PostToolUseFailure`, `Stop`, `SubagentStart`, `SubagentStop`, `SessionEnd`, and `CwdChanged` hooks in `.claude/settings.local.json`. Each hook invokes `agex hook <event>`, which routes to the matching task via a 3-tier fallback and appends a normalized event:
+1. **Hook events** (real-time, Claude Code only) — `agex init` registers `PostToolUse`, `PostToolUseFailure`, `Stop`, `SubagentStart`, `SubagentStop`, `SessionEnd`, and `CwdChanged` hooks in `.claude/settings.local.json`. Each hook invokes `agex hook <event>`, which routes to the matching task via a 2-tier fallback and appends a normalized event:
 
-   1. **`AGEX_TASK_ID` env var** — set by `agex` when spawning the worker; authoritative.
-   2. **Session cwd** matches `/.agex/tasks/<id>/`.
-   3. **Tool input path** (`file_path`, `path`, or `notebook_path`) matches `/.agex/tasks/<id>/`.
+   1. **`AGEX_TASK_ID` env var** — set by `agex` when spawning the worker; authoritative ownership signal. Every tool call a worker or its subagents emit routes here, even if the session `cd`s out mid-run.
+   2. **Tool input path** (`file_path`, `path`, or `notebook_path`) matches `/.agex/tasks/<id>/`. Catches events from non-agex sessions that touch worktree files by absolute path (e.g. a root-cwd Claude session editing a file via its full path).
 
-   The first tier that resolves wins. Tier 1 is what keeps a dispatched worker's events attached to its task even if the session `cd`s out mid-run; tier 3 catches events from a non-agex session (e.g. a root-cwd Claude session editing a worktree file by absolute path).
+   The first tier that resolves wins. Events that fall through both tiers drop — we have no reliable ownership signal for them. To attach a manually-launched `claude` session to a specific task, set `AGEX_TASK_ID=<id>` (and `AGEX_WORKTREE=<abs-worktree-path>`) in its env before launch.
 
    This captures per-tool activity (`tool.call`, `tool.failed`, `turn.end`, `subagent.started/completed`, `session.end`) as it happens.
 2. **Transcript replay** (post-hoc, all agents) — after a task finishes, the Claude Code transcript (`~/.claude/projects/…/*.jsonl`) is scanned and any missing session-level events are backfilled. This also runs when no hooks were active, so activity works in read-only fashion even without `agex init`.
