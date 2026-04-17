@@ -360,6 +360,33 @@ describe('Task Activity Logs (integration)', () => {
       expect(evt).toBeDefined();
       expect(evt!.data!.cwd).toBe(join(repo, '.agex', 'tasks', id, 'src'));
     });
+
+    it('29. tier 3 — absolute worktree file_path from root cwd lands in the task log', async () => {
+      await initAgex(repo);
+      const id = 'rootedit';
+      await setupWorktreeDir(id);
+      const absoluteFilePath = join(repo, '.agex', 'tasks', id, 'src', 'foo.ts');
+      const payload = JSON.stringify({
+        cwd: repo,                 // root session — no worktree in cwd
+        session_id: 'S-ROOT',
+        tool_name: 'Edit',
+        tool_input: { file_path: absoluteFilePath, old_string: 'a', new_string: 'b' },
+        tool_use_id: 'tu-root-1',
+      });
+      const res = agex(repo, ['hook', 'post-tool'], payload);
+      expect(res.status).toBe(0);
+
+      const events = await readActivity(repo, id);
+      expect(events).toHaveLength(1);
+      expect(events[0].event).toBe('tool.call');
+      expect(events[0].task_id).toBe(id);
+      expect(events[0].data!.tool).toBe('Edit');
+      expect(events[0].data!.tool_use_id).toBe('tu-root-1');
+
+      // Tier 3 must NOT populate the registry.
+      const registryPath = join(repo, '.agex', 'sessions.json');
+      expect(existsSync(registryPath)).toBe(false);
+    });
   });
 
   // ---------------- D. Activity log cleanup ----------------
