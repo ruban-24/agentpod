@@ -28,10 +28,6 @@ export function taskActivityPath(repoRoot: string, taskId: string): string {
   return join(repoRoot, AGEX_DIR, TASKS_DIR, `${taskId}.activity.jsonl`);
 }
 
-export function sessionRegistryPath(repoRoot: string): string {
-  return join(repoRoot, AGEX_DIR, 'sessions.json');
-}
-
 export function worktreePath(repoRoot: string, taskId: string): string {
   return join(repoRoot, AGEX_DIR, TASKS_DIR, taskId);
 }

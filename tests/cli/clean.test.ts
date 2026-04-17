@@ -102,41 +102,6 @@ describe('cleanCommand', () => {
     }
   });
 
-  it('prunes session registry entries for tasks that were cleaned up', async () => {
-    const { TaskManager } = await import('../../src/core/task-manager.js');
-    const { writeFile, readFile } = await import('node:fs/promises');
-    const { sessionRegistryPath } = await import('../../src/constants.js');
-
-    // Create two real tasks via taskCreateCommand (matches existing test patterns).
-    const toClean = await taskCreateCommand(repo.path, { prompt: 'to clean' });
-    const toKeep = await taskCreateCommand(repo.path, { prompt: 'to keep' });
-
-    const tm = new TaskManager(repo.path);
-
-    // Force the first task into a cleanable status.
-    const cleanData = await tm.getTask(toClean.id);
-    cleanData!.status = 'completed' as any;
-    await tm.saveTask(cleanData!);
-    // Second task stays in its default status (not cleanable).
-
-    // Pre-populate the registry with entries for both tasks.
-    await writeFile(
-      sessionRegistryPath(repo.path),
-      JSON.stringify({
-        's-cleaned': { taskId: toClean.id, repoRoot: repo.path },
-        's-kept': { taskId: toKeep.id, repoRoot: repo.path },
-      }),
-    );
-
-    await cleanCommand(repo.path);
-
-    // The surviving task's entry stays; the cleaned task's entry is dropped.
-    const raw = await readFile(sessionRegistryPath(repo.path), 'utf-8');
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
-    expect(parsed['s-cleaned']).toBeUndefined();
-    expect(parsed['s-kept']).toBeDefined();
-  });
-
   it('auto-kills server before cleaning task', async () => {
     const { writeFile } = await import('node:fs/promises');
     const { join } = await import('node:path');

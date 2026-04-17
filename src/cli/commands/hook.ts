@@ -1,10 +1,6 @@
 import { ActivityLogger } from '../../core/activity-logger.js';
 import { extractToolInput } from '../../core/transcript-parser.js';
 import type { ActivityEventType } from '../../types.js';
-import { existsSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
-import { dirname, join } from 'node:path';
-import { loadSessionRegistry } from '../../core/session-registry.js';
 
 // --- Types ---
 
@@ -29,64 +25,29 @@ export interface HookEventData {
 
 const WORKTREE_RE = /\/\.agex\/tasks\/([^/.]+)(?=\/|$)/;
 
-function findRepoRoot(cwd: string | undefined): string | null {
-  if (!cwd) return null;
-
-  // 1. cwd sits inside a worktree — repoRoot is the prefix before /.agex/tasks/
-  const m = WORKTREE_RE.exec(cwd);
-  if (m) return cwd.slice(0, m.index);
-
-  // 2. Walk upward from cwd looking for a directory that contains .agex/
-  let dir = cwd;
-  while (dir && dir !== dirname(dir)) {
-    if (existsSync(join(dir, '.agex'))) return dir;
-    dir = dirname(dir);
-  }
-
-  // 3. Last resort — ask git. Useful when cwd is a symlink or a subdir
-  //    of a non-agex-initialized repo that still has .agex at toplevel.
-  try {
-    const top = execFileSync('git', ['rev-parse', '--show-toplevel'], {
-      cwd,
-      encoding: 'utf-8',
-      stdio: ['ignore', 'pipe', 'ignore'],
-    }).trim();
-    if (top && existsSync(join(top, '.agex'))) return top;
-  } catch {
-    // git not available / not a repo — fall through
-  }
-  return null;
-}
-
 export function routeHookEvent(payload: HookPayload): HookRoute | null {
-  const cwd = payload.cwd ?? '';
-  const sessionId = typeof payload.session_id === 'string' ? payload.session_id : undefined;
-
-  // Tier 1: session_id registry.
-  if (sessionId) {
-    const repoRoot = findRepoRoot(cwd);
-    if (repoRoot) {
-      const entry = loadSessionRegistry(repoRoot).lookup(sessionId);
-      if (entry) return { repoRoot: entry.repoRoot, taskId: entry.taskId };
+  // Tier 1: AGEX_TASK_ID env var — authoritative ownership signal set by agex
+  // when spawning the worker. Excludes coordinator/root sessions by construction.
+  const envTaskId = process.env.AGEX_TASK_ID;
+  const envWorktree = process.env.AGEX_WORKTREE;
+  if (envTaskId && envWorktree) {
+    const m = WORKTREE_RE.exec(envWorktree);
+    if (m && m[1] === envTaskId) {
+      return { repoRoot: envWorktree.slice(0, m.index), taskId: envTaskId };
     }
   }
 
-  // Tier 2: cwd regex match (existing behavior). Populates the registry on hit.
+  const cwd = payload.cwd ?? '';
+
+  // Tier 2: cwd regex match.
   const cwdMatch = WORKTREE_RE.exec(cwd);
   if (cwdMatch) {
     const taskId = cwdMatch[1];
     const repoRoot = cwd.slice(0, cwdMatch.index);
-    if (sessionId) {
-      try {
-        loadSessionRegistry(repoRoot).register(sessionId, { taskId, repoRoot });
-      } catch {
-        // non-fatal; tier 2 still succeeds
-      }
-    }
     return { repoRoot, taskId };
   }
 
-  // Tier 3: tool_input path regex. Does NOT write to the registry.
+  // Tier 3: tool_input path regex.
   const input = (payload.tool_input ?? {}) as Record<string, unknown>;
   const candidatePaths = [input.file_path, input.path, input.notebook_path]
     .filter((p): p is string => typeof p === 'string');

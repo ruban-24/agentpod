@@ -22,11 +22,15 @@ interface AgexResult {
 }
 
 function agex(cwd: string, args: string[], stdin?: string): AgexResult {
+  // Strip AGEX_TASK_ID / AGEX_WORKTREE from the inherited env so tier 1
+  // routing doesn't short-circuit to an ambient task when tests themselves
+  // run inside an agex worktree.
+  const { AGEX_TASK_ID: _a, AGEX_WORKTREE: _b, ...env } = process.env;
   const res = spawnSync('node', [CLI, ...args], {
     cwd,
     input: stdin,
     encoding: 'utf-8',
-    env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+    env: { ...env, NO_COLOR: '1', FORCE_COLOR: '0' },
   });
   return { status: res.status, stdout: res.stdout || '', stderr: res.stderr || '' };
 }
@@ -383,7 +387,7 @@ describe('Task Activity Logs (integration)', () => {
       expect(events[0].data!.tool).toBe('Edit');
       expect(events[0].data!.tool_use_id).toBe('tu-root-1');
 
-      // Tier 3 must NOT populate the registry.
+      // No registry side-effects — routing is now pure.
       const registryPath = join(repo, '.agex', 'sessions.json');
       expect(existsSync(registryPath)).toBe(false);
     });

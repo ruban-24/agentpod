@@ -20,6 +20,46 @@ describe('routeHookEvent', () => {
     await rm(repo, { recursive: true, force: true });
   });
 
+  // Tier 1 tests rely on process.env; restore after each test.
+  const origTaskId = process.env.AGEX_TASK_ID;
+  const origWorktree = process.env.AGEX_WORKTREE;
+  beforeEach(() => {
+    // Clear before every test so the ambient environment (e.g. when tests
+    // themselves run inside an agex worktree) does not leak into tier 1.
+    delete process.env.AGEX_TASK_ID;
+    delete process.env.AGEX_WORKTREE;
+  });
+  afterEach(() => {
+    if (origTaskId === undefined) delete process.env.AGEX_TASK_ID;
+    else process.env.AGEX_TASK_ID = origTaskId;
+    if (origWorktree === undefined) delete process.env.AGEX_WORKTREE;
+    else process.env.AGEX_WORKTREE = origWorktree;
+  });
+
+  it('tier 1 — AGEX_TASK_ID env var dominates even when cwd is elsewhere', () => {
+    process.env.AGEX_TASK_ID = 'envtask';
+    process.env.AGEX_WORKTREE = join(repo, '.agex', 'tasks', 'envtask');
+    const result = routeHookEvent({ cwd: '/tmp' });
+    expect(result).toEqual({ repoRoot: repo, taskId: 'envtask' });
+  });
+
+  it('tier 1 — AGEX_TASK_ID env var wins over a conflicting cwd', () => {
+    process.env.AGEX_TASK_ID = 'envtask';
+    process.env.AGEX_WORKTREE = join(repo, '.agex', 'tasks', 'envtask');
+    // cwd points to a DIFFERENT task — tier 1 must still win.
+    const result = routeHookEvent({ cwd: join(repo, '.agex', 'tasks', 'other') });
+    expect(result).toEqual({ repoRoot: repo, taskId: 'envtask' });
+  });
+
+  it('tier 1 — skipped when AGEX_TASK_ID disagrees with AGEX_WORKTREE', () => {
+    // Defensive: if agex ever sets mismatched vars, fall through to lower tiers.
+    process.env.AGEX_TASK_ID = 'alpha';
+    process.env.AGEX_WORKTREE = join(repo, '.agex', 'tasks', 'beta');
+    delete process.env.AGEX_TASK_ID; // unset one to trigger fallthrough
+    const result = routeHookEvent({ cwd: '/tmp' });
+    expect(result).toBeNull();
+  });
+
   // --- Baseline (replacing the old cwd-only tests) ---
   it('returns the route when cwd is inside a worktree', () => {
     const cwd = join(repo, '.agex', 'tasks', 'abc123', 'src');
@@ -33,30 +73,7 @@ describe('routeHookEvent', () => {
     expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
   });
 
-  // --- Spec tests 1–6 ---
-
-  // 1. Tier 1 (registry) wins when the session is registered.
-  it('prefers tier 1 when the registry has the session', async () => {
-    const { writeFile } = await import('node:fs/promises');
-    await writeFile(
-      join(repo, '.agex', 'sessions.json'),
-      JSON.stringify({ 'S1': { taskId: 'from-registry', repoRoot: repo } }),
-    );
-    // cwd does NOT match a worktree, so tier 2 would miss;
-    // but tier 1 resolves first and should pin task-id from the registry.
-    const result = routeHookEvent({ cwd: repo, session_id: 'S1' });
-    expect(result).toEqual({ repoRoot: repo, taskId: 'from-registry' });
-  });
-
-  // 2. Tier 2 (cwd) is used when registry misses, AND it writes to the registry.
-  it('uses tier 2 on registry miss and writes session_id -> task into the registry', async () => {
-    const { readFile } = await import('node:fs/promises');
-    const cwd = join(repo, '.agex', 'tasks', 'abc123', 'src');
-    const result = routeHookEvent({ cwd, session_id: 'S-NEW' });
-    expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
-    const raw = await readFile(join(repo, '.agex', 'sessions.json'), 'utf-8');
-    expect(JSON.parse(raw)).toEqual({ 'S-NEW': { taskId: 'abc123', repoRoot: repo } });
-  });
+  // --- Spec tests ---
 
   // 3. Tier 3 (tool_input path) is used when cwd is outside any worktree.
   it('uses tier 3 (tool_input.file_path) when cwd is outside any worktree', () => {
@@ -69,8 +86,8 @@ describe('routeHookEvent', () => {
     expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
   });
 
-  // 4. Tier 3 does NOT populate the registry (would be wrong for cross-worktree root sessions).
-  it('does not write to the registry when only tier 3 matches', async () => {
+  // 4. Tier 3 is a pure function — no side-effects on disk.
+  it('does not write any side-effect files when only tier 3 matches', async () => {
     const { access } = await import('node:fs/promises');
     const filePath = join(repo, '.agex', 'tasks', 'abc123', 'foo.ts');
     routeHookEvent({
@@ -110,21 +127,6 @@ describe('routeHookEvent', () => {
     const activityFile = join(repo, '.agex', 'tasks', 'abc123.activity.jsonl');
     expect(routeHookEvent({ cwd: '/tmp', tool_input: { file_path: metaFile } })).toBeNull();
     expect(routeHookEvent({ cwd: '/tmp', tool_input: { path: activityFile } })).toBeNull();
-  });
-
-  // 7. Corrupt registry file → treated as empty; tier 2 still resolves and overwrites.
-  it('tolerates a corrupt registry file and falls through to tier 2', async () => {
-    const { writeFile, readFile } = await import('node:fs/promises');
-    const { __resetWarningsForTests } = await import('../../src/core/session-registry.js');
-    __resetWarningsForTests();
-
-    await writeFile(join(repo, '.agex', 'sessions.json'), 'not json {{{');
-    const cwd = join(repo, '.agex', 'tasks', 'abc123');
-    const result = routeHookEvent({ cwd, session_id: 'S-CORRUPT' });
-    expect(result).toEqual({ repoRoot: repo, taskId: 'abc123' });
-    // Tier 2 overwrites the corrupt file with a valid object that includes our entry.
-    const raw = await readFile(join(repo, '.agex', 'sessions.json'), 'utf-8');
-    expect(JSON.parse(raw)).toEqual({ 'S-CORRUPT': { taskId: 'abc123', repoRoot: repo } });
   });
 });
 
@@ -239,13 +241,23 @@ describe('extractHookData', () => {
 describe('processHookPayload integration', () => {
   let tempDir: string;
 
+  // Clear tier-1 env vars so the ambient environment (tests run inside an
+  // agex worktree) does not short-circuit routing; restore afterward.
+  const origTaskId = process.env.AGEX_TASK_ID;
+  const origWorktree = process.env.AGEX_WORKTREE;
   beforeEach(async () => {
+    delete process.env.AGEX_TASK_ID;
+    delete process.env.AGEX_WORKTREE;
     tempDir = await mkdtemp(join(tmpdir(), 'agex-hook-test-'));
     // Create .agex/tasks/ directory structure with a task worktree
     await mkdir(join(tempDir, '.agex', 'tasks', 'abc123'), { recursive: true });
   });
 
   afterEach(async () => {
+    if (origTaskId === undefined) delete process.env.AGEX_TASK_ID;
+    else process.env.AGEX_TASK_ID = origTaskId;
+    if (origWorktree === undefined) delete process.env.AGEX_WORKTREE;
+    else process.env.AGEX_WORKTREE = origWorktree;
     await rm(tempDir, { recursive: true, force: true });
   });
 

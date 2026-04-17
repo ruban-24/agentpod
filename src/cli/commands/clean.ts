@@ -1,7 +1,6 @@
 import { TaskManager } from '../../core/task-manager.js';
 import { WorkspaceManager } from '../../core/workspace-manager.js';
 import { ServerManager } from '../../core/server-manager.js';
-import { pruneSessionRegistry } from '../../core/session-registry.js';
 
 export interface CleanResult {
   removed: string[];
@@ -56,16 +55,6 @@ export async function cleanCommand(repoRoot: string): Promise<CleanResult> {
     .map(r => r.value.id);
 
   const removed = toClean.map(t => t.id);
-
-  // Re-enumerate tasks that survived cleanup (deleteTask failures are swallowed above,
-  // so `kept` may undercount). Prune registry entries whose taskId is not in the
-  // surviving set — that matches the spec's "removed tasks" definition on disk.
-  try {
-    const survivors = new Set((await tm.listTasks()).map(t => t.id));
-    pruneSessionRegistry(repoRoot, survivors);
-  } catch {
-    // never fail clean on registry housekeeping
-  }
 
   return { removed, kept, ...(dirtyTasks.length ? { uncommitted_changes: dirtyTasks } : {}) };
 }
