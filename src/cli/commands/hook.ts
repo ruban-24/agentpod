@@ -30,7 +30,7 @@ export function routeHookEvent(cwd: string): HookRoute | null {
 
 const HOOK_EVENT_MAP: Record<string, (payload: Record<string, unknown>) => HookEventData | null> = {
   'post-tool': (payload) => {
-    const tool = payload.tool as string;
+    const tool = (payload.tool_name ?? payload.tool) as string;
     const toolUseId = payload.tool_use_id as string;
     const toolInput = (payload.tool_input ?? {}) as Record<string, unknown>;
     const extracted = extractToolInput(tool, toolInput);
@@ -45,7 +45,7 @@ const HOOK_EVENT_MAP: Record<string, (payload: Record<string, unknown>) => HookE
   },
 
   'post-tool-failure': (payload) => {
-    const tool = payload.tool as string;
+    const tool = (payload.tool_name ?? payload.tool) as string;
     const toolUseId = payload.tool_use_id as string;
     const toolInput = (payload.tool_input ?? {}) as Record<string, unknown>;
     const extracted = extractToolInput(tool, toolInput);

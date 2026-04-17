@@ -28,7 +28,7 @@ describe('routeHookEvent', () => {
 describe('extractHookData', () => {
   it('post-tool maps to tool.call with extracted tool input', () => {
     const payload = {
-      tool: 'Edit',
+      tool_name: 'Edit',
       tool_use_id: 'tu_001',
       tool_input: {
         file_path: '/src/main.ts',
@@ -49,7 +49,7 @@ describe('extractHookData', () => {
 
   it('post-tool-failure maps to tool.failed with error info', () => {
     const payload = {
-      tool: 'Bash',
+      tool_name: 'Bash',
       tool_use_id: 'tu_002',
       tool_input: { command: 'npm test' },
       error: 'Permission denied',
@@ -148,7 +148,7 @@ describe('processHookPayload integration', () => {
 
   it('appends an activity event for a post-tool payload with cwd inside a worktree', async () => {
     const payload = {
-      tool: 'Read',
+      tool_name: 'Read',
       tool_use_id: 'tu_100',
       tool_input: { file_path: join(tempDir, '.agex', 'tasks', 'abc123', 'src', 'index.ts') },
       cwd: join(tempDir, '.agex', 'tasks', 'abc123'),
@@ -171,7 +171,7 @@ describe('processHookPayload integration', () => {
 
   it('uses file_path fallback when cwd does not match a worktree', async () => {
     const payload = {
-      tool: 'Write',
+      tool_name: 'Write',
       tool_use_id: 'tu_200',
       tool_input: { file_path: join(tempDir, '.agex', 'tasks', 'abc123', 'src', 'foo.ts'), content: 'hello' },
       cwd: '/some/random/dir',
@@ -191,7 +191,7 @@ describe('processHookPayload integration', () => {
 
   it('silently does nothing when cwd and file_path both do not match', async () => {
     const payload = {
-      tool: 'Read',
+      tool_name: 'Read',
       tool_use_id: 'tu_300',
       tool_input: { file_path: '/some/other/path/file.ts' },
       cwd: '/some/random/dir',
