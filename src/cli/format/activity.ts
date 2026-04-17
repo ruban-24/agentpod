@@ -20,7 +20,7 @@ const SESSION_EVENTS = new Set(['session.start', 'turn.end', 'task.status_change
 function formatTimestamp(ts: string): string {
   try {
     const d = new Date(ts);
-    return d.toISOString().slice(11, 19); // HH:MM:SS
+    return d.toLocaleTimeString('en-GB', { hour12: false }); // HH:MM:SS in local TZ
   } catch {
     return ts;
   }
