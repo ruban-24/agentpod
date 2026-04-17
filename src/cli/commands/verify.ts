@@ -1,6 +1,7 @@
 import { resolve } from 'node:path';
 import { TaskManager } from '../../core/task-manager.js';
 import { Verifier } from '../../core/verifier.js';
+import { ActivityLogger } from '../../core/activity-logger.js';
 import { loadConfig } from '../../config/loader.js';
 import { detectVerifyCommands } from '../../config/auto-detect.js';
 import { AgexError } from '../../errors.js';
@@ -40,6 +41,15 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
 
   const result = await verifier.runChecks(wtPath, verifyCommands);
   await tm.updateTask(taskId, { verification: result });
+
+  const activity = new ActivityLogger(repoRoot);
+  try {
+    await activity.append(taskId, 'task.verify', {
+      passed: result.passed,
+      summary: result.summary,
+      checks: result.checks.map(c => ({ cmd: c.cmd, passed: c.passed, duration_s: c.duration_s })),
+    });
+  } catch { /* best-effort */ }
 
   // Transition to final status if we went through verifying
   if (canTransition) {

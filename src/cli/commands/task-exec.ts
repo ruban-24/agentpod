@@ -3,6 +3,7 @@ import { readFile, unlink, access } from 'node:fs/promises';
 import { TaskManager } from '../../core/task-manager.js';
 import { AgentRunner } from '../../core/agent-runner.js';
 import { Verifier } from '../../core/verifier.js';
+import { ActivityLogger } from '../../core/activity-logger.js';
 import { loadConfig } from '../../config/loader.js';
 import { detectVerifyCommands } from '../../config/auto-detect.js';
 import { AgexError } from '../../errors.js';
@@ -69,10 +70,12 @@ export async function taskExecCommand(
 
   await tm.updateStatus(taskId, 'running');
 
+  const activity = new ActivityLogger(repoRoot);
   const timeoutMs = options.timeout ? options.timeout * 1000 : undefined;
 
   if (options.wait) {
     // Blocking execution
+    try { await activity.append(taskId, 'task.exec.started', { cmd: options.cmd }); } catch { /* best-effort */ }
     const result = await runner.run(taskId, options.cmd, wtPath, { ...task.env }, { timeout: timeoutMs });
     await tm.updateTask(taskId, { exit_code: result.exitCode, cmd: options.cmd });
 
@@ -85,6 +88,7 @@ export async function taskExecCommand(
     // Check for needs-input signal
     const needsInput = await checkNeedsInput(wtPath);
     if (needsInput) {
+      try { await activity.append(taskId, 'task.needs_input', { question: needsInput.question, options: needsInput.options, context: needsInput.context }); } catch { /* best-effort */ }
       await tm.updateTask(taskId, { needsInput, cmd: options.cmd });
       return await tm.updateStatus(taskId, 'needs-input');
     }
@@ -103,11 +107,13 @@ export async function taskExecCommand(
 
     // Final status
     const finalStatus = verification.passed ? 'completed' : 'failed';
+    try { await activity.append(taskId, 'task.finished', { exit_code: result.exitCode, duration_s: task.duration_s, diff_stats }); } catch { /* best-effort */ }
     return await tm.updateStatus(taskId, finalStatus);
   } else {
     // Non-blocking: spawn and return immediately
     const handle = runner.spawn(taskId, options.cmd, wtPath, { ...task.env }, { timeout: timeoutMs });
     const spawned = await tm.updateTask(taskId, { pid: handle.pid, cmd: options.cmd });
+    try { await activity.append(taskId, 'task.exec.started', { cmd: options.cmd, pid: handle.pid }); } catch { /* best-effort */ }
 
     // Register background completion handler
     handle.done.then(async (runResult) => {
@@ -123,6 +129,7 @@ export async function taskExecCommand(
 
         const needsInput = await checkNeedsInput(wtPath);
         if (needsInput) {
+          try { await activity.append(taskId, 'task.needs_input', { question: needsInput.question, options: needsInput.options, context: needsInput.context }); } catch { /* best-effort */ }
           await tm.updateTask(taskId, { needsInput, cmd: options.cmd });
           await tm.updateStatus(taskId, 'needs-input');
           return; // skip verify
@@ -139,6 +146,8 @@ export async function taskExecCommand(
         await tm.updateTask(taskId, { diff_stats });
 
         const finalStatus = verification.passed ? 'completed' : 'failed';
+        const updatedTask = await tm.getTask(taskId);
+        try { await activity.append(taskId, 'task.finished', { exit_code: runResult.exitCode, duration_s: updatedTask?.duration_s, diff_stats }); } catch { /* best-effort */ }
         await tm.updateStatus(taskId, finalStatus);
       } catch (err) {
         try {
