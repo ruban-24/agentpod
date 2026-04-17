@@ -1,5 +1,26 @@
 # Changelog
 
+## 0.6.0 — 2026-04-17
+
+### Features
+
+- **`agex activity <id>` command (#45):** Shows the step-by-step story of what an agent did inside a worktree — which files it read, what it edited, tool failures, subagent invocations, tokens used, and verification results. JSONL by default for agent/script consumption; `--human` renders a color-coded timeline with prompt/model/duration header and token/files-modified footer.
+- **Claude Code hook integration:** `agex init` now installs activity hooks (PostToolUse, PostToolUseFailure, Stop, SubagentStart/Stop, SessionEnd, CwdChanged) so interactive Claude Code sessions inside an agex worktree are captured in real time. Routing is 2-tier: `AGEX_TASK_ID` env var is authoritative; `tool_input` path regex catches non-agex sessions editing worktree files by absolute path.
+- **Transcript replay for `agex exec`:** After agent runs, agex parses `~/.claude/projects/` transcripts to backfill token usage, model, turn count, and files-modified. Deduplicated against hooks when both are present.
+- **Lazy aggregation on TaskRecord:** `agex status`, `agex activity`, and `agex accept` populate `token_usage`, `model`, `turn_count`, and `files_modified` on the task record by scanning the activity log — no extra bookkeeping required.
+- **SessionStart branding:** Claude Code sessions in an agex repo now show `Powered by agex CLI v<version>` in the startup banner.
+
+### Improvements
+
+- **`agex hook <event>` internal subcommand:** Dispatcher for Claude Code hook payloads — stdin JSON → routes by tier → appends to `.agex/tasks/<id>.activity.jsonl`. Fail-safe: all errors are swallowed so hooks never break the user's flow.
+- **Unified transcript finalization:** `taskExecCommand` and `answerCommand` now share a single `finalizeTranscript` helper so both code paths emit `session.start`, `session.end`, `task.finished`, and update aggregated fields consistently.
+- **Status response includes fresh aggregates on first call:** Previously, the first `agex status` call after a run persisted aggregated fields to disk but returned the pre-aggregation snapshot; now both the response and on-disk state match immediately.
+
+### Known limitations
+
+- **Real-time hook capture is Claude Code only.** Codex and Copilot tasks get lifecycle events (create, exec, verify, finish, subagent start/stop) but no per-tool timeline.
+- **POSIX shells only.** The install's hook commands use POSIX shell syntax; Windows support is not yet tracked.
+
 ## 0.5.0 — 2026-04-14
 
 ### Breaking Changes
