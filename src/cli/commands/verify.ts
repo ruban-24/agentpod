@@ -51,6 +51,24 @@ export async function verifyCommand(repoRoot: string, taskId: string): Promise<V
     });
   } catch { /* best-effort */ }
 
+  // Lazy aggregation of activity data
+  try {
+    if (await activity.exists(taskId)) {
+      const currentTask = await tm.getTask(taskId);
+      if (currentTask && !currentTask.token_usage) {
+        const summary = await activity.aggregate(taskId);
+        if (summary) {
+          await tm.updateTask(taskId, {
+            ...(summary.token_usage && { token_usage: summary.token_usage }),
+            ...(summary.model && { model: summary.model }),
+            ...(summary.turn_count && { turn_count: summary.turn_count }),
+            ...(summary.files_modified && { files_modified: summary.files_modified }),
+          });
+        }
+      }
+    }
+  } catch { /* best-effort */ }
+
   // Transition to final status if we went through verifying
   if (canTransition) {
     const finalStatus = result.passed ? 'completed' : 'failed';

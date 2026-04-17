@@ -1,6 +1,6 @@
 import { appendFile, readFile, access } from 'node:fs/promises';
 import { taskActivityPath } from '../constants.js';
-import type { ActivityEvent, ActivityEventType } from '../types.js';
+import type { ActivityEvent, ActivityEventType, TokenUsage } from '../types.js';
 
 export class ActivityLogger {
   private repoRoot: string;
@@ -52,5 +52,57 @@ export class ActivityLogger {
   async hasToolCalls(taskId: string): Promise<boolean> {
     const events = await this.read(taskId);
     return events.some(e => e.event === 'tool.call');
+  }
+
+  async aggregate(taskId: string): Promise<{
+    token_usage?: TokenUsage;
+    model?: string;
+    turn_count?: number;
+    files_modified?: string[];
+  } | null> {
+    const events = await this.read(taskId);
+    if (events.length === 0) return null;
+
+    let inputTokens = 0;
+    let outputTokens = 0;
+    let cacheCreationTokens = 0;
+    let cacheReadTokens = 0;
+    let apiCalls = 0;
+    let model: string | undefined;
+    let turnCount = 0;
+    const filesModified = new Set<string>();
+
+    for (const event of events) {
+      if (event.event === 'session.start' && event.data?.model) {
+        model = event.data.model as string;
+      }
+      if (event.event === 'session.end' && event.data?.tokens) {
+        const tokens = event.data.tokens as Record<string, number>;
+        inputTokens += tokens.input_tokens || 0;
+        outputTokens += tokens.output_tokens || 0;
+        cacheCreationTokens += tokens.cache_creation_tokens || 0;
+        cacheReadTokens += tokens.cache_read_tokens || 0;
+        apiCalls += (event.data.api_calls as number) || 0;
+      }
+      if (event.event === 'turn.end') {
+        turnCount++;
+      }
+      if (event.event === 'tool.call') {
+        const tool = event.data?.tool as string;
+        if (['Edit', 'Write'].includes(tool) && event.data?.file_path) {
+          filesModified.add(event.data.file_path as string);
+        }
+      }
+    }
+
+    const hasTokenData = inputTokens > 0 || outputTokens > 0;
+    return {
+      ...(hasTokenData && {
+        token_usage: { input_tokens: inputTokens, output_tokens: outputTokens, cache_creation_tokens: cacheCreationTokens, cache_read_tokens: cacheReadTokens, api_call_count: apiCalls },
+      }),
+      model,
+      ...(turnCount > 0 && { turn_count: turnCount }),
+      ...(filesModified.size > 0 && { files_modified: [...filesModified] }),
+    };
   }
 }
